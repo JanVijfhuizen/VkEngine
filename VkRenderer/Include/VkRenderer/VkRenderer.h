@@ -12,6 +12,7 @@ namespace vi
 		struct Settings final
 		{
 			PhysicalDeviceFactory::Settings physicalDevice{};
+			Debugger::Settings debugger{};
 		};
 
 		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
@@ -24,5 +25,6 @@ namespace vi
 		VkInstance _instance;
 		VkSurfaceKHR _surface;
 		VkPhysicalDevice _physicalDevice;
+		VkDevice _device;
 	};
 }

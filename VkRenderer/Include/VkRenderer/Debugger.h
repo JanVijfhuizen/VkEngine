@@ -5,7 +5,12 @@ namespace vi
 	class Debugger final
 	{
 	public:
-		void Construct(VkInstance instance);
+		struct Settings final
+		{
+			std::vector<const char*> additionalValidationLayers;
+		};
+
+		void Construct(const Settings& settings, VkInstance instance);
 		void Cleanup();
 
 		[[nodiscard]] bool CheckValidationLayerSupport() const;
@@ -18,8 +23,12 @@ namespace vi
 			"VK_LAYER_KHRONOS_validation"
 		};
 
+		Settings _settings;
+
 		VkDebugUtilsMessengerEXT _debugMessenger;
 		VkInstance _instance;
+
+		[[nodiscard]] static bool IsLayerPresent(const char* layer, std::vector<VkLayerProperties>& layers);
 
 		[[nodiscard]] static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType,

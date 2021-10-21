@@ -15,7 +15,7 @@ namespace vi
 		};
 		InstanceFactory{instanceInfo};
 
-		_debugger.Construct(_instance);
+		_debugger.Construct(settings.debugger, _instance);
 		_windowSystem.CreateSurface(_instance, _surface);
 
 		const PhysicalDeviceFactory::Info physicalDeviceInfo

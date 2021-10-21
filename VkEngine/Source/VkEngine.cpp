@@ -26,9 +26,14 @@ int main()
 	}
 
 	vi::WindowSystemGLFW windowSystem{};
+
+	vi::VkRenderer::Settings settings;
+	settings.debugger.additionalValidationLayers.push_back("VK_LAYER_KHRONOS_validation");
+
 	vi::VkRenderer renderer
 	{
-		windowSystem
+		windowSystem,
+		settings
 	};
 
 	while(true)
