@@ -9,6 +9,7 @@ namespace vi
 
 		struct DeviceInfo final
 		{
+			const VkPhysicalDevice& device;
 			const VkPhysicalDeviceProperties& properties;
 			const VkPhysicalDeviceFeatures& features;
 		};

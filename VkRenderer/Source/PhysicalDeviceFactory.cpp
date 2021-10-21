@@ -1,5 +1,6 @@
 ﻿#include "pch.h"
 #include "PhysicalDeviceFactory.h"
+#include "SwapChain.h"
 
 namespace vi
 {
@@ -38,6 +39,7 @@ namespace vi
 
 			const DeviceInfo deviceInfo
 			{
+				device,
 				deviceProperties,
 				deviceFeatures
 			};
@@ -55,6 +57,10 @@ namespace vi
 
 	bool PhysicalDeviceFactory::IsDeviceSuitable(const Info& info, const DeviceInfo& deviceInfo)
 	{
+		const auto swapChainSupport = SwapChain::QuerySwapChainSupport(info.surface, deviceInfo.device);
+		if (!swapChainSupport)
+			return false;
+
 		auto& func = info.settings.deviceSuitableFunc;
 		if (func)
 			return func(deviceInfo);
