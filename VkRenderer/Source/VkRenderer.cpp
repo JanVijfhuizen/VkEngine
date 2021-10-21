@@ -70,7 +70,7 @@ namespace vi
 		_swapChain.Construct(swapChainInfo);
 	}
 
-	void VkRenderer::CleanupSwapChainDependendies() const
+	void VkRenderer::CleanupSwapChainDependendies()
 	{
 		_swapChain.Cleanup();
 	}

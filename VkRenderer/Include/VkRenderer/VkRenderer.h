@@ -39,6 +39,6 @@ namespace vi
 		Queues _queues;
 
 		void CreateSwapChainDependencies();
-		void CleanupSwapChainDependendies() const;
+		void CleanupSwapChainDependendies();
 	};
 }

@@ -25,7 +25,7 @@ namespace vi
 
 		SwapChain();
 		void Construct(const Info& info);
-		void Cleanup() const;
+		void Cleanup();
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
@@ -37,11 +37,13 @@ namespace vi
 		VkExtent2D _extent;
 
 		std::vector<VkImage> _images{};
+		std::vector<VkImageView> _imageViews{};
 
 		[[nodiscard]] static VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		[[nodiscard]] static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
 		[[nodiscard]] VkExtent2D ChooseExtent(const Info& info, const VkSurfaceCapabilitiesKHR& capabilities) const;
 
 		void CreateImages(uint32_t count);
+		void CreateImageViews();
 	};
 }

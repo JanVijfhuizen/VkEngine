@@ -73,10 +73,19 @@ namespace vi
 
 		const auto result = vkCreateSwapchainKHR(info.device, &createInfo, nullptr, &_swapChain);
 		assert(!result);
+
+		CreateImages(imageCount);
+		CreateImageViews();
 	}
 
-	void SwapChain::Cleanup() const
+	void SwapChain::Cleanup()
 	{
+		for (const auto& imageView : _imageViews)
+			vkDestroyImageView(_info->device, imageView, nullptr);
+
+		_images.clear();
+		_imageViews.clear();
+
 		vkDestroySwapchainKHR(_info->device, _swapChain, nullptr);
 	}
 
@@ -154,5 +163,35 @@ namespace vi
 		vkGetSwapchainImagesKHR(_info->device, _swapChain, &count, nullptr);
 		_images.resize(count);
 		vkGetSwapchainImagesKHR(_info->device, _swapChain, &count, _images.data());
+	}
+
+	void SwapChain::CreateImageViews()
+	{
+		const uint32_t count = _images.size();
+		_imageViews.resize(count);
+
+		for (uint32_t i = 0; i < count; ++i)
+		{
+			VkImageViewCreateInfo createInfo{};
+			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+			createInfo.image = _images[i];
+
+			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+			createInfo.format = _format;
+
+			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+			createInfo.subresourceRange.baseMipLevel = 0;
+			createInfo.subresourceRange.levelCount = 1;
+			createInfo.subresourceRange.baseArrayLayer = 0;
+			createInfo.subresourceRange.layerCount = 1;
+
+			const auto result = vkCreateImageView(_info->device, &createInfo, nullptr, &_imageViews[i]);
+			assert(!result);
+		}
 	}
 }
