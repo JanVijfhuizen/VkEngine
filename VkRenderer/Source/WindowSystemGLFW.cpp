@@ -46,7 +46,7 @@ namespace vi
 		assert(!result);
 	}
 
-	const WindowSystem::VkInfo& WindowSystemGLFW::GetVkInfo()
+	const WindowSystem::VkInfo& WindowSystemGLFW::GetVkInfo() const
 	{
 		return _info;
 	}

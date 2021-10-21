@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\VkRenderer\SwapChain.h" />
     <ClInclude Include="Include\VkRenderer\Debugger.h" />
     <ClInclude Include="Include\VkRenderer\pch.h" />
     <ClInclude Include="Include\VkRenderer\PhysicalDeviceFactory.h" />
@@ -164,6 +165,7 @@
     <ClInclude Include="Include\VkRenderer\LogicalDeviceFactory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\SwapChain.cpp" />
     <ClCompile Include="Source\LogicalDeviceFactory.cpp" />
     <ClCompile Include="Source\InstanceFactory.cpp" />
     <ClCompile Include="Source\Debugger.cpp" />
