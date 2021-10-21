@@ -8,7 +8,7 @@ namespace vi
 		struct Info final
 		{
 			class WindowSystem& windowSystem;
-			class Debugger& debugger;
+			const class Debugger& debugger;
 			VkInstance& instance;
 		};
 

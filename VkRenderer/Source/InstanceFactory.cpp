@@ -9,10 +9,6 @@ namespace vi
 	{
 		assert(info.debugger.CheckValidationLayerSupport());
 
-		const auto& windowInfo = info.windowSystem.GetVkInfo();
-		const auto& name = windowInfo.name.c_str();
-		const auto version = VK_MAKE_VERSION(1, 0, 0);
-
 		auto appInfo = CreateApplicationInfo(info);
 		auto extensions = GetExtensions(info);
 
@@ -27,7 +23,6 @@ namespace vi
 
 		const auto result = vkCreateInstance(&createInfo, nullptr, &info.instance);
 		assert(!result);
-
 	}
 
 	VkApplicationInfo InstanceFactory::CreateApplicationInfo(const Info& info)

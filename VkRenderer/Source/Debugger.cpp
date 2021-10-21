@@ -3,19 +3,21 @@
 
 namespace vi
 {
-	void Debugger::Construct(const VkInstance instance)
+	void Debugger::Construct(const Settings& settings, const VkInstance instance)
 	{
 		if (!DEBUG)
 			return;
 
+		_settings = settings;
 		_instance = instance;
+
 		auto info = CreateInfo();
 
 		const auto result = CreateDebugUtilsMessengerEXT(instance, &info, nullptr, &_debugMessenger);
 		assert(!result);
 	}
 
-	void Debugger::Cleanup()
+	void Debugger::Cleanup() const
 	{
 		if (!DEBUG)
 			return;
@@ -31,21 +33,9 @@ namespace vi
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		for (const char* layer : _validationLayers)
-		{
-			bool layerFound = false;
-
-			for (const auto& layerProperties : availableLayers)
-				if (strcmp(layer, layerProperties.layerName) == 0)
-				{
-					layerFound = true;
-					break;
-				}
-
-			if (!layerFound)
+		for (const auto& layer : _settings.validationLayers)
+			if (!IsLayerPresent(layer, availableLayers))
 				return false;
-		}
-
 		return true;
 	}
 
@@ -57,10 +47,15 @@ namespace vi
 			return;
 		}
 
-		auto& validationLayers = _validationLayers;
+		auto& validationLayers = _settings.validationLayers;
 		instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		instanceInfo.ppEnabledLayerNames = validationLayers.data();
 		instanceInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugInfo);
+	}
+
+	const std::vector<const char*>& Debugger::GetValidationLayers() const
+	{
+		return _settings.validationLayers;
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT Debugger::CreateInfo()
@@ -74,6 +69,20 @@ namespace vi
 		info.pfnUserCallback = DebugCallback;
 
 		return info;
+	}
+
+	bool Debugger::IsLayerPresent(const char* layer, std::vector<VkLayerProperties>& layers)
+	{
+		bool layerFound = false;
+
+		for (const auto& layerProperties : layers)
+			if (strcmp(layer, layerProperties.layerName) == 0)
+			{
+				layerFound = true;
+				break;
+			}
+
+		return layerFound;
 	}
 
 	VkBool32 Debugger::DebugCallback(const VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,

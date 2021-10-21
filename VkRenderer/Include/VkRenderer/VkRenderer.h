@@ -1,5 +1,7 @@
 ﻿#pragma once
 #include "Debugger.h"
+#include "PhysicalDeviceFactory.h"
+#include "Queues.h"
 
 namespace vi
 {
@@ -8,7 +10,18 @@ namespace vi
 	class VkRenderer final
 	{
 	public:
-		explicit VkRenderer(class WindowSystem& system);
+		struct Settings final
+		{
+			PhysicalDeviceFactory::Settings physicalDevice{};
+			Debugger::Settings debugger{};
+
+			const std::vector<const char*> deviceExtensions =
+			{
+				VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			};
+		};
+
+		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
 		~VkRenderer();
 
 	private:
@@ -17,5 +30,8 @@ namespace vi
 
 		VkInstance _instance;
 		VkSurfaceKHR _surface;
+		VkPhysicalDevice _physicalDevice;
+		VkDevice _device;
+		Queues _queues;
 	};
 }

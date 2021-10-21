@@ -5,21 +5,30 @@ namespace vi
 	class Debugger final
 	{
 	public:
-		void Construct(VkInstance instance);
-		void Cleanup();
+		struct Settings final
+		{
+			std::vector<const char*> validationLayers =
+			{
+				"VK_LAYER_KHRONOS_validation"
+			};
+		};
+
+		void Construct(const Settings& settings, VkInstance instance);
+		void Cleanup() const;
 
 		[[nodiscard]] bool CheckValidationLayerSupport() const;
 		[[nodiscard]] static VkDebugUtilsMessengerCreateInfoEXT CreateInfo();
 		void EnableValidationLayers(VkDebugUtilsMessengerCreateInfoEXT& debugInfo, VkInstanceCreateInfo& instanceInfo) const;
 
+		[[nodiscard]] const std::vector<const char*>& GetValidationLayers() const;
+
 	private:
-		const std::vector<const char*> _validationLayers =
-		{
-			"VK_LAYER_KHRONOS_validation"
-		};
+		Settings _settings;
 
 		VkDebugUtilsMessengerEXT _debugMessenger;
 		VkInstance _instance;
+
+		[[nodiscard]] static bool IsLayerPresent(const char* layer, std::vector<VkLayerProperties>& layers);
 
 		[[nodiscard]] static VkBool32 DebugCallback(VkDebugUtilsMessageSeverityFlagBitsEXT messageSeverity,
 			VkDebugUtilsMessageTypeFlagsEXT messageType,
