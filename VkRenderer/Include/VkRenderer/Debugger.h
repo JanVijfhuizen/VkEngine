@@ -17,13 +17,15 @@ namespace vi
 		[[nodiscard]] static VkDebugUtilsMessengerCreateInfoEXT CreateInfo();
 		void EnableValidationLayers(VkDebugUtilsMessengerCreateInfoEXT& debugInfo, VkInstanceCreateInfo& instanceInfo) const;
 
+		[[nodiscard]] const std::vector<const char*>& GetActiveValidationLayers() const;
+
 	private:
 		const std::vector<const char*> _validationLayers =
 		{
 			"VK_LAYER_KHRONOS_validation"
 		};
 
-		Settings _settings;
+		std::vector<const char*> _activeValidationLayers{};
 
 		VkDebugUtilsMessengerEXT _debugMessenger;
 		VkInstance _instance;

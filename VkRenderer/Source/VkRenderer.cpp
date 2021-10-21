@@ -2,6 +2,7 @@
 #include "VkRenderer.h"
 #include "WindowSystem.h"
 #include "InstanceFactory.h"
+#include "LogicalDeviceFactory.h"
 
 namespace vi
 {
@@ -23,13 +24,24 @@ namespace vi
 			settings.physicalDevice,
 			_instance,
 			_surface,
-			_physicalDevice
+			_physicalDevice,
 		};
 		PhysicalDeviceFactory{physicalDeviceInfo};
+
+		const LogicalDeviceFactory::Info logicalDeviceInfo
+		{
+			_physicalDevice,
+			_surface,
+			_debugger,
+			_device,
+			_queues
+		};
+		LogicalDeviceFactory{logicalDeviceInfo};
 	}
 
 	VkRenderer::~VkRenderer()
 	{
+		vkDestroyDevice(_device, nullptr);
 		_debugger.Cleanup();
 
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);

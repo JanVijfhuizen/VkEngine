@@ -5,7 +5,7 @@ namespace vi
 {
 	PhysicalDeviceFactory::QueueFamilies::operator bool() const
 	{
-		for (const auto& family : families)
+		for (const auto& family : values)
 			if (family == UINT32_MAX)
 				return false;
 		return true;
@@ -29,7 +29,7 @@ namespace vi
 			vkGetPhysicalDeviceProperties(device, &deviceProperties);
 			vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-			const auto families = GetQueueFamilies(info, device);
+			const auto families = GetQueueFamilies(info.surface, device);
 			if (!families)
 				continue;
 
@@ -74,7 +74,8 @@ namespace vi
 		return score;
 	}
 
-	PhysicalDeviceFactory::QueueFamilies PhysicalDeviceFactory::GetQueueFamilies(const Info& info, const VkPhysicalDevice physicalDevice)
+	PhysicalDeviceFactory::QueueFamilies PhysicalDeviceFactory::GetQueueFamilies(const VkSurfaceKHR& surface, 
+		const VkPhysicalDevice physicalDevice)
 	{
 		QueueFamilies families{};
 
@@ -91,7 +92,7 @@ namespace vi
 				families.graphics = i;
 
 			VkBool32 presentSupport = false;
-			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, info.surface, &presentSupport);
+			vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, i, surface, &presentSupport);
 
 			if (presentSupport)
 				families.present = i;

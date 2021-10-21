@@ -8,7 +8,11 @@ namespace vi
 		if (!DEBUG)
 			return;
 
-		_settings = settings;
+		for (const auto& layer : _validationLayers)
+			_activeValidationLayers.push_back(layer);
+		for (const auto& layer : settings.additionalValidationLayers)
+			_activeValidationLayers.push_back(layer);
+
 		_instance = instance;
 
 		auto info = CreateInfo();
@@ -22,6 +26,7 @@ namespace vi
 		if (!DEBUG)
 			return;
 
+		_activeValidationLayers.clear();
 		DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
 	}
 
@@ -36,10 +41,6 @@ namespace vi
 		for (const auto& layer : _validationLayers)
 			if (!IsLayerPresent(layer, availableLayers))
 				return false;
-		for (const auto& layer : _settings.additionalValidationLayers)
-			if (!IsLayerPresent(layer, availableLayers))
-				return false;
-
 		return true;
 	}
 
@@ -55,6 +56,11 @@ namespace vi
 		instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		instanceInfo.ppEnabledLayerNames = validationLayers.data();
 		instanceInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugInfo);
+	}
+
+	const std::vector<const char*>& Debugger::GetActiveValidationLayers() const
+	{
+		return _activeValidationLayers;
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT Debugger::CreateInfo()

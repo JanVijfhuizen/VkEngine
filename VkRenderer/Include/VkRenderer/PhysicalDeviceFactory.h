@@ -9,22 +9,8 @@ namespace vi
 
 		struct DeviceInfo final
 		{
-			VkPhysicalDeviceProperties& properties;
-			VkPhysicalDeviceFeatures& features;
-		};
-
-		struct Settings final
-		{
-			std::function<bool(const DeviceInfo& info)> deviceSuitableFunc;
-			std::function<uint32_t(const DeviceInfo& info)> deviceRatingFunc;
-		};
-
-		struct Info final
-		{
-			Settings settings;
-			VkInstance instance;
-			VkSurfaceKHR surface;
-			VkPhysicalDevice& physicalDevice;
+			const VkPhysicalDeviceProperties& properties;
+			const VkPhysicalDeviceFeatures& features;
 		};
 
 		struct QueueFamilies final
@@ -37,9 +23,9 @@ namespace vi
 					uint32_t present;
 				};
 
-				uint32_t families[2]
+				uint32_t values[2]
 				{
-					UINT32_MAX, 
+					UINT32_MAX,
 					UINT32_MAX
 				};
 			};
@@ -47,11 +33,26 @@ namespace vi
 			[[nodiscard]] explicit operator bool() const;
 		};
 
+		struct Settings final
+		{
+			std::function<bool(const DeviceInfo& info)> deviceSuitableFunc;
+			std::function<uint32_t(const DeviceInfo& info)> deviceRatingFunc;
+		};
+
+		struct Info final
+		{
+			const Settings& settings;
+			const VkInstance instance;
+			const VkSurfaceKHR surface;
+			VkPhysicalDevice& physicalDevice;
+		};
+
 		explicit PhysicalDeviceFactory(const Info& info);
+
+		[[nodiscard]] static QueueFamilies GetQueueFamilies(const VkSurfaceKHR& surface, VkPhysicalDevice physicalDevice);
 
 	private:
 		[[nodiscard]] static bool IsDeviceSuitable(const Info& info, const DeviceInfo& deviceInfo);
-		[[nodiscard]] static uint32_t RateDevice(const Info& info, const DeviceInfo& deviceInfo);
-		[[nodiscard]] static QueueFamilies GetQueueFamilies(const Info& info, VkPhysicalDevice physicalDevice);
+		[[nodiscard]] static uint32_t RateDevice(const Info& info, const DeviceInfo& deviceInfo);		
 	};
 }

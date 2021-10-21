@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "Debugger.h"
 #include "PhysicalDeviceFactory.h"
+#include "Queues.h"
 
 namespace vi
 {
@@ -26,5 +27,6 @@ namespace vi
 		VkSurfaceKHR _surface;
 		VkPhysicalDevice _physicalDevice;
 		VkDevice _device;
+		Queues _queues;
 	};
 }

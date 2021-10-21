@@ -156,12 +156,15 @@
     <ClInclude Include="Include\VkRenderer\Debugger.h" />
     <ClInclude Include="Include\VkRenderer\pch.h" />
     <ClInclude Include="Include\VkRenderer\PhysicalDeviceFactory.h" />
+    <ClInclude Include="Include\VkRenderer\Queues.h" />
     <ClInclude Include="Include\VkRenderer\WindowSystem.h" />
     <ClInclude Include="Include\VkRenderer\WindowSystemGLFW.h" />
     <ClInclude Include="Include\VkRenderer\VkRenderer.h" />
     <ClInclude Include="Include\VkRenderer\InstanceFactory.h" />
+    <ClInclude Include="Include\VkRenderer\LogicalDeviceFactory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\LogicalDeviceFactory.cpp" />
     <ClCompile Include="Source\InstanceFactory.cpp" />
     <ClCompile Include="Source\Debugger.cpp" />
     <ClCompile Include="Source\pch.cpp">
