@@ -9,6 +9,7 @@ namespace vi
 	public:
 		struct Info final
 		{
+			const std::vector<const char*>& deviceExtensions;
 			const VkPhysicalDevice physicalDevice;
 			const VkSurfaceKHR surface;
 			const Debugger& debugger;

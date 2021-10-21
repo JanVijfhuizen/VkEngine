@@ -14,6 +14,11 @@ namespace vi
 		{
 			PhysicalDeviceFactory::Settings physicalDevice{};
 			Debugger::Settings debugger{};
+
+			const std::vector<const char*> deviceExtensions =
+			{
+				VK_KHR_SWAPCHAIN_EXTENSION_NAME
+			};
 		};
 
 		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});

@@ -42,6 +42,7 @@ namespace vi
 		struct Info final
 		{
 			const Settings& settings;
+			const std::vector<const char*>& deviceExtensions;
 			const VkInstance instance;
 			const VkSurfaceKHR surface;
 			VkPhysicalDevice& physicalDevice;
@@ -53,6 +54,8 @@ namespace vi
 
 	private:
 		[[nodiscard]] static bool IsDeviceSuitable(const Info& info, const DeviceInfo& deviceInfo);
-		[[nodiscard]] static uint32_t RateDevice(const Info& info, const DeviceInfo& deviceInfo);		
+		[[nodiscard]] static uint32_t RateDevice(const Info& info, const DeviceInfo& deviceInfo);
+		[[nodiscard]] static bool CheckDeviceExtensionSupport(VkPhysicalDevice device,
+			const std::vector<const char*>& extensions);
 	};
 }

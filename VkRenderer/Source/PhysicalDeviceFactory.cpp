@@ -33,6 +33,9 @@ namespace vi
 			if (!families)
 				continue;
 
+			if (!CheckDeviceExtensionSupport(device, info.deviceExtensions))
+				continue;
+
 			const DeviceInfo deviceInfo
 			{
 				deviceProperties,
@@ -72,6 +75,22 @@ namespace vi
 		score += properties.limits.maxImageDimension2D;
 
 		return score;
+	}
+
+	bool PhysicalDeviceFactory::CheckDeviceExtensionSupport(const VkPhysicalDevice device,
+		const std::vector<const char*>& extensions)
+	{
+		uint32_t extensionCount;
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
+
+		std::vector<VkExtensionProperties> availableExtensions(extensionCount);
+		vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, availableExtensions.data());
+
+		std::set<std::string> requiredExtensions(extensions.begin(), extensions.end());
+
+		for (const auto& extension : availableExtensions)
+			requiredExtensions.erase(extension.extensionName);
+		return requiredExtensions.empty();
 	}
 
 	PhysicalDeviceFactory::QueueFamilies PhysicalDeviceFactory::GetQueueFamilies(const VkSurfaceKHR& surface, 

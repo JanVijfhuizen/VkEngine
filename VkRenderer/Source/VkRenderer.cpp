@@ -22,6 +22,7 @@ namespace vi
 		const PhysicalDeviceFactory::Info physicalDeviceInfo
 		{
 			settings.physicalDevice,
+			settings.deviceExtensions,
 			_instance,
 			_surface,
 			_physicalDevice,
@@ -30,6 +31,7 @@ namespace vi
 
 		const LogicalDeviceFactory::Info logicalDeviceInfo
 		{
+			settings.deviceExtensions,
 			_physicalDevice,
 			_surface,
 			_debugger,
