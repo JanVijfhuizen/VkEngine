@@ -5,7 +5,7 @@
 
 namespace vi
 {
-	VkRenderer::VkRenderer(WindowSystem& system) : _windowSystem(system)
+	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) : _windowSystem(system)
 	{
 		const InstanceFactory::Info instanceInfo
 		{
@@ -13,10 +13,19 @@ namespace vi
 			_debugger,
 			_instance
 		};
+		InstanceFactory{instanceInfo};
 
-		InstanceFactory{ instanceInfo };
 		_debugger.Construct(_instance);
 		_windowSystem.CreateSurface(_instance, _surface);
+
+		const PhysicalDeviceFactory::Info physicalDeviceInfo
+		{
+			settings.physicalDevice,
+			_instance,
+			_surface,
+			_physicalDevice
+		};
+		PhysicalDeviceFactory{physicalDeviceInfo};
 	}
 
 	VkRenderer::~VkRenderer()

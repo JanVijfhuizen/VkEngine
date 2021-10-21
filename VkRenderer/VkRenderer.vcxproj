@@ -155,6 +155,7 @@
   <ItemGroup>
     <ClInclude Include="Include\VkRenderer\Debugger.h" />
     <ClInclude Include="Include\VkRenderer\pch.h" />
+    <ClInclude Include="Include\VkRenderer\PhysicalDeviceFactory.h" />
     <ClInclude Include="Include\VkRenderer\WindowSystem.h" />
     <ClInclude Include="Include\VkRenderer\WindowSystemGLFW.h" />
     <ClInclude Include="Include\VkRenderer\VkRenderer.h" />
@@ -169,6 +170,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">Create</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Source\PhysicalDeviceFactory.cpp" />
     <ClCompile Include="Source\WindowSystem.cpp" />
     <ClCompile Include="Source\WindowSystemGLFW.cpp" />
     <ClCompile Include="Source\VkRenderer.cpp" />

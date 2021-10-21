@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "Debugger.h"
+#include "PhysicalDeviceFactory.h"
 
 namespace vi
 {
@@ -8,7 +9,12 @@ namespace vi
 	class VkRenderer final
 	{
 	public:
-		explicit VkRenderer(class WindowSystem& system);
+		struct Settings final
+		{
+			PhysicalDeviceFactory::Settings physicalDevice{};
+		};
+
+		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
 		~VkRenderer();
 
 	private:
@@ -17,5 +23,6 @@ namespace vi
 
 		VkInstance _instance;
 		VkSurfaceKHR _surface;
+		VkPhysicalDevice _physicalDevice;
 	};
 }

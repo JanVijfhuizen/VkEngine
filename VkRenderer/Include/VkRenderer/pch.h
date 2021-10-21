@@ -5,6 +5,8 @@
 
 #include <vector>
 #include <iostream>
+#include <functional>
+#include <map>
 
 constexpr bool DEBUG =
 #ifdef NDEBUG
