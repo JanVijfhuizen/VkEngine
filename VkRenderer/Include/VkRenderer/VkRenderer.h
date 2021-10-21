@@ -2,6 +2,7 @@
 #include "Debugger.h"
 #include "PhysicalDeviceFactory.h"
 #include "Queues.h"
+#include "SwapChain.h"
 
 namespace vi
 {
@@ -15,7 +16,7 @@ namespace vi
 			PhysicalDeviceFactory::Settings physicalDevice{};
 			Debugger::Settings debugger{};
 
-			const std::vector<const char*> deviceExtensions =
+			std::vector<const char*> deviceExtensions =
 			{
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME
 			};
@@ -25,13 +26,19 @@ namespace vi
 		~VkRenderer();
 
 	private:
+		std::unique_ptr<Settings> _settings{};
+
 		WindowSystem& _windowSystem;
 		Debugger _debugger{};
+		SwapChain _swapChain{};
 
 		VkInstance _instance;
 		VkSurfaceKHR _surface;
 		VkPhysicalDevice _physicalDevice;
 		VkDevice _device;
 		Queues _queues;
+
+		void CreateSwapChainDependencies();
+		void CleanupSwapChainDependendies() const;
 	};
 }

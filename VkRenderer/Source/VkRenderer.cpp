@@ -6,8 +6,11 @@
 
 namespace vi
 {
-	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) : _windowSystem(system)
+	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) :  _windowSystem(system)
 	{
+		_settings = std::make_unique<Settings>();
+		*_settings = settings;
+
 		const InstanceFactory::Info instanceInfo
 		{
 			_windowSystem,
@@ -16,13 +19,13 @@ namespace vi
 		};
 		InstanceFactory{instanceInfo};
 
-		_debugger.Construct(settings.debugger, _instance);
+		_debugger.Construct(_settings->debugger, _instance);
 		_windowSystem.CreateSurface(_instance, _surface);
 
 		const PhysicalDeviceFactory::Info physicalDeviceInfo
 		{
-			settings.physicalDevice,
-			settings.deviceExtensions,
+			_settings->physicalDevice,
+			_settings->deviceExtensions,
 			_instance,
 			_surface,
 			_physicalDevice,
@@ -31,7 +34,7 @@ namespace vi
 
 		const LogicalDeviceFactory::Info logicalDeviceInfo
 		{
-			settings.deviceExtensions,
+			_settings->deviceExtensions,
 			_physicalDevice,
 			_surface,
 			_debugger,
@@ -39,14 +42,36 @@ namespace vi
 			_queues
 		};
 		LogicalDeviceFactory{logicalDeviceInfo};
+
+		CreateSwapChainDependencies();
 	}
 
 	VkRenderer::~VkRenderer()
 	{
+		CleanupSwapChainDependendies();
+
 		vkDestroyDevice(_device, nullptr);
 		_debugger.Cleanup();
 
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 		vkDestroyInstance(_instance, nullptr);
+	}
+
+	void VkRenderer::CreateSwapChainDependencies()
+	{
+		const SwapChain::Info swapChainInfo
+		{
+			_physicalDevice,
+			_surface,
+			_device,
+			&_windowSystem
+		};
+
+		_swapChain.Construct(swapChainInfo);
+	}
+
+	void VkRenderer::CleanupSwapChainDependendies() const
+	{
+		_swapChain.Cleanup();
 	}
 }

@@ -12,7 +12,7 @@ namespace vi
 			const std::vector<const char*>& deviceExtensions;
 			const VkPhysicalDevice physicalDevice;
 			const VkSurfaceKHR surface;
-			const Debugger& debugger;
+			Debugger& debugger;
 			VkDevice& device;
 			Queues& queues;
 		};
