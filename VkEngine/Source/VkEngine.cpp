@@ -5,6 +5,7 @@
 #include "FileReader.h"
 #include "VkRenderer/PipelineLayoutInfo.h"
 #include "Vertex.h"
+#include "VkRenderer/RenderPassInfo.h"
 
 struct Transform final
 {
@@ -61,6 +62,12 @@ int main()
 
 	const auto pipeline = renderer.CreatePipelineLayout(pipelineInfo);
 
+	vi::RenderPassInfo renderPassInfo{};
+	vi::RenderPassInfo::Attachment renderPassAttachment{};
+	renderPassInfo.attachments.push_back(renderPassAttachment);
+
+	const auto renderPass = renderer.CreateRenderPass(renderPassInfo);
+
 	while(true)
 	{
 		bool quit;
@@ -68,6 +75,8 @@ int main()
 		if (quit)
 			break;
 	}
+
+	renderer.DestroyRenderPass(renderPass);
 
 	renderer.DestroyShaderModule(vertModule);
 	renderer.DestroyShaderModule(fragModule);

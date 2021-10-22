@@ -28,6 +28,7 @@ namespace vi
 		void Cleanup();
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
+		[[nodiscard]] VkFormat GetFormat() const;
 		[[nodiscard]] VkExtent2D GetExtent() const;
 
 	private:

@@ -23,6 +23,9 @@ namespace vi
 		VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
 		VkFrontFace frontFace = VK_FRONT_FACE_CLOCKWISE;
 
+		VkViewport viewport{};
+		bool useViewport = false;
+
 		VkPipelineColorBlendAttachmentState colorBlending;
 		bool colorBlendingEnabled = false;
 	};

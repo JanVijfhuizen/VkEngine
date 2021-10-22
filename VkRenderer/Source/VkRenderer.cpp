@@ -4,6 +4,7 @@
 #include "InstanceFactory.h"
 #include "LogicalDeviceFactory.h"
 #include "PipelineLayoutInfo.h"
+#include "RenderPassInfo.h"
 
 namespace vi
 {
@@ -77,6 +78,62 @@ namespace vi
 		vkDestroyShaderModule(_device, module, nullptr);
 	}
 
+	VkRenderPass VkRenderer::CreateRenderPass(const RenderPassInfo& info) const
+	{
+		const uint32_t attachmentsCount = info.attachments.size();
+		const auto format = _swapChain.GetFormat();
+
+		std::vector<VkAttachmentDescription> descriptions{};
+		descriptions.resize(info.attachments.size());
+
+		for (uint32_t i = 0; i < attachmentsCount; ++i)
+		{
+			auto& descriptionInfo = info.attachments[i];
+			auto& description = descriptions[i];
+
+			description.format = format;
+			description.samples = descriptionInfo.samples;
+			description.loadOp = descriptionInfo.loadOp;
+			description.storeOp = descriptionInfo.storeOp;
+			description.stencilLoadOp = descriptionInfo.stencilLoadOp;
+			description.stencilStoreOp = descriptionInfo.stencilStoreOp;
+			description.initialLayout = descriptionInfo.initialLayout;
+			description.finalLayout = descriptionInfo.finalLayout;
+		}
+		
+		std::vector<VkAttachmentReference> colorAttachmentRefs{};
+		colorAttachmentRefs.resize(attachmentsCount);
+
+		for (uint32_t i = 0; i < attachmentsCount; ++i)
+		{
+			auto& attachmentRef = colorAttachmentRefs[i];
+			attachmentRef.attachment = i;
+			attachmentRef.layout = info.attachments[i].layout;
+		}
+
+		VkSubpassDescription subpass{};
+		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
+		subpass.colorAttachmentCount = attachmentsCount;
+		subpass.pColorAttachments = colorAttachmentRefs.data();
+		
+		VkRenderPassCreateInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+		renderPassInfo.attachmentCount = attachmentsCount;
+		renderPassInfo.pAttachments = descriptions.data();
+		renderPassInfo.subpassCount = 1;
+		renderPassInfo.pSubpasses = &subpass;
+
+		VkRenderPass renderPass;
+		const auto result = vkCreateRenderPass(_device, &renderPassInfo, nullptr, &renderPass);
+		assert(!result);
+		return renderPass;
+	}
+
+	void VkRenderer::DestroyRenderPass(const VkRenderPass renderPass) const
+	{
+		vkDestroyRenderPass(_device, renderPass, nullptr);
+	}
+
 	VkPipelineLayout VkRenderer::CreatePipelineLayout(const PipelineLayoutInfo& info) const
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> modules{};
@@ -116,6 +173,9 @@ namespace vi
 		viewport.height = static_cast<float>(extent.height);
 		viewport.minDepth = 0;
 		viewport.maxDepth = 1;
+
+		if (info.useViewport)
+			viewport = info.viewport;
 
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };

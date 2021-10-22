@@ -28,6 +28,9 @@ namespace vi
 		[[nodiscard]] VkShaderModule CreateShaderModule(const std::vector<char>& data) const;
 		void DestroyShaderModule(VkShaderModule module) const;
 
+		[[nodiscard]] VkRenderPass CreateRenderPass(const struct RenderPassInfo& info) const;
+		void DestroyRenderPass(VkRenderPass renderPass) const;
+
 		[[nodiscard]] VkPipelineLayout CreatePipelineLayout(const struct PipelineLayoutInfo& info) const;
 		void DestroyPipelineLayout(VkPipelineLayout layout) const;
 

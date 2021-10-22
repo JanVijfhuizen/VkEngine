@@ -116,6 +116,11 @@ namespace vi
 		return details;
 	}
 
+	VkFormat SwapChain::GetFormat() const
+	{
+		return _format;
+	}
+
 	VkExtent2D SwapChain::GetExtent() const
 	{
 		return _extent;
