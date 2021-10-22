@@ -3,8 +3,9 @@
 #include "WindowSystem.h"
 #include "InstanceFactory.h"
 #include "LogicalDeviceFactory.h"
-#include "PipelineLayoutInfo.h"
+#include "PipelineInfo.h"
 #include "RenderPassInfo.h"
+#include "DescriptorLayoutInfo.h"
 
 namespace vi
 {
@@ -134,7 +135,42 @@ namespace vi
 		vkDestroyRenderPass(_device, renderPass, nullptr);
 	}
 
-	VkPipelineLayout VkRenderer::CreatePipelineLayout(const PipelineLayoutInfo& info) const
+	VkDescriptorSetLayout VkRenderer::CreateLayout(const DescriptorLayoutInfo& info) const
+	{
+		const uint32_t bindingsCount = info.bindings.size();
+		std::vector<VkDescriptorSetLayoutBinding> layoutBindings{};
+		layoutBindings.resize(bindingsCount);
+
+		for (uint32_t i = 0; i < bindingsCount; ++i)
+		{
+			const auto& binding = info.bindings[i];
+			auto& uboLayoutBinding = layoutBindings[i];
+
+			uboLayoutBinding.binding = i;
+			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.stageFlags = binding.flag;
+		}
+
+		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
+		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+		layoutInfo.pNext = nullptr;
+		layoutInfo.flags = 0;
+		layoutInfo.bindingCount = bindingsCount;
+		layoutInfo.pBindings = layoutBindings.data();
+
+		VkDescriptorSetLayout layout;
+		const auto result = vkCreateDescriptorSetLayout(_device, &layoutInfo, nullptr, &layout);
+		assert(!result);
+		return layout;
+	}
+
+	void VkRenderer::DestroyLayout(const VkDescriptorSetLayout layout) const
+	{
+		vkDestroyDescriptorSetLayout(_device, layout, nullptr);
+	}
+
+	Pipeline VkRenderer::CreatePipeline(const PipelineLayout& info) const
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> modules{};
 		
@@ -198,7 +234,7 @@ namespace vi
 		rasterizer.frontFace = info.frontFace;
 		rasterizer.depthBiasEnable = VK_FALSE;
 
-		// TODO multisampling.
+		// Todo multisampling.
 		VkPipelineMultisampleStateCreateInfo multisampling{};
 		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
 		multisampling.sampleShadingEnable = VK_FALSE;
@@ -211,28 +247,76 @@ namespace vi
 		if (info.colorBlendingEnabled)
 			colorBlendAttachment = info.colorBlending;
 
+		VkPipelineColorBlendStateCreateInfo colorBlending{};
+		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
+		colorBlending.logicOpEnable = info.colorBlendingEnabled;
+		colorBlending.logicOp = VK_LOGIC_OP_COPY;
+		colorBlending.attachmentCount = 1;
+		colorBlending.pAttachments = &colorBlendAttachment;
+		for (auto& blendConstant : colorBlending.blendConstants)
+			blendConstant = 0.0f;
+
 		VkPipelineDynamicStateCreateInfo dynamicState{};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
 		dynamicState.dynamicStateCount = 0;
 		dynamicState.pDynamicStates = nullptr;
 
-		// TODO LAYOUTS.
+		std::vector<VkPushConstantRange> pushConstantRanges{};
+		for (const auto& pushConstant : info.pushConstants)
+		{
+			VkPushConstantRange pushConstantRange;
+			pushConstantRange.offset = 0;
+			pushConstantRange.size = pushConstant.size;
+			pushConstantRange.stageFlags = pushConstant.flag;
+			pushConstantRanges.push_back(pushConstantRange);
+		}
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-		pipelineLayoutInfo.setLayoutCount = 0;
-		pipelineLayoutInfo.pSetLayouts = nullptr;
-		pipelineLayoutInfo.pushConstantRangeCount = 0;
-		pipelineLayoutInfo.pPushConstantRanges = nullptr;
+		pipelineLayoutInfo.setLayoutCount = info.setLayouts.size();
+		pipelineLayoutInfo.pSetLayouts = info.setLayouts.data();
+		pipelineLayoutInfo.pushConstantRangeCount = info.pushConstants.size();
+		pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
 
 		VkPipelineLayout pipelineLayout;
-		const auto result = vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+		auto result = vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
 		assert(!result);
-		return pipelineLayout;
+		
+		VkGraphicsPipelineCreateInfo pipelineInfo{};
+		pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+		pipelineInfo.stageCount = modulesCount;
+		pipelineInfo.pStages = modules.data();
+		pipelineInfo.pVertexInputState = &vertexInputInfo;
+		pipelineInfo.pInputAssemblyState = &inputAssembly;
+		pipelineInfo.pViewportState = &viewportState;
+		pipelineInfo.pRasterizationState = &rasterizer;
+		pipelineInfo.pMultisampleState = &multisampling;
+		// Todo add depth stencil.
+		pipelineInfo.pDepthStencilState = nullptr;
+		pipelineInfo.pColorBlendState = &colorBlending;
+		pipelineInfo.pDynamicState = nullptr;
+		pipelineInfo.layout = pipelineLayout;
+		pipelineInfo.renderPass = info.renderPass;
+		pipelineInfo.subpass = 0;
+		// Todo optimize with base pipeline.
+		pipelineInfo.basePipelineHandle = info.basePipeline;
+		pipelineInfo.basePipelineIndex = info.basePipelineIndex;
+
+		VkPipeline graphicsPipeline;
+		result = vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+		assert(!result);
+
+		return
+		{
+			graphicsPipeline,
+			pipelineLayout 
+		};
 	}
 
-	void VkRenderer::DestroyPipelineLayout(const VkPipelineLayout layout) const
+	void VkRenderer::DestroyPipeline(const Pipeline pipeline) const
 	{
-		vkDestroyPipelineLayout(_device, layout, nullptr);
+		vkDestroyPipeline(_device, pipeline.pipeline, nullptr);
+		vkDestroyPipelineLayout(_device, pipeline.layout, nullptr);
 	}
 
 	void VkRenderer::Rebuild()

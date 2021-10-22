@@ -45,10 +45,16 @@
     <ClInclude Include="Include\VkRenderer\SwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\VkRenderer\PipelineLayoutInfo.h">
+    <ClInclude Include="Include\VkRenderer\PipelineInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\VkRenderer\RenderPassInfo.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\VkRenderer\Pipeline.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\VkRenderer\DescriptorLayoutInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

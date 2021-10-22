@@ -2,7 +2,7 @@
 
 namespace vi
 {
-	struct PipelineLayoutInfo final
+	struct PipelineLayout final
 	{
 		struct Module final
 		{
@@ -10,9 +10,20 @@ namespace vi
 			VkShaderStageFlagBits flags;
 		};
 
+		struct PushConstant final
+		{
+			size_t size;
+			VkShaderStageFlags flag;
+		};
+
 		VkVertexInputBindingDescription bindingDescription;
 		std::vector<VkVertexInputAttributeDescription> attributeDescriptions;
 		std::vector<Module> modules{};
+
+		std::vector<VkDescriptorSetLayout> setLayouts{};
+		std::vector<PushConstant> pushConstants{};
+
+		VkRenderPass renderPass;
 
 		VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkBool32 primitiveRestartEnable = VK_FALSE;
@@ -27,6 +38,9 @@ namespace vi
 		bool useViewport = false;
 
 		VkPipelineColorBlendAttachmentState colorBlending;
-		bool colorBlendingEnabled = false;
+		VkBool32 colorBlendingEnabled = false;
+
+		VkPipeline basePipeline = VK_NULL_HANDLE;
+		int32_t basePipelineIndex = -1;
 	};
 }

@@ -3,6 +3,7 @@
 #include "PhysicalDeviceFactory.h"
 #include "Queues.h"
 #include "SwapChain.h"
+#include "Pipeline.h"
 
 namespace vi
 {
@@ -31,8 +32,11 @@ namespace vi
 		[[nodiscard]] VkRenderPass CreateRenderPass(const struct RenderPassInfo& info) const;
 		void DestroyRenderPass(VkRenderPass renderPass) const;
 
-		[[nodiscard]] VkPipelineLayout CreatePipelineLayout(const struct PipelineLayoutInfo& info) const;
-		void DestroyPipelineLayout(VkPipelineLayout layout) const;
+		[[nodiscard]] VkDescriptorSetLayout CreateLayout(const struct DescriptorLayoutInfo& info) const;
+		void DestroyLayout(VkDescriptorSetLayout layout) const;
+
+		[[nodiscard]] Pipeline CreatePipeline(const struct PipelineLayout& info) const;
+		void DestroyPipeline(Pipeline pipeline) const;
 
 		void Rebuild();
 
