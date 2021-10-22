@@ -4,6 +4,7 @@ namespace vi
 {
 	class SwapChain final
 	{
+		// Todo: support multiple attachments.
 	public:
 		struct SupportDetails final
 		{
@@ -27,6 +28,9 @@ namespace vi
 		void Construct(const Info& info);
 		void Cleanup();
 
+		void CreateFrameBuffers(VkRenderPass renderPass);
+		void CleanupFrameBuffers();
+
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 		[[nodiscard]] VkFormat GetFormat() const;
 		[[nodiscard]] VkExtent2D GetExtent() const;
@@ -40,6 +44,8 @@ namespace vi
 
 		std::vector<VkImage> _images{};
 		std::vector<VkImageView> _imageViews{};
+
+		std::vector<VkFramebuffer> _frameBuffers{};
 
 		[[nodiscard]] static VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		[[nodiscard]] static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

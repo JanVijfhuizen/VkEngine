@@ -75,6 +75,7 @@ int main()
 	pipelineInfo.renderPass = renderPass;
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
+	renderer.AssignSwapChainRenderPass(renderPass);
 
 	while(true)
 	{

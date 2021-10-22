@@ -319,6 +319,13 @@ namespace vi
 		vkDestroyPipelineLayout(_device, pipeline.layout, nullptr);
 	}
 
+	void VkRenderer::AssignSwapChainRenderPass(const VkRenderPass renderPass)
+	{
+		_swapChainRenderPass = renderPass;
+		_swapChain.CleanupFrameBuffers();
+		_swapChain.CreateFrameBuffers(renderPass);
+	}
+
 	void VkRenderer::Rebuild()
 	{
 		CleanupSwapChainDependendies();

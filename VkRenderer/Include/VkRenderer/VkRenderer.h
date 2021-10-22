@@ -38,6 +38,8 @@ namespace vi
 		[[nodiscard]] Pipeline CreatePipeline(const struct PipelineLayout& info) const;
 		void DestroyPipeline(Pipeline pipeline) const;
 
+		void AssignSwapChainRenderPass(VkRenderPass renderPass);
+
 		void Rebuild();
 
 	private:
@@ -52,6 +54,8 @@ namespace vi
 		VkPhysicalDevice _physicalDevice;
 		VkDevice _device;
 		Queues _queues;
+
+		VkRenderPass _swapChainRenderPass;
 
 		void CreateSwapChainDependencies();
 		void CleanupSwapChainDependendies();

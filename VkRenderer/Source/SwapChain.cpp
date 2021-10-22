@@ -80,6 +80,7 @@ namespace vi
 
 	void SwapChain::Cleanup()
 	{
+		CleanupFrameBuffers();
 		for (const auto& imageView : _imageViews)
 			vkDestroyImageView(_info->device, imageView, nullptr);
 
@@ -87,6 +88,37 @@ namespace vi
 		_imageViews.clear();
 
 		vkDestroySwapchainKHR(_info->device, _swapChain, nullptr);
+	}
+
+	void SwapChain::CreateFrameBuffers(const VkRenderPass renderPass)
+	{
+		_frameBuffers.resize(_imageViews.size());
+		for (uint32_t i = 0; i < _frameBuffers.size(); ++i)
+		{
+			VkImageView attachments[] =
+			{
+				_imageViews[i]
+			};
+
+			VkFramebufferCreateInfo framebufferInfo{};
+			framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+			framebufferInfo.renderPass = renderPass;
+			framebufferInfo.attachmentCount = 1;
+			framebufferInfo.pAttachments = attachments;
+			framebufferInfo.width = _extent.width;
+			framebufferInfo.height = _extent.height;
+			framebufferInfo.layers = 1;
+
+			const auto result = vkCreateFramebuffer(_info->device, &framebufferInfo, nullptr, &_frameBuffers[i]);
+			assert(!result);
+		}
+	}
+
+	void SwapChain::CleanupFrameBuffers()
+	{
+		for (auto framebuffer : _frameBuffers)
+			vkDestroyFramebuffer(_info->device, framebuffer, nullptr);
+		_frameBuffers.clear();
 	}
 
 	SwapChain::SupportDetails SwapChain::QuerySwapChainSupport(const VkSurfaceKHR surface, const VkPhysicalDevice device)
