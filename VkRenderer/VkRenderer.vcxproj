@@ -153,6 +153,10 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\VkRenderer\DescriptorLayoutInfo.h" />
+    <ClInclude Include="Include\VkRenderer\Pipeline.h" />
+    <ClInclude Include="Include\VkRenderer\PipelineInfo.h" />
+    <ClInclude Include="Include\VkRenderer\RenderPassInfo.h" />
     <ClInclude Include="Include\VkRenderer\SwapChain.h" />
     <ClInclude Include="Include\VkRenderer\Debugger.h" />
     <ClInclude Include="Include\VkRenderer\pch.h" />
