@@ -3,6 +3,7 @@
 #include "WindowSystem.h"
 #include "InstanceFactory.h"
 #include "LogicalDeviceFactory.h"
+#include "PipelineInfo.h"
 
 namespace vi
 {
@@ -55,6 +56,63 @@ namespace vi
 
 		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 		vkDestroyInstance(_instance, nullptr);
+	}
+
+	VkShaderModule VkRenderer::CreateShaderModule(const std::vector<char>& data) const
+	{
+		VkShaderModuleCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+		createInfo.codeSize = data.size();
+		createInfo.pCode = reinterpret_cast<const uint32_t*>(data.data());
+
+		VkShaderModule vkModule;
+		const auto result = vkCreateShaderModule(_device, &createInfo, nullptr, &vkModule);
+		assert(!result);
+
+		return vkModule;
+	}
+
+	void VkRenderer::DestroyShaderModule(const VkShaderModule module) const
+	{
+		vkDestroyShaderModule(_device, module, nullptr);
+	}
+
+	VkPipeline VkRenderer::CreatePipeline(const PipelineInfo& info)
+	{
+		std::vector<VkPipelineShaderStageCreateInfo> modules{};
+		
+		const uint32_t modulesCount = info.modules.size();
+		modules.resize(modulesCount);
+
+		for (uint32_t i = 0; i < modulesCount; ++i)
+		{
+			const auto& moduleInfo = info.modules[i];
+			auto& vertShaderStageInfo = modules[i];
+
+			vertShaderStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+			vertShaderStageInfo.stage = moduleInfo.flags;
+			vertShaderStageInfo.module = moduleInfo.module;
+			vertShaderStageInfo.pName = "main";
+		}
+
+		VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
+		vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+		vertexInputInfo.vertexBindingDescriptionCount = 1;
+		vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(info.attributeDescriptions.size());
+		vertexInputInfo.pVertexBindingDescriptions = &info.bindingDescription;
+		vertexInputInfo.pVertexAttributeDescriptions = info.attributeDescriptions.data();
+
+		return {};
+	}
+
+	void VkRenderer::DestroyPipeline(const VkPipeline pipeline)
+	{
+	}
+
+	void VkRenderer::Rebuild()
+	{
+		CleanupSwapChainDependendies();
+		CreateSwapChainDependencies();
 	}
 
 	void VkRenderer::CreateSwapChainDependencies()

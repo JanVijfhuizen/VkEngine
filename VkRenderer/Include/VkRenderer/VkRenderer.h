@@ -25,6 +25,14 @@ namespace vi
 		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
 		~VkRenderer();
 
+		[[nodiscard]] VkShaderModule CreateShaderModule(const std::vector<char>& data) const;
+		void DestroyShaderModule(VkShaderModule module) const;
+
+		[[nodiscard]] VkPipeline CreatePipeline(const struct PipelineInfo& info);
+		void DestroyPipeline(VkPipeline pipeline);
+
+		void Rebuild();
+
 	private:
 		std::unique_ptr<Settings> _settings{};
 
