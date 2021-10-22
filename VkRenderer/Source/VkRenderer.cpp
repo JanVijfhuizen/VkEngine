@@ -3,7 +3,7 @@
 #include "WindowSystem.h"
 #include "InstanceFactory.h"
 #include "LogicalDeviceFactory.h"
-#include "PipelineInfo.h"
+#include "PipelineLayoutInfo.h"
 
 namespace vi
 {
@@ -77,7 +77,7 @@ namespace vi
 		vkDestroyShaderModule(_device, module, nullptr);
 	}
 
-	VkPipeline VkRenderer::CreatePipeline(const PipelineInfo& info)
+	VkPipelineLayout VkRenderer::CreatePipelineLayout(const PipelineLayoutInfo& info) const
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> modules{};
 		
@@ -102,11 +102,77 @@ namespace vi
 		vertexInputInfo.pVertexBindingDescriptions = &info.bindingDescription;
 		vertexInputInfo.pVertexAttributeDescriptions = info.attributeDescriptions.data();
 
-		return {};
+		VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
+		inputAssembly.sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
+		inputAssembly.topology = info.primitiveTopology;
+		inputAssembly.primitiveRestartEnable = info.primitiveRestartEnable;
+
+		const auto extent = _swapChain.GetExtent();
+
+		VkViewport viewport{};
+		viewport.x = 0;
+		viewport.y = 0;
+		viewport.width = static_cast<float>(extent.width);
+		viewport.height = static_cast<float>(extent.height);
+		viewport.minDepth = 0;
+		viewport.maxDepth = 1;
+
+		VkRect2D scissor{};
+		scissor.offset = { 0, 0 };
+		scissor.extent = extent;
+
+		VkPipelineViewportStateCreateInfo viewportState{};
+		viewportState.sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO;
+		viewportState.viewportCount = 1;
+		viewportState.pViewports = &viewport;
+		viewportState.scissorCount = 1;
+		viewportState.pScissors = &scissor;
+
+		VkPipelineRasterizationStateCreateInfo rasterizer{};
+		rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
+		rasterizer.depthClampEnable = info.depthClampEnable;
+		rasterizer.rasterizerDiscardEnable = VK_FALSE;
+		rasterizer.polygonMode = info.polygonMode;
+		rasterizer.lineWidth = info.lineWidth;
+		rasterizer.cullMode = info.cullMode;
+		rasterizer.frontFace = info.frontFace;
+		rasterizer.depthBiasEnable = VK_FALSE;
+
+		// TODO multisampling.
+		VkPipelineMultisampleStateCreateInfo multisampling{};
+		multisampling.sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO;
+		multisampling.sampleShadingEnable = VK_FALSE;
+		multisampling.rasterizationSamples = VK_SAMPLE_COUNT_1_BIT;
+
+		VkPipelineColorBlendAttachmentState colorBlendAttachment{};
+		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
+		colorBlendAttachment.blendEnable = VK_FALSE;
+
+		if (info.colorBlendingEnabled)
+			colorBlendAttachment = info.colorBlending;
+
+		VkPipelineDynamicStateCreateInfo dynamicState{};
+		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
+		dynamicState.dynamicStateCount = 0;
+		dynamicState.pDynamicStates = nullptr;
+
+		// TODO LAYOUTS.
+		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
+		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
+		pipelineLayoutInfo.setLayoutCount = 0;
+		pipelineLayoutInfo.pSetLayouts = nullptr;
+		pipelineLayoutInfo.pushConstantRangeCount = 0;
+		pipelineLayoutInfo.pPushConstantRanges = nullptr;
+
+		VkPipelineLayout pipelineLayout;
+		const auto result = vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+		assert(!result);
+		return pipelineLayout;
 	}
 
-	void VkRenderer::DestroyPipeline(const VkPipeline pipeline)
+	void VkRenderer::DestroyPipelineLayout(const VkPipelineLayout layout) const
 	{
+		vkDestroyPipelineLayout(_device, layout, nullptr);
 	}
 
 	void VkRenderer::Rebuild()

@@ -45,7 +45,7 @@
     <ClInclude Include="Include\VkRenderer\SwapChain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\VkRenderer\PipelineInfo.h">
+    <ClInclude Include="Include\VkRenderer\PipelineLayoutInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

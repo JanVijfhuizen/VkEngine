@@ -116,6 +116,11 @@ namespace vi
 		return details;
 	}
 
+	VkExtent2D SwapChain::GetExtent() const
+	{
+		return _extent;
+	}
+
 	VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
 	{
 		for (const auto& availableFormat : availableFormats)

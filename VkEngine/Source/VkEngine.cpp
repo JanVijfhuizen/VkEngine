@@ -3,7 +3,7 @@
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/VkRenderer.h"
 #include "FileReader.h"
-#include "VkRenderer/PipelineInfo.h"
+#include "VkRenderer/PipelineLayoutInfo.h"
 #include "Vertex.h"
 
 struct Transform final
@@ -45,7 +45,7 @@ int main()
 	const auto vertModule = renderer.CreateShaderModule(vertCode);
 	const auto fragModule = renderer.CreateShaderModule(fragCode);
 
-	vi::PipelineInfo pipelineInfo{};
+	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
 	pipelineInfo.modules.push_back(
@@ -59,7 +59,7 @@ int main()
 			VK_SHADER_STAGE_FRAGMENT_BIT
 		});
 
-	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
+	const auto pipeline = renderer.CreatePipelineLayout(pipelineInfo);
 
 	while(true)
 	{
@@ -72,7 +72,7 @@ int main()
 	renderer.DestroyShaderModule(vertModule);
 	renderer.DestroyShaderModule(fragModule);
 
-	renderer.DestroyPipeline(pipeline);
+	renderer.DestroyPipelineLayout(pipeline);
 
 	return 0;
 }
