@@ -377,8 +377,8 @@ namespace vi
 
 	void VkRenderer::EndCommandBufferRecording(const VkCommandBuffer commandBuffer)
 	{
-		vkEndCommandBuffer(commandBuffer);
-
+		const auto result = vkEndCommandBuffer(commandBuffer);
+		assert(!result);
 		// Todo submit.
 	}
 

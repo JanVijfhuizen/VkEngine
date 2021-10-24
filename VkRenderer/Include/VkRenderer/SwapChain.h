@@ -38,15 +38,19 @@ namespace vi
 		void Cleanup();
 
 		void SetRenderPass(VkRenderPass renderPass);
+		[[nodiscard]] const Frame& GetNextFrame();
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
 	private:
 		VkRenderer* _renderer;
+		uint32_t _currentFrame = 0;
 
 		void CreateImages();
 		void CreateImageViews();
+
 		void CreateCommandBuffers();
+		void CleanupCommandBuffers();
 
 		void CreateFrameBuffers();
 		void CleanupFrameBuffers();

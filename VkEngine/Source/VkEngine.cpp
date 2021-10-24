@@ -83,6 +83,14 @@ int main()
 		windowSystem.BeginFrame(quit);
 		if (quit)
 			break;
+
+		auto& frame = renderer.swapChain.GetNextFrame();
+		auto& extent = renderer.swapChain.extent;
+
+		renderer.BeginCommandBufferRecording(frame.commandBuffer);
+		renderer.BeginRenderPass(frame.commandBuffer, frame.frameBuffer, renderer.swapChain.renderPass, {}, { extent.width, extent.height});
+		renderer.EndRenderPass(frame.commandBuffer, renderer.swapChain.renderPass);
+		renderer.EndCommandBufferRecording(frame.commandBuffer);
 	}
 
 	renderer.DestroyPipeline(pipeline);

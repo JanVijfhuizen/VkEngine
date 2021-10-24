@@ -102,6 +102,15 @@ namespace vi
 		this->renderPass = renderPass;
 		CleanupFrameBuffers();
 		CreateFrameBuffers();
+		CleanupCommandBuffers();
+		CreateCommandBuffers();
+	}
+
+	const SwapChain::Frame& SwapChain::GetNextFrame()
+	{
+		auto& frame = frames[_currentFrame];
+		_currentFrame = (_currentFrame + 1) % frames.size();
+		return frame;
 	}
 
 	void SwapChain::CreateFrameBuffers()
@@ -205,6 +214,14 @@ namespace vi
 
 		for (uint32_t i = 0; i < count; ++i)
 			frames[i].commandBuffer = commandBuffers[i];
+	}
+
+	void SwapChain::CleanupCommandBuffers()
+	{
+		const uint32_t count = frames.size();
+
+		for (uint32_t i = 0; i < count; ++i)
+			_renderer->DestroyCommandBuffer(frames[i].commandBuffer);
 	}
 
 	SwapChain::SupportDetails SwapChain::QuerySwapChainSupport(const VkSurfaceKHR surface, const VkPhysicalDevice device)
