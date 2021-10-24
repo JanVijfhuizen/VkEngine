@@ -32,7 +32,8 @@ namespace vi
 
 	VkRenderer::~VkRenderer()
 	{
-		vkDeviceWaitIdle(device);
+		const auto result = vkDeviceWaitIdle(device);
+		assert(!result);
 
 		CleanupSwapChainDependendies();
 		CommandPoolFactory::Cleanup(*this);
@@ -454,8 +455,20 @@ namespace vi
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
+	void VkRenderer::BindPipeline(const VkCommandBuffer commandBuffer, const VkPipeline pipeline)
+	{
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	}
+
+	void VkRenderer::BindDescriptorSets(const VkCommandBuffer commandBuffer, const VkPipelineLayout layout,
+		VkDescriptorSet* sets, const uint32_t setCount)
+	{
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0,
+			setCount, sets, 0, nullptr);
+	}
+
 	void VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,
-		const VkSemaphore waitSemaphore, const VkSemaphore signalSemaphore) const
+		const VkSemaphore waitSemaphore, const VkSemaphore signalSemaphore, const VkFence fence) const
 	{
 		VkSubmitInfo submitInfo{};
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
@@ -469,7 +482,7 @@ namespace vi
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 
-		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, VK_NULL_HANDLE);
+		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, fence);
 		assert(!result);
 	}
 

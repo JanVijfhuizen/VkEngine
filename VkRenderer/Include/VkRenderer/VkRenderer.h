@@ -73,8 +73,11 @@ namespace vi
 			VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
 		void EndRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass);
 
+		void BindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline);
+		void BindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkDescriptorSet* sets, uint32_t setCount);
+
 		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
-			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore) const;
+			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const;
 
 		void Rebuild();
 

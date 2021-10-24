@@ -94,10 +94,15 @@ int main()
 
 		renderer.BeginCommandBufferRecording(image->commandBuffer);
 		renderer.BeginRenderPass(image->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
+
+		renderer.BindPipeline(image->commandBuffer, pipeline.pipeline);
+
+		//renderer.BindDescriptorSets(image->commandBuffer, pipeline.layout, &camLayout, 1);
+
 		renderer.EndRenderPass(image->commandBuffer, swapChain.renderPass);
 		renderer.EndCommandBufferRecording(image->commandBuffer);
 
-		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore);
+		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
 		renderer.swapChain.Present();
 	}
 
