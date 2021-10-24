@@ -47,7 +47,7 @@ namespace vi
 		void Cleanup();
 
 		void SetRenderPass(VkRenderPass renderPass);
-		void GetNext(Image*& outImage, Frame*& outFrame);
+		[[nodiscard]] VkResult GetNext(Image*& outImage, Frame*& outFrame);
 
 		void Present();
 
