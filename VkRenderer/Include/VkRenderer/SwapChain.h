@@ -37,6 +37,7 @@ namespace vi
 		VkExtent2D extent;
 		std::vector<Image> images{};
 		std::vector<Frame> frames{};
+		std::vector<VkFence> imagesInFlight{};
 		VkRenderPass renderPass;
 
 		SwapChain();

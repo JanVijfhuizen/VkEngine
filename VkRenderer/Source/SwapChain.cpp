@@ -81,6 +81,7 @@ namespace vi
 
 		images.resize(imageCount);
 		frames.resize(_MAX_FRAMES_IN_FLIGHT);
+		imagesInFlight.resize(images.size(), VK_NULL_HANDLE);
 
 		CreateImages();
 		CreateImageViews();
@@ -126,6 +127,10 @@ namespace vi
 
 		vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
 		outImage = &images[_imageIndex];
+
+		if (imagesInFlight[_imageIndex] != VK_NULL_HANDLE)
+			vkWaitForFences(_renderer->device, 1, &imagesInFlight[_imageIndex], VK_TRUE, UINT64_MAX);
+		imagesInFlight[_imageIndex] = outFrame->inFlightFence;
 	}
 
 	void SwapChain::Present(VkSubmitInfo& submitInfo)
