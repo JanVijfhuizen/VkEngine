@@ -2,9 +2,10 @@
 
 namespace vi
 {
+	class VkRenderer;
+
 	class SwapChain final
 	{
-		// Todo: support multiple attachments.
 	public:
 		struct SupportDetails final
 		{
@@ -16,42 +17,42 @@ namespace vi
 			[[nodiscard]] uint32_t GetRecommendedImageCount() const;
 		};
 
-		struct Info final
+		struct Frame final
 		{
-			VkPhysicalDevice physicalDevice;
-			VkSurfaceKHR surface;
-			VkDevice device;
-			class WindowSystem* windowSystem;
+			VkImage image;
+			VkImageView imageView;
+			VkFramebuffer frameBuffer;
+			VkCommandBuffer commandBuffer;
 		};
 
+		VkSwapchainKHR swapChain;
+		VkFormat format;
+		VkExtent2D extent;
+		std::vector<Frame> frames{};
+		VkRenderPass renderPass;
+
 		SwapChain();
-		void Construct(const Info& info);
+		explicit SwapChain(VkRenderer& renderer);
+
+		void Construct();
 		void Cleanup();
 
-		void CreateFrameBuffers(VkRenderPass renderPass);
-		void CleanupFrameBuffers();
+		void SetRenderPass(VkRenderPass renderPass);
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
-		[[nodiscard]] VkFormat GetFormat() const;
-		[[nodiscard]] VkExtent2D GetExtent() const;
 
 	private:
-		std::unique_ptr<Info> _info;
+		VkRenderer* _renderer;
 
-		VkSwapchainKHR _swapChain;
-		VkFormat _format;
-		VkExtent2D _extent;
+		void CreateImages(VkDevice device);
+		void CreateImageViews(VkDevice device);
+		void CreateCommandBuffers(VkRenderer& renderer);
 
-		std::vector<VkImage> _images{};
-		std::vector<VkImageView> _imageViews{};
-
-		std::vector<VkFramebuffer> _frameBuffers{};
+		void CreateFrameBuffers(VkDevice device, VkRenderPass renderPass);
+		void CleanupFrameBuffers(VkDevice device);
 
 		[[nodiscard]] static VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		[[nodiscard]] static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
-		[[nodiscard]] VkExtent2D ChooseExtent(const Info& info, const VkSurfaceCapabilitiesKHR& capabilities) const;
-
-		void CreateImages(uint32_t count);
-		void CreateImageViews();
+		[[nodiscard]] VkExtent2D ChooseExtent(const VkSurfaceCapabilitiesKHR& capabilities) const;
 	};
 }

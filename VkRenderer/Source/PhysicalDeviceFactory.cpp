@@ -1,6 +1,7 @@
 ﻿#include "pch.h"
 #include "PhysicalDeviceFactory.h"
 #include "SwapChain.h"
+#include "VkRenderer.h"
 
 namespace vi
 {
@@ -12,14 +13,14 @@ namespace vi
 		return true;
 	}
 
-	PhysicalDeviceFactory::PhysicalDeviceFactory(const Info& info)
+	PhysicalDeviceFactory::PhysicalDeviceFactory(VkRenderer& renderer, const Settings& settings)
 	{
 		uint32_t deviceCount = 0;
-		vkEnumeratePhysicalDevices(info.instance, &deviceCount, nullptr);
+		vkEnumeratePhysicalDevices(renderer.instance, &deviceCount, nullptr);
 		assert(deviceCount);
 
 		std::vector<VkPhysicalDevice> devices(deviceCount);
-		vkEnumeratePhysicalDevices(info.instance, &deviceCount, devices.data());
+		vkEnumeratePhysicalDevices(renderer.instance, &deviceCount, devices.data());
 
 		std::multimap<uint32_t, VkPhysicalDevice> candidates;
 
@@ -30,11 +31,11 @@ namespace vi
 			vkGetPhysicalDeviceProperties(device, &deviceProperties);
 			vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-			const auto families = GetQueueFamilies(info.surface, device);
+			const auto families = GetQueueFamilies(renderer.surface, device);
 			if (!families)
 				continue;
 
-			if (!CheckDeviceExtensionSupport(device, info.deviceExtensions))
+			if (!CheckDeviceExtensionSupport(device, renderer.settings->deviceExtensions))
 				continue;
 
 			const DeviceInfo deviceInfo
@@ -44,32 +45,32 @@ namespace vi
 				deviceFeatures
 			};
 
-			if (!IsDeviceSuitable(info, deviceInfo))
+			if (!IsDeviceSuitable(renderer, settings, deviceInfo))
 				continue;
 
-			const uint32_t score = RateDevice(info, deviceInfo);
+			const uint32_t score = RateDevice(settings, deviceInfo);
 			candidates.insert({ score, device });
 		}
 		assert(!candidates.empty());
 
-		info.physicalDevice = candidates.rbegin()->second;
+		renderer.physicalDevice = candidates.rbegin()->second;
 	}
 
-	bool PhysicalDeviceFactory::IsDeviceSuitable(const Info& info, const DeviceInfo& deviceInfo)
+	bool PhysicalDeviceFactory::IsDeviceSuitable(VkRenderer& renderer, const Settings& settings, const DeviceInfo& deviceInfo)
 	{
-		const auto swapChainSupport = SwapChain::QuerySwapChainSupport(info.surface, deviceInfo.device);
+		const auto swapChainSupport = SwapChain::QuerySwapChainSupport(renderer.surface, deviceInfo.device);
 		if (!swapChainSupport)
 			return false;
 
-		auto& func = info.settings.deviceSuitableFunc;
+		auto& func = settings.deviceSuitableFunc;
 		if (func)
 			return func(deviceInfo);
 		return true;
 	}
 
-	uint32_t PhysicalDeviceFactory::RateDevice(const Info& info, const DeviceInfo& deviceInfo)
+	uint32_t PhysicalDeviceFactory::RateDevice(const Settings& settings, const DeviceInfo& deviceInfo)
 	{
-		auto& func = info.settings.deviceRatingFunc;
+		auto& func = settings.deviceRatingFunc;
 		if (func)
 			return func(deviceInfo);
 

@@ -13,7 +13,10 @@ namespace vi
 			};
 		};
 
-		void Construct(const Settings& settings, VkInstance instance);
+		Debugger();
+		explicit Debugger(class VkRenderer& renderer);
+
+		void Construct();
 		void Cleanup() const;
 
 		[[nodiscard]] bool CheckValidationLayerSupport() const;
@@ -23,10 +26,8 @@ namespace vi
 		[[nodiscard]] const std::vector<const char*>& GetValidationLayers() const;
 
 	private:
-		Settings _settings;
-
+		VkRenderer* _renderer;
 		VkDebugUtilsMessengerEXT _debugMessenger;
-		VkInstance _instance;
 
 		[[nodiscard]] static bool IsLayerPresent(const char* layer, std::vector<VkLayerProperties>& layers);
 

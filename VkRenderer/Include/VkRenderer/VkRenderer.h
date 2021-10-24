@@ -23,6 +23,19 @@ namespace vi
 			};
 		};
 
+		std::unique_ptr<Settings> settings{};
+
+		WindowSystem& windowSystem;
+		Debugger debugger{};
+		SwapChain swapChain{};
+
+		VkInstance instance;
+		VkSurfaceKHR surface;
+		VkPhysicalDevice physicalDevice;
+		VkDevice device;
+		Queues queues;
+		VkCommandPool commandPool;
+
 		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
 		~VkRenderer();
 
@@ -38,25 +51,21 @@ namespace vi
 		[[nodiscard]] Pipeline CreatePipeline(const struct PipelineLayout& info) const;
 		void DestroyPipeline(Pipeline pipeline) const;
 
-		void AssignSwapChainRenderPass(VkRenderPass renderPass);
+		[[nodiscard]] VkCommandBuffer CreateCommandBuffer() const;
+		void DestroyCommandBuffer(VkCommandBuffer commandBuffer) const;
+
+		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format) const;
+		void DestroyImageView(VkImageView imageView) const;
+
+		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
+		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
+
+		void BeginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
+		void EndRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass);
 
 		void Rebuild();
 
 	private:
-		std::unique_ptr<Settings> _settings{};
-
-		WindowSystem& _windowSystem;
-		Debugger _debugger{};
-		SwapChain _swapChain{};
-
-		VkInstance _instance;
-		VkSurfaceKHR _surface;
-		VkPhysicalDevice _physicalDevice;
-		VkDevice _device;
-		Queues _queues;
-
-		VkRenderPass _swapChainRenderPass;
-
 		void CreateSwapChainDependencies();
 		void CleanupSwapChainDependendies();
 	};

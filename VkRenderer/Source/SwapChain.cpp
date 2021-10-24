@@ -1,7 +1,8 @@
 ﻿#include "pch.h"
 #include "SwapChain.h"
-#include "WindowSystem.h"
 #include "PhysicalDeviceFactory.h"
+#include "VkRenderer.h"
+#include "WindowSystem.h"
 
 namespace vi
 {
@@ -21,33 +22,26 @@ namespace vi
 		return imageCount;
 	}
 
-	SwapChain::SwapChain()
+	void SwapChain::Construct()
 	{
-		_info = std::make_unique<Info>();
-	}
-
-	void SwapChain::Construct(const Info& info)
-	{
-		*_info = info;
-
-		const SupportDetails support = QuerySwapChainSupport(info.surface, info.physicalDevice);
-		const auto families = PhysicalDeviceFactory::GetQueueFamilies(info.surface, info.physicalDevice);
+		const SupportDetails support = QuerySwapChainSupport(_renderer->surface, _renderer->physicalDevice);
+		const auto families = PhysicalDeviceFactory::GetQueueFamilies(_renderer->surface, _renderer->physicalDevice);
 
 		const VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(support.formats);
 		const VkPresentModeKHR presentMode = ChoosePresentMode(support.presentModes);
 
-		_extent = ChooseExtent(info, support.capabilities);
-		_format = surfaceFormat.format;
+		extent = ChooseExtent(support.capabilities);
+		format = surfaceFormat.format;
 
 		const uint32_t imageCount = support.GetRecommendedImageCount();
 
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.surface = info.surface;
+		createInfo.surface = _renderer->surface;
 		createInfo.minImageCount = imageCount;
-		createInfo.imageFormat = _format;
+		createInfo.imageFormat = format;
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
-		createInfo.imageExtent = _extent;
+		createInfo.imageExtent = extent;
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // TODO: VK_IMAGE_USAGE_TRANSFER_DST_BIT for post processing.
 
@@ -71,33 +65,50 @@ namespace vi
 		createInfo.clipped = VK_TRUE;
 		createInfo.oldSwapchain = VK_NULL_HANDLE; // Todo: store old swapchain.
 
-		const auto result = vkCreateSwapchainKHR(info.device, &createInfo, nullptr, &_swapChain);
+		auto& device = _renderer->device;
+
+		const auto result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
 		assert(!result);
 
-		CreateImages(imageCount);
-		CreateImageViews();
+		frames.resize(imageCount);
+
+		CreateImages(device);
+		CreateImageViews(device);
 	}
 
 	void SwapChain::Cleanup()
 	{
-		CleanupFrameBuffers();
-		for (const auto& imageView : _imageViews)
-			vkDestroyImageView(_info->device, imageView, nullptr);
+		auto& device = _renderer->device;
 
-		_images.clear();
-		_imageViews.clear();
+		CleanupFrameBuffers(device);
 
-		vkDestroySwapchainKHR(_info->device, _swapChain, nullptr);
+		for (const auto& frame : frames)
+			_renderer->DestroyImageView(frame.imageView);
+		frames.clear();
+
+		vkDestroySwapchainKHR(device, swapChain, nullptr);
 	}
 
-	void SwapChain::CreateFrameBuffers(const VkRenderPass renderPass)
+	void SwapChain::SetRenderPass(const VkRenderPass renderPass)
 	{
-		_frameBuffers.resize(_imageViews.size());
-		for (uint32_t i = 0; i < _frameBuffers.size(); ++i)
+		auto& device = _renderer->device;
+
+		this->renderPass = renderPass;
+		CleanupFrameBuffers(device);
+		CreateFrameBuffers(device, renderPass);
+	}
+
+	void SwapChain::CreateFrameBuffers(const VkDevice device, const VkRenderPass renderPass)
+	{
+		const uint32_t count = frames.size();
+
+		for (uint32_t i = 0; i < count; ++i)
 		{
+			auto& frame = frames[i];
+
 			VkImageView attachments[] =
 			{
-				_imageViews[i]
+				frame.imageView
 			};
 
 			VkFramebufferCreateInfo framebufferInfo{};
@@ -105,20 +116,113 @@ namespace vi
 			framebufferInfo.renderPass = renderPass;
 			framebufferInfo.attachmentCount = 1;
 			framebufferInfo.pAttachments = attachments;
-			framebufferInfo.width = _extent.width;
-			framebufferInfo.height = _extent.height;
+			framebufferInfo.width = extent.width;
+			framebufferInfo.height = extent.height;
 			framebufferInfo.layers = 1;
 
-			const auto result = vkCreateFramebuffer(_info->device, &framebufferInfo, nullptr, &_frameBuffers[i]);
+			const auto result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frame.frameBuffer);
 			assert(!result);
 		}
 	}
 
-	void SwapChain::CleanupFrameBuffers()
+	void SwapChain::CleanupFrameBuffers(const VkDevice device)
 	{
-		for (auto framebuffer : _frameBuffers)
-			vkDestroyFramebuffer(_info->device, framebuffer, nullptr);
-		_frameBuffers.clear();
+		for (const auto& frame : frames)
+			vkDestroyFramebuffer(device, frame.frameBuffer, nullptr);
+	}
+
+	VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
+	{
+		for (const auto& availableFormat : availableFormats)
+			if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
+				availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+				return availableFormat;
+		return availableFormats.front();
+	}
+
+	VkPresentModeKHR SwapChain::ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
+	{
+		for (const auto& availablePresentMode : availablePresentModes)
+			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+				return availablePresentMode;
+		return VK_PRESENT_MODE_FIFO_KHR;
+	}
+
+	VkExtent2D SwapChain::ChooseExtent(const VkSurfaceCapabilitiesKHR& capabilities) const
+	{
+		if (capabilities.currentExtent.width != UINT32_MAX)
+			return capabilities.currentExtent;
+
+		const auto& windowSystem = _renderer->windowSystem;
+		const auto& resolution = windowSystem.GetVkInfo().resolution;
+
+		VkExtent2D actualExtent =
+		{
+			static_cast<uint32_t>(resolution.x),
+			static_cast<uint32_t>(resolution.y)
+		};
+
+		const auto& minExtent = capabilities.minImageExtent;
+		const auto& maxExtent = capabilities.maxImageExtent;
+
+		const uint32_t actualWidth = std::max(minExtent.width, std::min(actualExtent.width, maxExtent.width));
+		const uint32_t actualHeight = std::max(minExtent.height, std::min(actualExtent.height, maxExtent.height));
+		actualExtent.width = actualWidth;
+		actualExtent.height = actualHeight;
+
+		return actualExtent;
+	}
+
+	void SwapChain::CreateImages(const VkDevice device)
+	{
+		uint32_t count = frames.size();
+
+		std::vector<VkImage> images{};
+		images.resize(count);
+
+		vkGetSwapchainImagesKHR(device, swapChain, &count, images.data());
+
+		for (uint32_t i = 0; i < count; ++i)
+			frames[i].image = images[i];
+	}
+
+	void SwapChain::CreateImageViews(const VkDevice device)
+	{
+		const uint32_t count = frames.size();
+
+		for (uint32_t i = 0; i < count; ++i)
+		{
+			auto& frame = frames[i];
+			frame.imageView = _renderer->CreateImageView(frame.image, format);
+		}
+	}
+
+	void SwapChain::CreateCommandBuffers(VkRenderer& renderer)
+	{
+		const uint32_t count = frames.size();
+
+		std::vector<VkCommandBuffer> commandBuffers{};
+		commandBuffers.resize(count);
+
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = renderer.commandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+
+		const auto result = vkAllocateCommandBuffers(renderer.device, &allocInfo, commandBuffers.data());
+		assert(!result);
+
+		for (uint32_t i = 0; i < count; ++i)
+			frames[i].commandBuffer = commandBuffers[i];
+	}
+
+	SwapChain::SwapChain()
+	{
+	}
+
+	SwapChain::SwapChain(VkRenderer& renderer) : _renderer(&renderer)
+	{
 	}
 
 	SwapChain::SupportDetails SwapChain::QuerySwapChainSupport(const VkSurfaceKHR surface, const VkPhysicalDevice device)
@@ -146,94 +250,5 @@ namespace vi
 		}
 
 		return details;
-	}
-
-	VkFormat SwapChain::GetFormat() const
-	{
-		return _format;
-	}
-
-	VkExtent2D SwapChain::GetExtent() const
-	{
-		return _extent;
-	}
-
-	VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
-	{
-		for (const auto& availableFormat : availableFormats)
-			if (availableFormat.format == VK_FORMAT_B8G8R8A8_SRGB &&
-				availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
-				return availableFormat;
-		return availableFormats.front();
-	}
-
-	VkPresentModeKHR SwapChain::ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes)
-	{
-		for (const auto& availablePresentMode : availablePresentModes)
-			if (availablePresentMode == VK_PRESENT_MODE_MAILBOX_KHR)
-				return availablePresentMode;
-		return VK_PRESENT_MODE_FIFO_KHR;
-	}
-
-	VkExtent2D SwapChain::ChooseExtent(const Info& info, const VkSurfaceCapabilitiesKHR& capabilities) const
-	{
-		if (capabilities.currentExtent.width != UINT32_MAX)
-			return capabilities.currentExtent;
-
-		const auto& windowSystem = info.windowSystem;
-		const auto& resolution = windowSystem->GetVkInfo().resolution;
-
-		VkExtent2D actualExtent =
-		{
-			static_cast<uint32_t>(resolution.x),
-			static_cast<uint32_t>(resolution.y)
-		};
-
-		const auto& minExtent = capabilities.minImageExtent;
-		const auto& maxExtent = capabilities.maxImageExtent;
-
-		const uint32_t actualWidth = std::max(minExtent.width, std::min(actualExtent.width, maxExtent.width));
-		const uint32_t actualHeight = std::max(minExtent.height, std::min(actualExtent.height, maxExtent.height));
-		actualExtent.width = actualWidth;
-		actualExtent.height = actualHeight;
-
-		return actualExtent;
-	}
-
-	void SwapChain::CreateImages(uint32_t count)
-	{
-		vkGetSwapchainImagesKHR(_info->device, _swapChain, &count, nullptr);
-		_images.resize(count);
-		vkGetSwapchainImagesKHR(_info->device, _swapChain, &count, _images.data());
-	}
-
-	void SwapChain::CreateImageViews()
-	{
-		const uint32_t count = _images.size();
-		_imageViews.resize(count);
-
-		for (uint32_t i = 0; i < count; ++i)
-		{
-			VkImageViewCreateInfo createInfo{};
-			createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-			createInfo.image = _images[i];
-
-			createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-			createInfo.format = _format;
-
-			createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
-			createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
-
-			createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
-			createInfo.subresourceRange.baseMipLevel = 0;
-			createInfo.subresourceRange.levelCount = 1;
-			createInfo.subresourceRange.baseArrayLayer = 0;
-			createInfo.subresourceRange.layerCount = 1;
-
-			const auto result = vkCreateImageView(_info->device, &createInfo, nullptr, &_imageViews[i]);
-			assert(!result);
-		}
 	}
 }

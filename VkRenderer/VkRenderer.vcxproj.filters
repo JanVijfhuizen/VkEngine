@@ -57,6 +57,9 @@
     <ClInclude Include="Include\VkRenderer\DescriptorLayoutInfo.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\VkRenderer\CommandPoolFactory.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Source\pch.cpp">
@@ -84,6 +87,9 @@
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\SwapChain.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\CommandPoolFactory.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>

@@ -1,19 +1,26 @@
 ﻿#include "pch.h"
 #include "Debugger.h"
+#include "VkRenderer.h"
 
 namespace vi
 {
-	void Debugger::Construct(const Settings& settings, const VkInstance instance)
+	Debugger::Debugger()
+	{
+	}
+
+	Debugger::Debugger(VkRenderer& renderer) : _renderer(&renderer)
+	{
+		
+	}
+
+	void Debugger::Construct()
 	{
 		if (!DEBUG)
 			return;
 
-		_settings = settings;
-		_instance = instance;
-
 		auto info = CreateInfo();
 
-		const auto result = CreateDebugUtilsMessengerEXT(instance, &info, nullptr, &_debugMessenger);
+		const auto result = CreateDebugUtilsMessengerEXT(_renderer->instance, &info, nullptr, &_debugMessenger);
 		assert(!result);
 	}
 
@@ -22,7 +29,7 @@ namespace vi
 		if (!DEBUG)
 			return;
 
-		DestroyDebugUtilsMessengerEXT(_instance, _debugMessenger, nullptr);
+		DestroyDebugUtilsMessengerEXT(_renderer->instance, _debugMessenger, nullptr);
 	}
 
 	bool Debugger::CheckValidationLayerSupport() const
@@ -33,7 +40,7 @@ namespace vi
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		for (const auto& layer : _settings.validationLayers)
+		for (const auto& layer : _renderer->settings->debugger.validationLayers)
 			if (!IsLayerPresent(layer, availableLayers))
 				return false;
 		return true;
@@ -47,7 +54,7 @@ namespace vi
 			return;
 		}
 
-		auto& validationLayers = _settings.validationLayers;
+		auto& validationLayers = _renderer->settings->debugger.validationLayers;
 		instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		instanceInfo.ppEnabledLayerNames = validationLayers.data();
 		instanceInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugInfo);
@@ -55,7 +62,7 @@ namespace vi
 
 	const std::vector<const char*>& Debugger::GetValidationLayers() const
 	{
-		return _settings.validationLayers;
+		return _renderer->settings->debugger.validationLayers;
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT Debugger::CreateInfo()
