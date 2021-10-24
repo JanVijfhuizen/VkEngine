@@ -22,13 +22,14 @@ namespace vi
 			VkImage image;
 			VkImageView imageView;
 			VkFramebuffer frameBuffer;
+			VkCommandBuffer commandBuffer;
 		};
 
 		struct Frame final
 		{
-			VkCommandBuffer commandBuffer;
 			VkSemaphore imageAvailableSemaphore;
 			VkSemaphore renderFinishedSemaphore;
+			VkFence inFlightFence;
 		};
 
 		VkSwapchainKHR swapChain;
@@ -52,13 +53,15 @@ namespace vi
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
 	private:
+		#define _MAX_FRAMES_IN_FLIGHT 2
+
 		VkRenderer* _renderer;
 		uint32_t _frameIndex = 0;
 		uint32_t _imageIndex;
 
 		void CreateImages();
 		void CreateImageViews();
-		void CreateSemaphores();
+		void CreateSyncObjects();
 
 		void CreateCommandBuffers();
 		void CleanupCommandBuffers();

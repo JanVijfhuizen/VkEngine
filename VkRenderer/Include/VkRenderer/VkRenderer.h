@@ -63,6 +63,9 @@ namespace vi
 		[[nodiscard]] VkSemaphore CreateSemaphore() const;
 		void DestroySemaphore(VkSemaphore semaphore) const;
 
+		[[nodiscard]] VkFence CreateFence() const;
+		void DestroyFence(VkFence fence) const;
+
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
 

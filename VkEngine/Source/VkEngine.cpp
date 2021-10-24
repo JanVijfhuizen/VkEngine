@@ -92,12 +92,12 @@ int main()
 		swapChain.GetNext(image, frame);
 		auto& extent = swapChain.extent;
 
-		renderer.BeginCommandBufferRecording(frame->commandBuffer);
-		renderer.BeginRenderPass(frame->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
-		renderer.EndRenderPass(frame->commandBuffer, swapChain.renderPass);
-		renderer.EndCommandBufferRecording(frame->commandBuffer);
+		renderer.BeginCommandBufferRecording(image->commandBuffer);
+		renderer.BeginRenderPass(image->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
+		renderer.EndRenderPass(image->commandBuffer, swapChain.renderPass);
+		renderer.EndCommandBufferRecording(image->commandBuffer);
 
-		auto submitInfo = renderer.Submit(&frame->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore);
+		auto submitInfo = renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore);
 		renderer.swapChain.Present(submitInfo);
 	}
 

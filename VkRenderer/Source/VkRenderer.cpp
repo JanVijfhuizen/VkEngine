@@ -394,6 +394,23 @@ namespace vi
 		vkDestroySemaphore(device, semaphore, nullptr);
 	}
 
+	VkFence VkRenderer::CreateFence() const
+	{
+		VkFenceCreateInfo fenceInfo{};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		VkFence fence;
+		const auto result = vkCreateFence(device, &fenceInfo, nullptr, &fence);
+		assert(!result);
+		return fence;
+	}
+
+	void VkRenderer::DestroyFence(const VkFence fence) const
+	{
+		vkDestroyFence(device, fence, nullptr);
+	}
+
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
 	{
 		VkCommandBufferBeginInfo beginInfo{};

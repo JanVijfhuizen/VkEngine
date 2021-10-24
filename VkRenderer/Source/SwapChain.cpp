@@ -80,11 +80,11 @@ namespace vi
 		assert(!result);
 
 		images.resize(imageCount);
-		frames.resize(imageCount);
+		frames.resize(_MAX_FRAMES_IN_FLIGHT);
 
 		CreateImages();
 		CreateImageViews();
-		CreateSemaphores();
+		CreateSyncObjects();
 	}
 
 	void SwapChain::Cleanup()
@@ -101,6 +101,7 @@ namespace vi
 		{	
 			_renderer->DestroySemaphore(frame.imageAvailableSemaphore);
 			_renderer->DestroySemaphore(frame.renderFinishedSemaphore);
+			_renderer->DestroyFence(frame.inFlightFence);
 		}
 		frames.clear();
 
@@ -119,6 +120,10 @@ namespace vi
 	void SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
 	{
 		outFrame = &frames[_frameIndex];
+
+		vkWaitForFences(_renderer->device, 1, &outFrame->inFlightFence, VK_TRUE, UINT64_MAX);
+		vkResetFences(_renderer->device, 1, &outFrame->inFlightFence);
+
 		vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
 		outImage = &images[_imageIndex];
 	}
@@ -133,7 +138,7 @@ namespace vi
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = &frame.renderFinishedSemaphore;
 
-		const auto result = vkQueueSubmit(_renderer->queues.graphics, 1, &submitInfo, VK_NULL_HANDLE);
+		const auto result = vkQueueSubmit(_renderer->queues.graphics, 1, &submitInfo, frame.inFlightFence);
 		assert(!result);
 
 		presentInfo.swapchainCount = 1;
@@ -146,13 +151,8 @@ namespace vi
 
 	void SwapChain::CreateFrameBuffers()
 	{
-		const uint32_t count = frames.size();
-
-		for (uint32_t i = 0; i < count; ++i)
-		{
-			auto& image = images[i];
+		for (auto& image : images)
 			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass);
-		}
 	}
 
 	void SwapChain::CleanupFrameBuffers()
@@ -227,18 +227,19 @@ namespace vi
 		}
 	}
 
-	void SwapChain::CreateSemaphores()
+	void SwapChain::CreateSyncObjects()
 	{
 		for (auto& frame : frames)
 		{
 			frame.imageAvailableSemaphore = _renderer->CreateSemaphore();
 			frame.renderFinishedSemaphore = _renderer->CreateSemaphore();
+			frame.inFlightFence = _renderer->CreateFence();
 		}
 	}
 
 	void SwapChain::CreateCommandBuffers()
 	{
-		const uint32_t count = frames.size();
+		const uint32_t count = images.size();
 
 		std::vector<VkCommandBuffer> commandBuffers{};
 		commandBuffers.resize(count);
@@ -253,15 +254,15 @@ namespace vi
 		assert(!result);
 
 		for (uint32_t i = 0; i < count; ++i)
-			frames[i].commandBuffer = commandBuffers[i];
+			images[i].commandBuffer = commandBuffers[i];
 	}
 
 	void SwapChain::CleanupCommandBuffers()
 	{
-		const uint32_t count = frames.size();
+		const uint32_t count = images.size();
 
 		for (uint32_t i = 0; i < count; ++i)
-			_renderer->DestroyCommandBuffer(frames[i].commandBuffer);
+			_renderer->DestroyCommandBuffer(images[i].commandBuffer);
 	}
 
 	SwapChain::SupportDetails SwapChain::QuerySwapChainSupport(const VkSurfaceKHR surface, const VkPhysicalDevice device)
