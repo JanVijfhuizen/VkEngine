@@ -2,11 +2,11 @@
 
 namespace vi
 {
+	class VkRenderer;
+
 	class PhysicalDeviceFactory final
 	{
 	public:
-		struct Info;
-
 		struct DeviceInfo final
 		{
 			const VkPhysicalDevice& device;
@@ -40,22 +40,13 @@ namespace vi
 			std::function<uint32_t(const DeviceInfo& info)> deviceRatingFunc;
 		};
 
-		struct Info final
-		{
-			const Settings& settings;
-			const std::vector<const char*>& deviceExtensions;
-			const VkInstance instance;
-			const VkSurfaceKHR surface;
-			VkPhysicalDevice& physicalDevice;
-		};
-
-		explicit PhysicalDeviceFactory(const Info& info);
+		explicit PhysicalDeviceFactory(VkRenderer& renderer, const Settings& settings);
 
 		[[nodiscard]] static QueueFamilies GetQueueFamilies(const VkSurfaceKHR& surface, VkPhysicalDevice physicalDevice);
 
 	private:
-		[[nodiscard]] static bool IsDeviceSuitable(const Info& info, const DeviceInfo& deviceInfo);
-		[[nodiscard]] static uint32_t RateDevice(const Info& info, const DeviceInfo& deviceInfo);
+		[[nodiscard]] static bool IsDeviceSuitable(VkRenderer& renderer, const Settings& settings, const DeviceInfo& deviceInfo);
+		[[nodiscard]] static uint32_t RateDevice(const Settings& settings, const DeviceInfo& deviceInfo);
 		[[nodiscard]] static bool CheckDeviceExtensionSupport(VkPhysicalDevice device,
 			const std::vector<const char*>& extensions);
 	};

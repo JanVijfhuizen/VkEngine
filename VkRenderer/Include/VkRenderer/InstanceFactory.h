@@ -2,20 +2,16 @@
 
 namespace vi
 {
+	class VkRenderer;
+
 	class InstanceFactory final
 	{
 	public:
-		struct Info final
-		{
-			class WindowSystem& windowSystem;
-			const class Debugger& debugger;
-			VkInstance& instance;
-		};
-
-		explicit InstanceFactory(const Info& info);
+		explicit InstanceFactory(VkRenderer& renderer);
+		static void Cleanup(VkRenderer& renderer);
 
 	private:
-		[[nodiscard]] static VkApplicationInfo CreateApplicationInfo(const Info& info);
-		[[nodiscard]] static std::vector<const char*> GetExtensions(const Info& info);
+		[[nodiscard]] static VkApplicationInfo CreateApplicationInfo(VkRenderer& info);
+		[[nodiscard]] static std::vector<const char*> GetExtensions(VkRenderer& info);
 	};
 }

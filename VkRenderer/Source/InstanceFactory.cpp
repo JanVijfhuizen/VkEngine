@@ -1,16 +1,17 @@
 ﻿#include "pch.h"
 #include "InstanceFactory.h"
 #include "Debugger.h"
+#include "VkRenderer.h"
 #include "WindowSystem.h"
 
 namespace vi 
 {
-	InstanceFactory::InstanceFactory(const Info& info)
+	InstanceFactory::InstanceFactory(VkRenderer& renderer)
 	{
-		assert(info.debugger.CheckValidationLayerSupport());
+		assert(renderer.debugger.CheckValidationLayerSupport());
 
-		auto appInfo = CreateApplicationInfo(info);
-		auto extensions = GetExtensions(info);
+		auto appInfo = CreateApplicationInfo(renderer);
+		auto extensions = GetExtensions(renderer);
 
 		VkInstanceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
@@ -19,15 +20,20 @@ namespace vi
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		auto debugInfo = Debugger::CreateInfo();
-		info.debugger.EnableValidationLayers(debugInfo, createInfo);
+		renderer.debugger.EnableValidationLayers(debugInfo, createInfo);
 
-		const auto result = vkCreateInstance(&createInfo, nullptr, &info.instance);
+		const auto result = vkCreateInstance(&createInfo, nullptr, &renderer.instance);
 		assert(!result);
 	}
 
-	VkApplicationInfo InstanceFactory::CreateApplicationInfo(const Info& info)
+	void InstanceFactory::Cleanup(VkRenderer& renderer)
 	{
-		const auto& windowInfo = info.windowSystem.GetVkInfo();
+		vkDestroyInstance(renderer.instance, nullptr);
+	}
+
+	VkApplicationInfo InstanceFactory::CreateApplicationInfo(VkRenderer& renderer)
+	{
+		const auto& windowInfo = renderer.windowSystem.GetVkInfo();
 		const auto& name = windowInfo.name.c_str();
 		const auto version = VK_MAKE_VERSION(1, 0, 0);
 
@@ -42,10 +48,10 @@ namespace vi
 		return appInfo;
 	}
 
-	std::vector<const char*> InstanceFactory::GetExtensions(const Info& info)
+	std::vector<const char*> InstanceFactory::GetExtensions(VkRenderer& renderer)
 	{
 		std::vector<const char*> extensions;
-		info.windowSystem.GetRequiredExtensions(extensions);
+		renderer.windowSystem.GetRequiredExtensions(extensions);
 		if (DEBUG)
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		return extensions;

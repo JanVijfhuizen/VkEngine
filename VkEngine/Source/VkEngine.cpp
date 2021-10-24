@@ -75,7 +75,7 @@ int main()
 	pipelineInfo.renderPass = renderPass;
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
-	renderer.AssignSwapChainRenderPass(renderPass);
+	renderer.swapChain.SetRenderPass(renderPass);
 
 	while(true)
 	{
@@ -83,6 +83,27 @@ int main()
 		windowSystem.BeginFrame(quit);
 		if (quit)
 			break;
+
+		auto& swapChain = renderer.swapChain;
+
+		vi::SwapChain::Image* image;
+		vi::SwapChain::Frame* frame;
+
+		swapChain.GetNext(image, frame);
+		auto& extent = swapChain.extent;
+
+		renderer.BeginCommandBufferRecording(image->commandBuffer);
+		renderer.BeginRenderPass(image->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
+
+		renderer.BindPipeline(image->commandBuffer, pipeline.pipeline);
+
+		//renderer.BindDescriptorSets(image->commandBuffer, pipeline.layout, &camLayout, 1);
+
+		renderer.EndRenderPass(image->commandBuffer, swapChain.renderPass);
+		renderer.EndCommandBufferRecording(image->commandBuffer);
+
+		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
+		renderer.swapChain.Present();
 	}
 
 	renderer.DestroyPipeline(pipeline);

@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\VkRenderer\CommandPoolFactory.h" />
     <ClInclude Include="Include\VkRenderer\DescriptorLayoutInfo.h" />
     <ClInclude Include="Include\VkRenderer\Pipeline.h" />
     <ClInclude Include="Include\VkRenderer\PipelineInfo.h" />
@@ -169,6 +170,7 @@
     <ClInclude Include="Include\VkRenderer\LogicalDeviceFactory.h" />
   </ItemGroup>
   <ItemGroup>
+    <ClCompile Include="Source\CommandPoolFactory.cpp" />
     <ClCompile Include="Source\SwapChain.cpp" />
     <ClCompile Include="Source\LogicalDeviceFactory.cpp" />
     <ClCompile Include="Source\InstanceFactory.cpp" />

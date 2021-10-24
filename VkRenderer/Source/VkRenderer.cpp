@@ -6,58 +6,41 @@
 #include "PipelineInfo.h"
 #include "RenderPassInfo.h"
 #include "DescriptorLayoutInfo.h"
+#include "CommandPoolFactory.h"
 
 namespace vi
 {
-	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) :  _windowSystem(system)
+	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) :  windowSystem(system)
 	{
-		_settings = std::make_unique<Settings>();
-		*_settings = settings;
+		this->settings = std::make_unique<Settings>();
+		*this->settings = settings;
 
-		const InstanceFactory::Info instanceInfo
-		{
-			_windowSystem,
-			_debugger,
-			_instance
-		};
-		InstanceFactory{instanceInfo};
+		debugger = Debugger{ *this };
+		swapChain = SwapChain{ *this };
 
-		_debugger.Construct(_settings->debugger, _instance);
-		_windowSystem.CreateSurface(_instance, _surface);
+		InstanceFactory{*this};
 
-		const PhysicalDeviceFactory::Info physicalDeviceInfo
-		{
-			_settings->physicalDevice,
-			_settings->deviceExtensions,
-			_instance,
-			_surface,
-			_physicalDevice,
-		};
-		PhysicalDeviceFactory{physicalDeviceInfo};
+		debugger.Construct();
+		windowSystem.CreateSurface(instance, surface);
 
-		const LogicalDeviceFactory::Info logicalDeviceInfo
-		{
-			_settings->deviceExtensions,
-			_physicalDevice,
-			_surface,
-			_debugger,
-			_device,
-			_queues
-		};
-		LogicalDeviceFactory{logicalDeviceInfo};
+		PhysicalDeviceFactory{*this, settings.physicalDevice};
+		LogicalDeviceFactory{*this};
+		CommandPoolFactory{*this};
 
 		CreateSwapChainDependencies();
 	}
 
 	VkRenderer::~VkRenderer()
 	{
+		const auto result = vkDeviceWaitIdle(device);
+		assert(!result);
+
 		CleanupSwapChainDependendies();
-
-		vkDestroyDevice(_device, nullptr);
-		_debugger.Cleanup();
-
-		vkDestroySurfaceKHR(_instance, _surface, nullptr);
-		vkDestroyInstance(_instance, nullptr);
+		CommandPoolFactory::Cleanup(*this);
+		LogicalDeviceFactory::Cleanup(*this);
+		debugger.Cleanup();
+		vkDestroySurfaceKHR(instance, surface, nullptr);
+		InstanceFactory::Cleanup(*this);
 	}
 
 	VkShaderModule VkRenderer::CreateShaderModule(const std::vector<char>& data) const
@@ -68,7 +51,7 @@ namespace vi
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(data.data());
 
 		VkShaderModule vkModule;
-		const auto result = vkCreateShaderModule(_device, &createInfo, nullptr, &vkModule);
+		const auto result = vkCreateShaderModule(device, &createInfo, nullptr, &vkModule);
 		assert(!result);
 
 		return vkModule;
@@ -76,13 +59,13 @@ namespace vi
 
 	void VkRenderer::DestroyShaderModule(const VkShaderModule module) const
 	{
-		vkDestroyShaderModule(_device, module, nullptr);
+		vkDestroyShaderModule(device, module, nullptr);
 	}
 
 	VkRenderPass VkRenderer::CreateRenderPass(const RenderPassInfo& info) const
 	{
 		const uint32_t attachmentsCount = info.attachments.size();
-		const auto format = _swapChain.GetFormat();
+		const auto& format = swapChain.format;
 
 		std::vector<VkAttachmentDescription> descriptions{};
 		descriptions.resize(info.attachments.size());
@@ -116,6 +99,14 @@ namespace vi
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = attachmentsCount;
 		subpass.pColorAttachments = colorAttachmentRefs.data();
+
+		VkSubpassDependency dependency{};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -123,16 +114,18 @@ namespace vi
 		renderPassInfo.pAttachments = descriptions.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = 1;
+		renderPassInfo.pDependencies = &dependency;
 
 		VkRenderPass renderPass;
-		const auto result = vkCreateRenderPass(_device, &renderPassInfo, nullptr, &renderPass);
+		const auto result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass);
 		assert(!result);
 		return renderPass;
 	}
 
 	void VkRenderer::DestroyRenderPass(const VkRenderPass renderPass) const
 	{
-		vkDestroyRenderPass(_device, renderPass, nullptr);
+		vkDestroyRenderPass(device, renderPass, nullptr);
 	}
 
 	VkDescriptorSetLayout VkRenderer::CreateLayout(const DescriptorLayoutInfo& info) const
@@ -160,14 +153,14 @@ namespace vi
 		layoutInfo.pBindings = layoutBindings.data();
 
 		VkDescriptorSetLayout layout;
-		const auto result = vkCreateDescriptorSetLayout(_device, &layoutInfo, nullptr, &layout);
+		const auto result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &layout);
 		assert(!result);
 		return layout;
 	}
 
 	void VkRenderer::DestroyLayout(const VkDescriptorSetLayout layout) const
 	{
-		vkDestroyDescriptorSetLayout(_device, layout, nullptr);
+		vkDestroyDescriptorSetLayout(device, layout, nullptr);
 	}
 
 	Pipeline VkRenderer::CreatePipeline(const PipelineLayout& info) const
@@ -200,7 +193,7 @@ namespace vi
 		inputAssembly.topology = info.primitiveTopology;
 		inputAssembly.primitiveRestartEnable = info.primitiveRestartEnable;
 
-		const auto extent = _swapChain.GetExtent();
+		const auto& extent = swapChain.extent;
 
 		VkViewport viewport{};
 		viewport.x = 0;
@@ -209,9 +202,6 @@ namespace vi
 		viewport.height = static_cast<float>(extent.height);
 		viewport.minDepth = 0;
 		viewport.maxDepth = 1;
-
-		if (info.useViewport)
-			viewport = info.viewport;
 
 		VkRect2D scissor{};
 		scissor.offset = { 0, 0 };
@@ -244,17 +234,12 @@ namespace vi
 		colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT | VK_COLOR_COMPONENT_G_BIT | VK_COLOR_COMPONENT_B_BIT | VK_COLOR_COMPONENT_A_BIT;
 		colorBlendAttachment.blendEnable = VK_FALSE;
 
-		if (info.colorBlendingEnabled)
-			colorBlendAttachment = info.colorBlending;
-
 		VkPipelineColorBlendStateCreateInfo colorBlending{};
 		colorBlending.sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO;
-		colorBlending.logicOpEnable = info.colorBlendingEnabled;
+		colorBlending.logicOpEnable = VK_FALSE;
 		colorBlending.logicOp = VK_LOGIC_OP_COPY;
 		colorBlending.attachmentCount = 1;
 		colorBlending.pAttachments = &colorBlendAttachment;
-		for (auto& blendConstant : colorBlending.blendConstants)
-			blendConstant = 0.0f;
 
 		VkPipelineDynamicStateCreateInfo dynamicState{};
 		dynamicState.sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO;
@@ -279,7 +264,7 @@ namespace vi
 		pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
 
 		VkPipelineLayout pipelineLayout;
-		auto result = vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+		auto result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
 		assert(!result);
 		
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -303,7 +288,7 @@ namespace vi
 		pipelineInfo.basePipelineIndex = info.basePipelineIndex;
 
 		VkPipeline graphicsPipeline;
-		result = vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
 		assert(!result);
 
 		return
@@ -315,15 +300,190 @@ namespace vi
 
 	void VkRenderer::DestroyPipeline(const Pipeline pipeline) const
 	{
-		vkDestroyPipeline(_device, pipeline.pipeline, nullptr);
-		vkDestroyPipelineLayout(_device, pipeline.layout, nullptr);
+		vkDestroyPipeline(device, pipeline.pipeline, nullptr);
+		vkDestroyPipelineLayout(device, pipeline.layout, nullptr);
 	}
 
-	void VkRenderer::AssignSwapChainRenderPass(const VkRenderPass renderPass)
+	VkCommandBuffer VkRenderer::CreateCommandBuffer() const
 	{
-		_swapChainRenderPass = renderPass;
-		_swapChain.CleanupFrameBuffers();
-		_swapChain.CreateFrameBuffers(renderPass);
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = commandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		const auto result = vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+		assert(!result);
+
+		return commandBuffer;
+	}
+
+	void VkRenderer::DestroyCommandBuffer(const VkCommandBuffer commandBuffer) const
+	{
+		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+	}
+
+	VkImageView VkRenderer::CreateImageView(const VkImage image, const VkFormat format) const
+	{
+		VkImageViewCreateInfo createInfo{};
+		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+		createInfo.image = image;
+
+		createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+		createInfo.format = format;
+
+		createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.baseMipLevel = 0;
+		createInfo.subresourceRange.levelCount = 1;
+		createInfo.subresourceRange.baseArrayLayer = 0;
+		createInfo.subresourceRange.layerCount = 1;
+
+		VkImageView imageView;
+		const auto result = vkCreateImageView(device, &createInfo, nullptr, &imageView);
+		assert(!result);
+		return imageView;
+	}
+
+	void VkRenderer::DestroyImageView(const VkImageView imageView) const
+	{
+		vkDestroyImageView(device, imageView, nullptr);
+	}
+
+	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass) const
+	{
+		const auto& extent = swapChain.extent;
+
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = &imageView;
+		framebufferInfo.width = extent.width;
+		framebufferInfo.height = extent.height;
+		framebufferInfo.layers = 1;
+
+		VkFramebuffer frameBuffer;
+		const auto result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffer);
+		assert(!result);
+		return frameBuffer;
+	}
+
+	void VkRenderer::DestroyFrameBuffer(const VkFramebuffer frameBuffer) const
+	{
+		vkDestroyFramebuffer(device, frameBuffer, nullptr);
+	}
+
+	VkSemaphore VkRenderer::CreateSemaphore() const
+	{
+		VkSemaphoreCreateInfo semaphoreInfo{};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+		VkSemaphore semaphore;
+		const auto result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore);
+		assert(!result);
+		return semaphore;
+	}
+
+	void VkRenderer::DestroySemaphore(const VkSemaphore semaphore) const
+	{
+		vkDestroySemaphore(device, semaphore, nullptr);
+	}
+
+	VkFence VkRenderer::CreateFence() const
+	{
+		VkFenceCreateInfo fenceInfo{};
+		fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
+		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
+
+		VkFence fence;
+		const auto result = vkCreateFence(device, &fenceInfo, nullptr, &fence);
+		assert(!result);
+		return fence;
+	}
+
+	void VkRenderer::DestroyFence(const VkFence fence) const
+	{
+		vkDestroyFence(device, fence, nullptr);
+	}
+
+	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
+	{
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+	}
+
+	void VkRenderer::EndCommandBufferRecording(const VkCommandBuffer commandBuffer)
+	{
+		const auto result = vkEndCommandBuffer(commandBuffer);
+		assert(!result);
+	}
+
+	void VkRenderer::BeginRenderPass(const VkCommandBuffer commandBuffer, const VkFramebuffer frameBuffer, 
+		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent)
+	{
+		const VkExtent2D extentVk
+		{
+			static_cast<uint32_t>(extent.x),
+			static_cast<uint32_t>(extent.y)
+		};
+
+		VkRenderPassBeginInfo renderPassInfo{};
+		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+		renderPassInfo.renderPass = renderPass;
+		renderPassInfo.framebuffer = frameBuffer;
+		renderPassInfo.renderArea.offset = {offset.x, offset.y};
+		renderPassInfo.renderArea.extent = extentVk;
+
+		VkClearValue clearColor = { {{0, 0, 0, 1}} };
+		renderPassInfo.clearValueCount = 1;
+		renderPassInfo.pClearValues = &clearColor;
+
+		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+	}
+
+	void VkRenderer::EndRenderPass(const VkCommandBuffer commandBuffer, const VkRenderPass renderPass)
+	{
+		vkCmdEndRenderPass(commandBuffer);
+	}
+
+	void VkRenderer::BindPipeline(const VkCommandBuffer commandBuffer, const VkPipeline pipeline)
+	{
+		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+	}
+
+	void VkRenderer::BindDescriptorSets(const VkCommandBuffer commandBuffer, const VkPipelineLayout layout,
+		VkDescriptorSet* sets, const uint32_t setCount)
+	{
+		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0,
+			setCount, sets, 0, nullptr);
+	}
+
+	void VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,
+		const VkSemaphore waitSemaphore, const VkSemaphore signalSemaphore, const VkFence fence) const
+	{
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &waitSemaphore;
+		submitInfo.pWaitDstStageMask = &waitStage;
+		submitInfo.commandBufferCount = buffersCount;
+		submitInfo.pCommandBuffers = buffers;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &signalSemaphore;
+
+		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, fence);
+		assert(!result);
 	}
 
 	void VkRenderer::Rebuild()
@@ -334,19 +494,11 @@ namespace vi
 
 	void VkRenderer::CreateSwapChainDependencies()
 	{
-		const SwapChain::Info swapChainInfo
-		{
-			_physicalDevice,
-			_surface,
-			_device,
-			&_windowSystem
-		};
-
-		_swapChain.Construct(swapChainInfo);
+		swapChain.Construct();
 	}
 
 	void VkRenderer::CleanupSwapChainDependendies()
 	{
-		_swapChain.Cleanup();
+		swapChain.Cleanup();
 	}
 }

@@ -1,18 +1,25 @@
 ﻿#include "pch.h"
 #include "LogicalDeviceFactory.h"
 #include "PhysicalDeviceFactory.h"
+#include "VkRenderer.h"
 
 namespace vi
 {
-	LogicalDeviceFactory::LogicalDeviceFactory(const Info& info)
+	LogicalDeviceFactory::LogicalDeviceFactory(VkRenderer& renderer)
 	{
-		const auto queueFamilies = PhysicalDeviceFactory::GetQueueFamilies(info.surface, info.physicalDevice);
+		const auto queueFamilies = PhysicalDeviceFactory::GetQueueFamilies(renderer.surface, renderer.physicalDevice);
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		const float queuePriority = 1.0f;
 
-		for (const auto& family: queueFamilies.values)
+		std::set<uint32_t> familyIndexes{};
+
+		for (const auto& family : queueFamilies.values)
 		{
+			if (familyIndexes.find(family) != familyIndexes.end())
+				continue;
+			familyIndexes.insert(family);
+
 			VkDeviceQueueCreateInfo queueCreateInfo{};
 			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			queueCreateInfo.queueFamilyIndex = family;
@@ -24,7 +31,7 @@ namespace vi
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-		const auto& deviceExtensions = info.deviceExtensions;
+		const auto& deviceExtensions = renderer.settings->deviceExtensions;
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -37,19 +44,24 @@ namespace vi
 		createInfo.enabledLayerCount = 0;
 		if(DEBUG)
 		{
-			const auto& validationLayers = info.debugger.GetValidationLayers();
+			const auto& validationLayers = renderer.debugger.GetValidationLayers();
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 		}
 
-		const auto result = vkCreateDevice(info.physicalDevice, &createInfo, nullptr, &info.device);
+		const auto result = vkCreateDevice(renderer.physicalDevice, &createInfo, nullptr, &renderer.device);
 		assert(!result);
 
 		uint32_t i = 0;
 		for (const auto& family : queueFamilies.values)
 		{
-			vkGetDeviceQueue(info.device, family, 0, &info.queues.values[i]);
+			vkGetDeviceQueue(renderer.device, family, 0, &renderer.queues.values[i]);
 			i++;
 		}
+	}
+
+	void LogicalDeviceFactory::Cleanup(VkRenderer& renderer)
+	{
+		vkDestroyDevice(renderer.device, nullptr);
 	}
 }

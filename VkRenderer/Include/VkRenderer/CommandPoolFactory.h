@@ -4,10 +4,10 @@ namespace vi
 {
 	class VkRenderer;
 
-	class LogicalDeviceFactory final
+	class CommandPoolFactory final
 	{
 	public:
-		explicit LogicalDeviceFactory(VkRenderer& renderer);
+		explicit CommandPoolFactory(VkRenderer& renderer);
 		static void Cleanup(VkRenderer& renderer);
 	};
 }
