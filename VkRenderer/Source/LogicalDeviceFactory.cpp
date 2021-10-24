@@ -12,8 +12,14 @@ namespace vi
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		const float queuePriority = 1.0f;
 
-		for (const auto& family: queueFamilies.values)
+		std::set<uint32_t> familyIndexes{};
+
+		for (const auto& family : queueFamilies.values)
 		{
+			if (familyIndexes.find(family) != familyIndexes.end())
+				continue;
+			familyIndexes.insert(family);
+
 			VkDeviceQueueCreateInfo queueCreateInfo{};
 			queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
 			queueCreateInfo.queueFamilyIndex = family;

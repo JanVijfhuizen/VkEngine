@@ -123,14 +123,14 @@ namespace vi
 		outFrame = &frames[_frameIndex];
 
 		vkWaitForFences(_renderer->device, 1, &outFrame->inFlightFence, VK_TRUE, UINT64_MAX);
-		vkResetFences(_renderer->device, 1, &outFrame->inFlightFence);
-
 		vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
+
 		outImage = &images[_imageIndex];
 
-		if (imagesInFlight[_imageIndex] != VK_NULL_HANDLE)
-			vkWaitForFences(_renderer->device, 1, &imagesInFlight[_imageIndex], VK_TRUE, UINT64_MAX);
-		imagesInFlight[_imageIndex] = outFrame->inFlightFence;
+		auto& imageInFlight = imagesInFlight[_imageIndex];
+		if (imageInFlight != VK_NULL_HANDLE)
+			vkWaitForFences(_renderer->device, 1, &imageInFlight, VK_TRUE, UINT64_MAX);
+		imageInFlight = outFrame->inFlightFence;
 	}
 
 	void SwapChain::Present(VkSubmitInfo& submitInfo)
@@ -143,13 +143,14 @@ namespace vi
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = &frame.renderFinishedSemaphore;
 
+		vkResetFences(_renderer->device, 1, &frame.inFlightFence);
 		const auto result = vkQueueSubmit(_renderer->queues.graphics, 1, &submitInfo, frame.inFlightFence);
 		assert(!result);
 
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &swapChain;
 		presentInfo.pImageIndices = &_imageIndex;
-
+		
 		vkQueuePresentKHR(_renderer->queues.present, &presentInfo);
 		_frameIndex = (_frameIndex + 1) % frames.size();
 	}
