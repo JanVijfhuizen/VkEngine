@@ -32,6 +32,8 @@ namespace vi
 
 	VkRenderer::~VkRenderer()
 	{
+		vkDeviceWaitIdle(device);
+
 		CleanupSwapChainDependendies();
 		CommandPoolFactory::Cleanup(*this);
 		LogicalDeviceFactory::Cleanup(*this);
@@ -96,6 +98,14 @@ namespace vi
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
 		subpass.colorAttachmentCount = attachmentsCount;
 		subpass.pColorAttachments = colorAttachmentRefs.data();
+
+		VkSubpassDependency dependency{};
+		dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
+		dependency.dstSubpass = 0;
+		dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.srcAccessMask = 0;
+		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
@@ -103,6 +113,8 @@ namespace vi
 		renderPassInfo.pAttachments = descriptions.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
+		renderPassInfo.dependencyCount = 1;
+		renderPassInfo.pDependencies = &dependency;
 
 		VkRenderPass renderPass;
 		const auto result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass);
@@ -366,6 +378,22 @@ namespace vi
 		vkDestroyFramebuffer(device, frameBuffer, nullptr);
 	}
 
+	VkSemaphore VkRenderer::CreateSemaphore() const
+	{
+		VkSemaphoreCreateInfo semaphoreInfo{};
+		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
+
+		VkSemaphore semaphore;
+		const auto result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore);
+		assert(!result);
+		return semaphore;
+	}
+
+	void VkRenderer::DestroySemaphore(const VkSemaphore semaphore) const
+	{
+		vkDestroySemaphore(device, semaphore, nullptr);
+	}
+
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
 	{
 		VkCommandBufferBeginInfo beginInfo{};
@@ -379,7 +407,6 @@ namespace vi
 	{
 		const auto result = vkEndCommandBuffer(commandBuffer);
 		assert(!result);
-		// Todo submit.
 	}
 
 	void VkRenderer::BeginRenderPass(const VkCommandBuffer commandBuffer, const VkFramebuffer frameBuffer, 
@@ -408,6 +435,27 @@ namespace vi
 	void VkRenderer::EndRenderPass(const VkCommandBuffer commandBuffer, const VkRenderPass renderPass)
 	{
 		vkCmdEndRenderPass(commandBuffer);
+	}
+
+	VkSubmitInfo VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,
+		const VkSemaphore waitSemaphore, const VkSemaphore signalSemaphore) const
+	{
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+
+		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.pWaitSemaphores = &waitSemaphore;
+		submitInfo.pWaitDstStageMask = &_waitStage;
+		submitInfo.commandBufferCount = buffersCount;
+		submitInfo.pCommandBuffers = buffers;
+		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.pSignalSemaphores = &signalSemaphore;
+
+		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, VK_NULL_HANDLE);
+		assert(!result);
+
+		return submitInfo;
 	}
 
 	void VkRenderer::Rebuild()

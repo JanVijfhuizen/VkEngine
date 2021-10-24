@@ -84,13 +84,21 @@ int main()
 		if (quit)
 			break;
 
-		auto& frame = renderer.swapChain.GetNextFrame();
-		auto& extent = renderer.swapChain.extent;
+		auto& swapChain = renderer.swapChain;
 
-		renderer.BeginCommandBufferRecording(frame.commandBuffer);
-		renderer.BeginRenderPass(frame.commandBuffer, frame.frameBuffer, renderer.swapChain.renderPass, {}, { extent.width, extent.height});
-		renderer.EndRenderPass(frame.commandBuffer, renderer.swapChain.renderPass);
-		renderer.EndCommandBufferRecording(frame.commandBuffer);
+		vi::SwapChain::Image* image;
+		vi::SwapChain::Frame* frame;
+
+		swapChain.GetNext(image, frame);
+		auto& extent = swapChain.extent;
+
+		renderer.BeginCommandBufferRecording(frame->commandBuffer);
+		renderer.BeginRenderPass(frame->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
+		renderer.EndRenderPass(frame->commandBuffer, swapChain.renderPass);
+		renderer.EndCommandBufferRecording(frame->commandBuffer);
+
+		auto submitInfo = renderer.Submit(&frame->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore);
+		renderer.swapChain.Present(submitInfo);
 	}
 
 	renderer.DestroyPipeline(pipeline);

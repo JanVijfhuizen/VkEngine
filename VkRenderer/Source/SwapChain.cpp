@@ -28,6 +28,7 @@ namespace vi
 
 	SwapChain::SwapChain(VkRenderer& renderer) : _renderer(&renderer)
 	{
+		
 	}
 
 	void SwapChain::Construct()
@@ -78,10 +79,12 @@ namespace vi
 		const auto result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
 		assert(!result);
 
+		images.resize(imageCount);
 		frames.resize(imageCount);
 
 		CreateImages();
 		CreateImageViews();
+		CreateSemaphores();
 	}
 
 	void SwapChain::Cleanup()
@@ -90,8 +93,15 @@ namespace vi
 
 		CleanupFrameBuffers();
 
+		for (const auto& image : images)
+			_renderer->DestroyImageView(image.imageView);
+		images.clear();
+
 		for (const auto& frame : frames)
-			_renderer->DestroyImageView(frame.imageView);
+		{	
+			_renderer->DestroySemaphore(frame.imageAvailableSemaphore);
+			_renderer->DestroySemaphore(frame.renderFinishedSemaphore);
+		}
 		frames.clear();
 
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
@@ -106,11 +116,32 @@ namespace vi
 		CreateCommandBuffers();
 	}
 
-	const SwapChain::Frame& SwapChain::GetNextFrame()
+	void SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
 	{
-		auto& frame = frames[_currentFrame];
-		_currentFrame = (_currentFrame + 1) % frames.size();
-		return frame;
+		outFrame = &frames[_frameIndex];
+		vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
+		outImage = &images[_imageIndex];
+	}
+
+	void SwapChain::Present(VkSubmitInfo& submitInfo)
+	{
+		auto& frame = frames[_frameIndex];
+
+		VkPresentInfoKHR presentInfo{};
+		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
+
+		presentInfo.waitSemaphoreCount = 1;
+		presentInfo.pWaitSemaphores = &frame.renderFinishedSemaphore;
+
+		const auto result = vkQueueSubmit(_renderer->queues.graphics, 1, &submitInfo, VK_NULL_HANDLE);
+		assert(!result);
+
+		presentInfo.swapchainCount = 1;
+		presentInfo.pSwapchains = &swapChain;
+		presentInfo.pImageIndices = &_imageIndex;
+
+		vkQueuePresentKHR(_renderer->queues.present, &presentInfo);
+		_frameIndex = (_frameIndex + 1) % frames.size();
 	}
 
 	void SwapChain::CreateFrameBuffers()
@@ -119,15 +150,15 @@ namespace vi
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
-			auto& frame = frames[i];
-			frame.frameBuffer = _renderer->CreateFrameBuffer(frame.imageView, renderPass);
+			auto& image = images[i];
+			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass);
 		}
 	}
 
 	void SwapChain::CleanupFrameBuffers()
 	{
-		for (const auto& frame : frames)
-			_renderer->DestroyFrameBuffer(frame.frameBuffer);
+		for (const auto& image : images)
+			_renderer->DestroyFrameBuffer(image.frameBuffer);
 	}
 
 	VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -174,25 +205,34 @@ namespace vi
 
 	void SwapChain::CreateImages()
 	{
-		uint32_t count = frames.size();
+		uint32_t count = images.size();
 
-		std::vector<VkImage> images{};
-		images.resize(count);
+		std::vector<VkImage> vkImages{};
+		vkImages.resize(count);
 
-		vkGetSwapchainImagesKHR(_renderer->device, swapChain, &count, images.data());
+		vkGetSwapchainImagesKHR(_renderer->device, swapChain, &count, vkImages.data());
 
 		for (uint32_t i = 0; i < count; ++i)
-			frames[i].image = images[i];
+			images[i].image = vkImages[i];
 	}
 
 	void SwapChain::CreateImageViews()
 	{
-		const uint32_t count = frames.size();
+		const uint32_t count = images.size();
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
-			auto& frame = frames[i];
-			frame.imageView = _renderer->CreateImageView(frame.image, format);
+			auto& image = images[i];
+			image.imageView = _renderer->CreateImageView(image.image, format);
+		}
+	}
+
+	void SwapChain::CreateSemaphores()
+	{
+		for (auto& frame : frames)
+		{
+			frame.imageAvailableSemaphore = _renderer->CreateSemaphore();
+			frame.renderFinishedSemaphore = _renderer->CreateSemaphore();
 		}
 	}
 

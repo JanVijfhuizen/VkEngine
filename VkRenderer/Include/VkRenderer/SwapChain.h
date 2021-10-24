@@ -17,17 +17,24 @@ namespace vi
 			[[nodiscard]] uint32_t GetRecommendedImageCount() const;
 		};
 
-		struct Frame final
+		struct Image final
 		{
 			VkImage image;
 			VkImageView imageView;
 			VkFramebuffer frameBuffer;
+		};
+
+		struct Frame final
+		{
 			VkCommandBuffer commandBuffer;
+			VkSemaphore imageAvailableSemaphore;
+			VkSemaphore renderFinishedSemaphore;
 		};
 
 		VkSwapchainKHR swapChain;
 		VkFormat format;
 		VkExtent2D extent;
+		std::vector<Image> images{};
 		std::vector<Frame> frames{};
 		VkRenderPass renderPass;
 
@@ -38,16 +45,20 @@ namespace vi
 		void Cleanup();
 
 		void SetRenderPass(VkRenderPass renderPass);
-		[[nodiscard]] const Frame& GetNextFrame();
+		void GetNext(Image*& outImage, Frame*& outFrame);
+
+		void Present(VkSubmitInfo& submitInfo);
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
 	private:
 		VkRenderer* _renderer;
-		uint32_t _currentFrame = 0;
+		uint32_t _frameIndex = 0;
+		uint32_t _imageIndex;
 
 		void CreateImages();
 		void CreateImageViews();
+		void CreateSemaphores();
 
 		void CreateCommandBuffers();
 		void CleanupCommandBuffers();

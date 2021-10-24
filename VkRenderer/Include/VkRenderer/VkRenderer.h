@@ -60,15 +60,24 @@ namespace vi
 		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass) const;
 		void DestroyFrameBuffer(VkFramebuffer frameBuffer) const;
 
+		[[nodiscard]] VkSemaphore CreateSemaphore() const;
+		void DestroySemaphore(VkSemaphore semaphore) const;
+
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
 
-		void BeginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
+		void BeginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, 
+			VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
 		void EndRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass);
+
+		VkSubmitInfo Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
+			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore) const;
 
 		void Rebuild();
 
 	private:
+		VkPipelineStageFlags _waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+
 		void CreateSwapChainDependencies();
 		void CleanupSwapChainDependendies();
 	};
