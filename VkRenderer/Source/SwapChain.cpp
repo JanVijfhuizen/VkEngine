@@ -131,22 +131,18 @@ namespace vi
 		if (imageInFlight != VK_NULL_HANDLE)
 			vkWaitForFences(_renderer->device, 1, &imageInFlight, VK_TRUE, UINT64_MAX);
 		imageInFlight = outFrame->inFlightFence;
+
+		vkResetFences(_renderer->device, 1, &outFrame->inFlightFence);
 	}
 
-	void SwapChain::Present(VkSubmitInfo& submitInfo)
+	void SwapChain::Present()
 	{
 		auto& frame = frames[_frameIndex];
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
-
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = &frame.renderFinishedSemaphore;
-
-		vkResetFences(_renderer->device, 1, &frame.inFlightFence);
-		const auto result = vkQueueSubmit(_renderer->queues.graphics, 1, &submitInfo, frame.inFlightFence);
-		assert(!result);
-
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &swapChain;
 		presentInfo.pImageIndices = &_imageIndex;

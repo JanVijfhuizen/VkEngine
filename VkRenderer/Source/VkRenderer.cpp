@@ -454,7 +454,7 @@ namespace vi
 		vkCmdEndRenderPass(commandBuffer);
 	}
 
-	VkSubmitInfo VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,
+	void VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,
 		const VkSemaphore waitSemaphore, const VkSemaphore signalSemaphore) const
 	{
 		VkSubmitInfo submitInfo{};
@@ -463,7 +463,7 @@ namespace vi
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		submitInfo.waitSemaphoreCount = 1;
 		submitInfo.pWaitSemaphores = &waitSemaphore;
-		submitInfo.pWaitDstStageMask = &_waitStage;
+		submitInfo.pWaitDstStageMask = &waitStage;
 		submitInfo.commandBufferCount = buffersCount;
 		submitInfo.pCommandBuffers = buffers;
 		submitInfo.signalSemaphoreCount = 1;
@@ -471,8 +471,6 @@ namespace vi
 
 		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, VK_NULL_HANDLE);
 		assert(!result);
-
-		return submitInfo;
 	}
 
 	void VkRenderer::Rebuild()

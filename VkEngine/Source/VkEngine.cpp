@@ -97,8 +97,8 @@ int main()
 		renderer.EndRenderPass(image->commandBuffer, swapChain.renderPass);
 		renderer.EndCommandBufferRecording(image->commandBuffer);
 
-		auto submitInfo = renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore);
-		renderer.swapChain.Present(submitInfo);
+		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore);
+		renderer.swapChain.Present();
 	}
 
 	renderer.DestroyPipeline(pipeline);

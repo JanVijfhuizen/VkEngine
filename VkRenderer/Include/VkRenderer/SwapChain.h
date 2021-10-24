@@ -49,7 +49,7 @@ namespace vi
 		void SetRenderPass(VkRenderPass renderPass);
 		void GetNext(Image*& outImage, Frame*& outFrame);
 
-		void Present(VkSubmitInfo& submitInfo);
+		void Present();
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 

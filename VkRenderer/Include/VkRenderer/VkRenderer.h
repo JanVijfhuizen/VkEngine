@@ -73,14 +73,12 @@ namespace vi
 			VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
 		void EndRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass);
 
-		VkSubmitInfo Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
+		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore) const;
 
 		void Rebuild();
 
 	private:
-		VkPipelineStageFlags _waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-
 		void CreateSwapChainDependencies();
 		void CleanupSwapChainDependendies();
 	};
