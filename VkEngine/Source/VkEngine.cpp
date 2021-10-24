@@ -89,7 +89,12 @@ int main()
 		vi::SwapChain::Image* image;
 		vi::SwapChain::Frame* frame;
 
-		swapChain.GetNext(image, frame);
+		const auto result = swapChain.GetNext(image, frame);
+		if(!result)
+		{
+			// Recreate pipeline.
+		}
+
 		auto& extent = swapChain.extent;
 
 		renderer.BeginCommandBufferRecording(image->commandBuffer);

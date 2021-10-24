@@ -105,6 +105,7 @@ namespace vi
 			_renderer->DestroyFence(frame.inFlightFence);
 		}
 		frames.clear();
+		imagesInFlight.clear();
 
 		vkDestroySwapchainKHR(device, swapChain, nullptr);
 	}
@@ -118,12 +119,12 @@ namespace vi
 		CreateCommandBuffers();
 	}
 
-	void SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
+	VkResult SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
 	{
 		outFrame = &frames[_frameIndex];
 
 		vkWaitForFences(_renderer->device, 1, &outFrame->inFlightFence, VK_TRUE, UINT64_MAX);
-		vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
+		const auto result = vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
 
 		outImage = &images[_imageIndex];
 
@@ -133,6 +134,8 @@ namespace vi
 		imageInFlight = outFrame->inFlightFence;
 
 		vkResetFences(_renderer->device, 1, &outFrame->inFlightFence);
+
+		return result;
 	}
 
 	void SwapChain::Present()
