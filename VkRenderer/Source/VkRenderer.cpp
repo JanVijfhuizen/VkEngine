@@ -342,6 +342,30 @@ namespace vi
 		vkDestroyImageView(device, imageView, nullptr);
 	}
 
+	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass) const
+	{
+		const auto& extent = swapChain.extent;
+
+		VkFramebufferCreateInfo framebufferInfo{};
+		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+		framebufferInfo.renderPass = renderPass;
+		framebufferInfo.attachmentCount = 1;
+		framebufferInfo.pAttachments = &imageView;
+		framebufferInfo.width = extent.width;
+		framebufferInfo.height = extent.height;
+		framebufferInfo.layers = 1;
+
+		VkFramebuffer frameBuffer;
+		const auto result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffer);
+		assert(!result);
+		return frameBuffer;
+	}
+
+	void VkRenderer::DestroyFrameBuffer(const VkFramebuffer frameBuffer) const
+	{
+		vkDestroyFramebuffer(device, frameBuffer, nullptr);
+	}
+
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
 	{
 		VkCommandBufferBeginInfo beginInfo{};

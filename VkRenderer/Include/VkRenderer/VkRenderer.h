@@ -57,6 +57,9 @@ namespace vi
 		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format) const;
 		void DestroyImageView(VkImageView imageView) const;
 
+		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass) const;
+		void DestroyFrameBuffer(VkFramebuffer frameBuffer) const;
+
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
 

@@ -44,12 +44,12 @@ namespace vi
 	private:
 		VkRenderer* _renderer;
 
-		void CreateImages(VkDevice device);
-		void CreateImageViews(VkDevice device);
-		void CreateCommandBuffers(VkRenderer& renderer);
+		void CreateImages();
+		void CreateImageViews();
+		void CreateCommandBuffers();
 
-		void CreateFrameBuffers(VkDevice device, VkRenderPass renderPass);
-		void CleanupFrameBuffers(VkDevice device);
+		void CreateFrameBuffers();
+		void CleanupFrameBuffers();
 
 		[[nodiscard]] static VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		[[nodiscard]] static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);
