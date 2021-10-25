@@ -40,11 +40,8 @@ namespace vi
 		std::vector<VkFence> imagesInFlight{};
 		VkRenderPass renderPass;
 
-		SwapChain();
 		explicit SwapChain(VkRenderer& renderer);
-
-		void Construct();
-		void Cleanup();
+		~SwapChain();
 
 		void SetRenderPass(VkRenderPass renderPass);
 		[[nodiscard]] VkResult GetNext(Image*& outImage, Frame*& outFrame);

@@ -2,7 +2,6 @@
 #include "Debugger.h"
 #include "PhysicalDeviceFactory.h"
 #include "Queues.h"
-#include "SwapChain.h"
 #include "Pipeline.h"
 
 namespace vi
@@ -27,7 +26,6 @@ namespace vi
 
 		WindowSystem& windowSystem;
 		Debugger debugger{};
-		SwapChain swapChain{};
 
 		VkInstance instance;
 		VkSurfaceKHR surface;
@@ -57,7 +55,7 @@ namespace vi
 		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format) const;
 		void DestroyImageView(VkImageView imageView) const;
 
-		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass) const;
+		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass, VkExtent2D extent) const;
 		void DestroyFrameBuffer(VkFramebuffer frameBuffer) const;
 
 		[[nodiscard]] VkSemaphore CreateSemaphore() const;
@@ -78,11 +76,5 @@ namespace vi
 
 		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const;
-
-		void Rebuild();
-
-	private:
-		void CreateSwapChainDependencies();
-		void CleanupSwapChainDependendies();
 	};
 }

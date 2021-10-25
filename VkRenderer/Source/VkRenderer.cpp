@@ -16,7 +16,6 @@ namespace vi
 		*this->settings = settings;
 
 		debugger = Debugger{ *this };
-		swapChain = SwapChain{ *this };
 
 		InstanceFactory{*this};
 
@@ -26,8 +25,6 @@ namespace vi
 		PhysicalDeviceFactory{*this, settings.physicalDevice};
 		LogicalDeviceFactory{*this};
 		CommandPoolFactory{*this};
-
-		CreateSwapChainDependencies();
 	}
 
 	VkRenderer::~VkRenderer()
@@ -35,7 +32,6 @@ namespace vi
 		const auto result = vkDeviceWaitIdle(device);
 		assert(!result);
 
-		CleanupSwapChainDependendies();
 		CommandPoolFactory::Cleanup(*this);
 		LogicalDeviceFactory::Cleanup(*this);
 		debugger.Cleanup();
@@ -65,7 +61,7 @@ namespace vi
 	VkRenderPass VkRenderer::CreateRenderPass(const RenderPassInfo& info) const
 	{
 		const uint32_t attachmentsCount = info.attachments.size();
-		const auto& format = swapChain.format;
+		const auto& format = info.format;
 
 		std::vector<VkAttachmentDescription> descriptions{};
 		descriptions.resize(info.attachments.size());
@@ -193,7 +189,7 @@ namespace vi
 		inputAssembly.topology = info.primitiveTopology;
 		inputAssembly.primitiveRestartEnable = info.primitiveRestartEnable;
 
-		const auto& extent = swapChain.extent;
+		const auto& extent = info.extent;
 
 		VkViewport viewport{};
 		viewport.x = 0;
@@ -355,10 +351,8 @@ namespace vi
 		vkDestroyImageView(device, imageView, nullptr);
 	}
 
-	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass) const
+	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass, const VkExtent2D extent) const
 	{
-		const auto& extent = swapChain.extent;
-
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
@@ -484,21 +478,5 @@ namespace vi
 
 		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, fence);
 		assert(!result);
-	}
-
-	void VkRenderer::Rebuild()
-	{
-		CleanupSwapChainDependendies();
-		CreateSwapChainDependencies();
-	}
-
-	void VkRenderer::CreateSwapChainDependencies()
-	{
-		swapChain.Construct();
-	}
-
-	void VkRenderer::CleanupSwapChainDependendies()
-	{
-		swapChain.Cleanup();
 	}
 }
