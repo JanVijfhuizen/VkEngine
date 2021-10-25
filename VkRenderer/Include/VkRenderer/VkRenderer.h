@@ -65,14 +65,14 @@ namespace vi
 		void DestroyFence(VkFence fence) const;
 
 		template <typename T>
-		[[nodiscard]] VkBuffer CreateBuffer(uint32_t vertCount, VkBufferUsageFlags flags) const;
+		[[nodiscard]] VkBuffer CreateBuffer(uint32_t count, VkBufferUsageFlags flags) const;
 		void DestroyBuffer(VkBuffer buffer);
 
 		[[nodiscard]] VkDeviceMemory AllocateMemory(VkBuffer buffer) const;
 		void BindMemory(VkBuffer buffer, VkDeviceMemory memory);
 		void FreeMemory(VkDeviceMemory memory);
 		template <typename T>
-		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, VkDeviceSize size);
+		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, uint32_t count);
 
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
@@ -100,11 +100,11 @@ namespace vi
 	};
 
 	template <typename T>
-	VkBuffer VkRenderer::CreateBuffer(const uint32_t vertCount, const VkBufferUsageFlags flags) const
+	VkBuffer VkRenderer::CreateBuffer(const uint32_t count, const VkBufferUsageFlags flags) const
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-		bufferInfo.size = sizeof(T) * vertCount;
+		bufferInfo.size = sizeof(T) * count;
 		bufferInfo.usage = flags;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -115,11 +115,12 @@ namespace vi
 	}
 
 	template <typename T>
-	void VkRenderer::MapMemory(const VkDeviceMemory memory, T* input, const VkDeviceSize offset, const VkDeviceSize size)
+	void VkRenderer::MapMemory(const VkDeviceMemory memory, T* input, const VkDeviceSize offset, const uint32_t count)
 	{
 		void* data;
+		const uint32_t size = count * sizeof(T);
 		vkMapMemory(device, memory, offset, size, 0, &data);
-		memcpy(data, input, static_cast<size_t>(size));
+		memcpy(data, input, size);
 		vkUnmapMemory(device, memory);
 	}
 
