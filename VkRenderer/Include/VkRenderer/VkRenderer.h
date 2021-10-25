@@ -46,7 +46,7 @@ namespace vi
 		[[nodiscard]] VkDescriptorSetLayout CreateLayout(const struct DescriptorLayoutInfo& info) const;
 		void DestroyLayout(VkDescriptorSetLayout layout) const;
 
-		[[nodiscard]] Pipeline CreatePipeline(const struct PipelineLayout& info) const;
+		[[nodiscard]] Pipeline CreatePipeline(const struct PipelineLayoutInfo& info) const;
 		void DestroyPipeline(Pipeline pipeline) const;
 
 		[[nodiscard]] VkCommandBuffer CreateCommandBuffer() const;
@@ -65,7 +65,7 @@ namespace vi
 		void DestroyFence(VkFence fence) const;
 
 		template <typename T>
-		[[nodiscard]] VkBuffer CreateVertexBuffer(uint32_t vertCount) const;
+		[[nodiscard]] VkBuffer CreateBuffer(uint32_t vertCount, VkBufferUsageFlags flags) const;
 		void DestroyBuffer(VkBuffer buffer);
 
 		[[nodiscard]] VkDeviceMemory AllocateMemory(VkBuffer buffer) const;
@@ -84,6 +84,13 @@ namespace vi
 		void BindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline);
 		void BindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkDescriptorSet* sets, uint32_t setCount);
 
+		void BindVertexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer);
+		void BindIndicesBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer);
+
+		template <typename T>
+		void UpdatePushConstant(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkFlags flag, const T& input);
+
+		void Draw(VkCommandBuffer commandBuffer, uint32_t indexCount);
 		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const;
 
@@ -93,12 +100,12 @@ namespace vi
 	};
 
 	template <typename T>
-	VkBuffer VkRenderer::CreateVertexBuffer(const uint32_t vertCount) const
+	VkBuffer VkRenderer::CreateBuffer(const uint32_t vertCount, const VkBufferUsageFlags flags) const
 	{
 		VkBufferCreateInfo bufferInfo{};
 		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
 		bufferInfo.size = sizeof(T) * vertCount;
-		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		bufferInfo.usage = flags;
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		VkBuffer vertexBuffer;
@@ -114,5 +121,12 @@ namespace vi
 		vkMapMemory(device, memory, offset, size, 0, &data);
 		memcpy(data, input, static_cast<size_t>(size));
 		vkUnmapMemory(device, memory);
+	}
+
+	template <typename T>
+	void VkRenderer::UpdatePushConstant(const VkCommandBuffer commandBuffer, 
+		const VkPipelineLayout layout, const VkFlags flag, const T& input)
+	{
+		vkCmdPushConstants(commandBuffer, layout, flag, 0, sizeof(T), &input);
 	}
 }

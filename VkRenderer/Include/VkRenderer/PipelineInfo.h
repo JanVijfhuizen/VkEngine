@@ -2,7 +2,7 @@
 
 namespace vi
 {
-	struct PipelineLayout final
+	struct PipelineLayoutInfo final
 	{
 		struct Module final
 		{

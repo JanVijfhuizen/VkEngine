@@ -158,7 +158,7 @@ namespace vi
 		vkDestroyDescriptorSetLayout(device, layout, nullptr);
 	}
 
-	Pipeline VkRenderer::CreatePipeline(const PipelineLayout& info) const
+	Pipeline VkRenderer::CreatePipeline(const PipelineLayoutInfo& info) const
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> modules{};
 		
@@ -491,6 +491,22 @@ namespace vi
 	{
 		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0,
 			setCount, sets, 0, nullptr);
+	}
+
+	void VkRenderer::BindVertexBuffer(const VkCommandBuffer commandBuffer, const VkBuffer buffer)
+	{
+		VkDeviceSize offset = 0;
+		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer, &offset);
+	}
+
+	void VkRenderer::BindIndicesBuffer(const VkCommandBuffer commandBuffer, const VkBuffer buffer)
+	{
+		vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT16);
+	}
+
+	void VkRenderer::Draw(const VkCommandBuffer commandBuffer, const uint32_t indexCount)
+	{
+		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
 	}
 
 	void VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,

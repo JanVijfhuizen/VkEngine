@@ -59,7 +59,7 @@ int main()
 	camLayoutInfo.bindings.push_back(camBinding);
 	const auto camLayout = renderer.CreateLayout(camLayoutInfo);
 
-	vi::PipelineLayout pipelineInfo{};
+	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
 	pipelineInfo.setLayouts.push_back(camLayout);
@@ -84,19 +84,15 @@ int main()
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
 
 	vk::Mesh::Info meshInfo{};
-	const auto vertBuffer = renderer.CreateVertexBuffer<Vertex>(meshInfo.vertices.size());
+	const auto vertBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	const auto vertMem = renderer.AllocateMemory(vertBuffer);
-	const auto indBuffer = renderer.CreateVertexBuffer<uint16_t>(meshInfo.indices.size());
-	const auto indMem = renderer.AllocateMemory(indBuffer);
-
+	renderer.BindMemory(vertBuffer, vertMem);
 	renderer.MapMemory(vertMem, meshInfo.vertices.data(), 0, meshInfo.vertices.size());
+
+	const auto indBuffer = renderer.CreateBuffer<uint16_t>(meshInfo.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+	const auto indMem = renderer.AllocateMemory(indBuffer);
+	renderer.BindMemory(indBuffer, indMem);
 	renderer.MapMemory(indMem, meshInfo.indices.data(), 0, meshInfo.indices.size());
-
-	renderer.FreeMemory(vertMem);
-	renderer.FreeMemory(indMem);
-
-	renderer.DestroyBuffer(vertBuffer);
-	renderer.DestroyBuffer(indBuffer);
 
 	while(true)
 	{
@@ -122,6 +118,14 @@ int main()
 		renderer.BindPipeline(image->commandBuffer, pipeline.pipeline);
 
 		//renderer.BindDescriptorSets(image->commandBuffer, pipeline.layout, &camLayout, 1);
+		renderer.BindVertexBuffer(image->commandBuffer, vertBuffer);
+		renderer.BindIndicesBuffer(image->commandBuffer, indBuffer);
+
+		Transform transform{};
+
+		renderer.UpdatePushConstant(image->commandBuffer, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
+
+		renderer.Draw(image->commandBuffer, meshInfo.indices.size());
 
 		renderer.EndRenderPass(image->commandBuffer, swapChain.renderPass);
 		renderer.EndCommandBufferRecording(image->commandBuffer);
@@ -129,6 +133,12 @@ int main()
 		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
 		swapChain.Present();
 	}
+
+	renderer.FreeMemory(vertMem);
+	renderer.FreeMemory(indMem);
+
+	renderer.DestroyBuffer(vertBuffer);
+	renderer.DestroyBuffer(indBuffer);
 
 	renderer.DestroyPipeline(pipeline);
 	renderer.DestroyLayout(camLayout);
