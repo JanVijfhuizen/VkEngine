@@ -24,6 +24,7 @@ namespace vi
 		std::vector<PushConstant> pushConstants{};
 
 		VkRenderPass renderPass;
+		VkExtent2D extent;
 
 		VkPrimitiveTopology primitiveTopology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
 		VkBool32 primitiveRestartEnable = VK_FALSE;

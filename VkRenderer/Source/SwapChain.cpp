@@ -22,16 +22,7 @@ namespace vi
 		return imageCount;
 	}
 
-	SwapChain::SwapChain()
-	{
-	}
-
 	SwapChain::SwapChain(VkRenderer& renderer) : _renderer(&renderer)
-	{
-		
-	}
-
-	void SwapChain::Construct()
 	{
 		const SupportDetails support = QuerySwapChainSupport(_renderer->surface, _renderer->physicalDevice);
 		const auto families = PhysicalDeviceFactory::GetQueueFamilies(_renderer->surface, _renderer->physicalDevice);
@@ -88,7 +79,7 @@ namespace vi
 		CreateSyncObjects();
 	}
 
-	void SwapChain::Cleanup()
+	SwapChain::~SwapChain()
 	{
 		auto& device = _renderer->device;
 
@@ -99,7 +90,7 @@ namespace vi
 		images.clear();
 
 		for (const auto& frame : frames)
-		{	
+		{
 			_renderer->DestroySemaphore(frame.imageAvailableSemaphore);
 			_renderer->DestroySemaphore(frame.renderFinishedSemaphore);
 			_renderer->DestroyFence(frame.inFlightFence);
@@ -157,7 +148,7 @@ namespace vi
 	void SwapChain::CreateFrameBuffers()
 	{
 		for (auto& image : images)
-			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass);
+			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass, extent);
 	}
 
 	void SwapChain::CleanupFrameBuffers()

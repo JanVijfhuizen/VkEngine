@@ -7,6 +7,7 @@
 #include "Vertex.h"
 #include "VkRenderer/RenderPassInfo.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
+#include "VkRenderer/SwapChain.h"
 
 struct Transform final
 {
@@ -34,17 +35,21 @@ int main()
 		settings
 	};
 
+	vi::SwapChain swapChain{ renderer };
+
+	vi::RenderPassInfo renderPassInfo{};
+	vi::RenderPassInfo::Attachment renderPassAttachment{};
+	renderPassInfo.attachments.push_back(renderPassAttachment);
+	renderPassInfo.format = swapChain.format;
+
+	const auto renderPass = renderer.CreateRenderPass(renderPassInfo);
+	swapChain.SetRenderPass(renderPass);
+
 	const auto vertCode = FileReader::Read("Shaders/vert.spv");
 	const auto fragCode = FileReader::Read("Shaders/frag.spv");
 
 	const auto vertModule = renderer.CreateShaderModule(vertCode);
 	const auto fragModule = renderer.CreateShaderModule(fragCode);
-
-	vi::RenderPassInfo renderPassInfo{};
-	vi::RenderPassInfo::Attachment renderPassAttachment{};
-	renderPassInfo.attachments.push_back(renderPassAttachment);
-
-	const auto renderPass = renderer.CreateRenderPass(renderPassInfo);
 
 	vi::DescriptorLayoutInfo camLayoutInfo{};
 	vi::DescriptorLayoutInfo::Binding camBinding{};
@@ -73,9 +78,9 @@ int main()
 			VK_SHADER_STAGE_VERTEX_BIT
 		});
 	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.extent = swapChain.extent;
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
-	renderer.swapChain.SetRenderPass(renderPass);
 
 	while(true)
 	{
@@ -83,8 +88,6 @@ int main()
 		windowSystem.BeginFrame(quit);
 		if (quit)
 			break;
-
-		auto& swapChain = renderer.swapChain;
 
 		vi::SwapChain::Image* image;
 		vi::SwapChain::Frame* frame;
@@ -108,7 +111,7 @@ int main()
 		renderer.EndCommandBufferRecording(image->commandBuffer);
 
 		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
-		renderer.swapChain.Present();
+		swapChain.Present();
 	}
 
 	renderer.DestroyPipeline(pipeline);
