@@ -1,4 +1,5 @@
 #include "pch.h"
+
 #include "Cecsar.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/VkRenderer.h"
@@ -101,37 +102,38 @@ int main()
 		if (quit)
 			break;
 
-		vi::SwapChain::Image* image;
+		vi::SwapChain::Buffers* buffers;
 		vi::SwapChain::Frame* frame;
 
-		const auto result = swapChain.GetNext(image, frame);
-		if(!result)
-		{
-			// Recreate pipeline.
-		}
+		swapChain.GetNext(buffers, frame);
 
 		auto& extent = swapChain.extent;
 
-		renderer.BeginCommandBufferRecording(image->commandBuffer);
-		renderer.BeginRenderPass(image->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
+		renderer.BeginCommandBufferRecording(buffers->commandBuffer);
+		renderer.BeginRenderPass(buffers->commandBuffer, buffers->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
 
-		renderer.BindPipeline(image->commandBuffer, pipeline.pipeline);
+		renderer.BindPipeline(buffers->commandBuffer, pipeline.pipeline);
 
 		//renderer.BindDescriptorSets(image->commandBuffer, pipeline.layout, &camLayout, 1);
-		renderer.BindVertexBuffer(image->commandBuffer, vertBuffer);
-		renderer.BindIndicesBuffer(image->commandBuffer, indBuffer);
+		renderer.BindVertexBuffer(buffers->commandBuffer, vertBuffer);
+		renderer.BindIndicesBuffer(buffers->commandBuffer, indBuffer);
 
 		Transform transform{};
 
-		renderer.UpdatePushConstant(image->commandBuffer, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
+		renderer.UpdatePushConstant(buffers->commandBuffer, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
 
-		renderer.Draw(image->commandBuffer, meshInfo.indices.size());
+		renderer.Draw(buffers->commandBuffer, meshInfo.indices.size());
 
-		renderer.EndRenderPass(image->commandBuffer, swapChain.renderPass);
-		renderer.EndCommandBufferRecording(image->commandBuffer);
+		renderer.EndRenderPass(buffers->commandBuffer);
+		renderer.EndCommandBufferRecording(buffers->commandBuffer);
 
-		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
-		swapChain.Present();
+		swapChain.WaitForImage();
+		renderer.Submit(&buffers->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
+		const auto result = swapChain.Present();
+		if (!result)
+		{
+			// Recreate pipeline.
+		}
 	}
 
 	renderer.DestroyPipeline(pipeline);

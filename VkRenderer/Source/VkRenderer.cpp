@@ -278,7 +278,6 @@ namespace vi
 		pipelineInfo.layout = pipelineLayout;
 		pipelineInfo.renderPass = info.renderPass;
 		pipelineInfo.subpass = 0;
-		// Todo optimize with base pipeline.
 		pipelineInfo.basePipelineHandle = info.basePipeline;
 		pipelineInfo.basePipelineIndex = info.basePipelineIndex;
 
@@ -444,6 +443,7 @@ namespace vi
 		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
 		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
 
+		vkResetCommandBuffer(commandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 		vkBeginCommandBuffer(commandBuffer, &beginInfo);
 	}
 
@@ -476,7 +476,7 @@ namespace vi
 		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
-	void VkRenderer::EndRenderPass(const VkCommandBuffer commandBuffer, const VkRenderPass renderPass)
+	void VkRenderer::EndRenderPass(const VkCommandBuffer commandBuffer)
 	{
 		vkCmdEndRenderPass(commandBuffer);
 	}
@@ -524,6 +524,7 @@ namespace vi
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 
+		vkResetFences(device, 1, &fence);
 		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, fence);
 		assert(!result);
 	}

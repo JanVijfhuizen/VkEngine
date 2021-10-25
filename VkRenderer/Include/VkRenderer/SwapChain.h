@@ -21,8 +21,6 @@ namespace vi
 		{
 			VkImage image;
 			VkImageView imageView;
-			VkFramebuffer frameBuffer;
-			VkCommandBuffer commandBuffer;
 		};
 
 		struct Frame final
@@ -32,11 +30,18 @@ namespace vi
 			VkFence inFlightFence;
 		};
 
+		struct Buffers final
+		{
+			VkFramebuffer frameBuffer;
+			VkCommandBuffer commandBuffer;
+		};
+
 		VkSwapchainKHR swapChain;
 		VkFormat format;
 		VkExtent2D extent;
 		std::vector<Image> images{};
 		std::vector<Frame> frames{};
+		std::vector<Buffers> buffers{};
 		std::vector<VkFence> imagesInFlight{};
 		VkRenderPass renderPass;
 
@@ -44,9 +49,10 @@ namespace vi
 		~SwapChain();
 
 		void SetRenderPass(VkRenderPass renderPass);
-		[[nodiscard]] VkResult GetNext(Image*& outImage, Frame*& outFrame);
+		void GetNext(Buffers*& outBuffers, Frame*& outFrame);
 
-		void Present();
+		void WaitForImage();
+		[[nodiscard]] VkResult Present();
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
@@ -55,17 +61,14 @@ namespace vi
 
 		VkRenderer* _renderer;
 		uint32_t _frameIndex = 0;
+		uint32_t _bufferIndex = 0;
 		uint32_t _imageIndex;
 
 		void CreateImages();
-		void CreateImageViews();
 		void CreateSyncObjects();
 
-		void CreateCommandBuffers();
-		void CleanupCommandBuffers();
-
-		void CreateFrameBuffers();
-		void CleanupFrameBuffers();
+		void CreateBuffers();
+		void CleanupBuffers();
 
 		[[nodiscard]] static VkSurfaceFormatKHR ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats);
 		[[nodiscard]] static VkPresentModeKHR ChoosePresentMode(const std::vector<VkPresentModeKHR>& availablePresentModes);

@@ -79,7 +79,7 @@ namespace vi
 
 		void BeginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, 
 			VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
-		void EndRenderPass(VkCommandBuffer commandBuffer, VkRenderPass renderPass);
+		void EndRenderPass(VkCommandBuffer commandBuffer);
 
 		void BindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline);
 		void BindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkDescriptorSet* sets, uint32_t setCount);

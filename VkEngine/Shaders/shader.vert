@@ -50,7 +50,7 @@ void main()
 {
     vec2 pos = get_pos();
 
-    gl_Position = vec4(make_camera_relative(pos), 0.0, 1.0);
-    outFragPos = pos;
+    gl_Position = vec4(inPosition, 0, 0);//vec4(make_camera_relative(pos), 0.0, 1.0);
+    outFragPos = inPosition;//pos;
     outFragTexCoord = inTexCoords;
 }

@@ -75,7 +75,6 @@ namespace vi
 		imagesInFlight.resize(images.size(), VK_NULL_HANDLE);
 
 		CreateImages();
-		CreateImageViews();
 		CreateSyncObjects();
 	}
 
@@ -87,8 +86,7 @@ namespace vi
 
 		auto& device = _renderer->device;
 
-		CleanupFrameBuffers();
-		CleanupCommandBuffers();
+		CleanupBuffers();
 
 		for (const auto& image : images)
 			_renderer->DestroyImageView(image.imageView);
@@ -109,32 +107,31 @@ namespace vi
 	void SwapChain::SetRenderPass(const VkRenderPass renderPass)
 	{
 		this->renderPass = renderPass;
-		CleanupFrameBuffers();
-		CreateFrameBuffers();
-		CleanupCommandBuffers();
-		CreateCommandBuffers();
+		CleanupBuffers();
+		CreateBuffers();
 	}
 
-	VkResult SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
+	void SwapChain::GetNext(Buffers*& outBuffers, Frame*& outFrame)
 	{
 		outFrame = &frames[_frameIndex];
+		outBuffers = &buffers[_bufferIndex];
+	}
 
-		vkWaitForFences(_renderer->device, 1, &outFrame->inFlightFence, VK_TRUE, UINT64_MAX);
-		const auto result = vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, outFrame->imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
+	void SwapChain::WaitForImage()
+	{
+		auto& frame = frames[_frameIndex];
 
-		outImage = &images[_imageIndex];
+		vkWaitForFences(_renderer->device, 1, &frame.inFlightFence, VK_TRUE, UINT64_MAX);
+		const auto result = vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, frame.imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
+		assert(!result);
 
 		auto& imageInFlight = imagesInFlight[_imageIndex];
 		if (imageInFlight != VK_NULL_HANDLE)
 			vkWaitForFences(_renderer->device, 1, &imageInFlight, VK_TRUE, UINT64_MAX);
-		imageInFlight = outFrame->inFlightFence;
-
-		vkResetFences(_renderer->device, 1, &outFrame->inFlightFence);
-
-		return result;
+		imageInFlight = frame.inFlightFence;
 	}
 
-	void SwapChain::Present()
+	VkResult SwapChain::Present()
 	{
 		auto& frame = frames[_frameIndex];
 
@@ -145,21 +142,49 @@ namespace vi
 		presentInfo.swapchainCount = 1;
 		presentInfo.pSwapchains = &swapChain;
 		presentInfo.pImageIndices = &_imageIndex;
-		
-		vkQueuePresentKHR(_renderer->queues.present, &presentInfo);
+
+		const auto result = vkQueuePresentKHR(_renderer->queues.present, &presentInfo);
+
 		_frameIndex = (_frameIndex + 1) % frames.size();
+		_bufferIndex = (_bufferIndex + 1) % buffers.size();
+
+		return result;
 	}
 
-	void SwapChain::CreateFrameBuffers()
+	void SwapChain::CreateBuffers()
 	{
-		for (auto& image : images)
-			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass, extent);
+		const uint32_t count = images.size();
+		buffers.resize(count);
+
+		std::vector<VkCommandBuffer> commandBuffers{};
+		commandBuffers.resize(count);
+
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.commandPool = _renderer->commandPool;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
+
+		const auto result = vkAllocateCommandBuffers(_renderer->device, &allocInfo, commandBuffers.data());
+		assert(!result);
+
+		for (uint32_t i = 0; i < count; ++i)
+		{
+			auto& image = images[i];
+			auto& buffer = buffers[i];
+
+			buffer.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass, extent);
+			buffer.commandBuffer = commandBuffers[i];
+		}
 	}
 
-	void SwapChain::CleanupFrameBuffers()
+	void SwapChain::CleanupBuffers()
 	{
-		for (const auto& image : images)
-			_renderer->DestroyFrameBuffer(image.frameBuffer);
+		for (auto& buffer : buffers)
+		{
+			_renderer->DestroyFrameBuffer(buffer.frameBuffer);
+			_renderer->DestroyCommandBuffer(buffer.commandBuffer);
+		}
 	}
 
 	VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -214,16 +239,9 @@ namespace vi
 		vkGetSwapchainImagesKHR(_renderer->device, swapChain, &count, vkImages.data());
 
 		for (uint32_t i = 0; i < count; ++i)
-			images[i].image = vkImages[i];
-	}
-
-	void SwapChain::CreateImageViews()
-	{
-		const uint32_t count = images.size();
-
-		for (uint32_t i = 0; i < count; ++i)
 		{
 			auto& image = images[i];
+			image.image = vkImages[i];
 			image.imageView = _renderer->CreateImageView(image.image, format);
 		}
 	}
@@ -236,34 +254,6 @@ namespace vi
 			frame.renderFinishedSemaphore = _renderer->CreateSemaphore();
 			frame.inFlightFence = _renderer->CreateFence();
 		}
-	}
-
-	void SwapChain::CreateCommandBuffers()
-	{
-		const uint32_t count = images.size();
-
-		std::vector<VkCommandBuffer> commandBuffers{};
-		commandBuffers.resize(count);
-
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = _renderer->commandPool;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
-
-		const auto result = vkAllocateCommandBuffers(_renderer->device, &allocInfo, commandBuffers.data());
-		assert(!result);
-
-		for (uint32_t i = 0; i < count; ++i)
-			images[i].commandBuffer = commandBuffers[i];
-	}
-
-	void SwapChain::CleanupCommandBuffers()
-	{
-		const uint32_t count = images.size();
-
-		for (uint32_t i = 0; i < count; ++i)
-			_renderer->DestroyCommandBuffer(images[i].commandBuffer);
 	}
 
 	SwapChain::SupportDetails SwapChain::QuerySwapChainSupport(const VkSurfaceKHR surface, const VkPhysicalDevice device)
