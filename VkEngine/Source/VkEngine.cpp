@@ -86,9 +86,7 @@ int main()
 
 	vk::Mesh::Info meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
-	{
 		vertex.pos /= 2;
-	}
 
 	const auto vertBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	const auto vertMem = renderer.AllocateMemory(vertBuffer);
