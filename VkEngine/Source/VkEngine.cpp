@@ -8,6 +8,7 @@
 #include "VkRenderer/RenderPassInfo.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
 #include "VkRenderer/SwapChain.h"
+#include "Mesh.h"
 
 struct Transform final
 {
@@ -81,6 +82,21 @@ int main()
 	pipelineInfo.extent = swapChain.extent;
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
+
+	vk::Mesh::Info meshInfo{};
+	const auto vertBuffer = renderer.CreateVertexBuffer<Vertex>(meshInfo.vertices.size());
+	const auto vertMem = renderer.AllocateMemory(vertBuffer);
+	const auto indBuffer = renderer.CreateVertexBuffer<uint16_t>(meshInfo.indices.size());
+	const auto indMem = renderer.AllocateMemory(indBuffer);
+
+	renderer.MapMemory(vertMem, meshInfo.vertices.data(), 0, meshInfo.vertices.size());
+	renderer.MapMemory(indMem, meshInfo.indices.data(), 0, meshInfo.indices.size());
+
+	renderer.FreeMemory(vertMem);
+	renderer.FreeMemory(indMem);
+
+	renderer.DestroyBuffer(vertBuffer);
+	renderer.DestroyBuffer(indBuffer);
 
 	while(true)
 	{

@@ -29,8 +29,7 @@ namespace vi
 
 	VkRenderer::~VkRenderer()
 	{
-		const auto result = vkDeviceWaitIdle(device);
-		assert(!result);
+		DeviceWaitIdle();
 
 		CommandPoolFactory::Cleanup(*this);
 		LogicalDeviceFactory::Cleanup(*this);
@@ -406,6 +405,39 @@ namespace vi
 		vkDestroyFence(device, fence, nullptr);
 	}
 
+	void VkRenderer::DestroyBuffer(const VkBuffer buffer)
+	{
+		vkDestroyBuffer(device, buffer, nullptr);
+	}
+
+	VkDeviceMemory VkRenderer::AllocateMemory(const VkBuffer buffer) const
+	{
+		VkMemoryRequirements memRequirements;
+		vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+
+		VkMemoryAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+		allocInfo.allocationSize = memRequirements.size;
+		allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, 
+			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+
+		VkDeviceMemory memory;
+		const auto result = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
+		assert(!result);
+
+		return memory;
+	}
+
+	void VkRenderer::BindMemory(const VkBuffer buffer, const VkDeviceMemory memory)
+	{
+		vkBindBufferMemory(device, buffer, memory, 0);
+	}
+
+	void VkRenderer::FreeMemory(const VkDeviceMemory memory)
+	{
+		vkFreeMemory(device, memory, nullptr);
+	}
+
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
 	{
 		VkCommandBufferBeginInfo beginInfo{};
@@ -477,6 +509,31 @@ namespace vi
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 
 		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, fence);
+		assert(!result);
+	}
+
+	uint32_t VkRenderer::FindMemoryType(const uint32_t typeFilter, const VkMemoryPropertyFlags properties) const
+	{
+		VkPhysicalDeviceMemoryProperties memProperties;
+		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+			if (typeFilter & 1 << i)
+			{
+				const bool requiredPropertiesPresent = (memProperties.memoryTypes[i].propertyFlags & properties) == properties;
+				if (!requiredPropertiesPresent)
+					continue;
+
+				return i;
+			}
+
+		assert(false);
+		return -1;
+	}
+
+	void VkRenderer::DeviceWaitIdle() const
+	{
+		const auto result = vkDeviceWaitIdle(device);
 		assert(!result);
 	}
 }

@@ -64,6 +64,16 @@ namespace vi
 		[[nodiscard]] VkFence CreateFence() const;
 		void DestroyFence(VkFence fence) const;
 
+		template <typename T>
+		[[nodiscard]] VkBuffer CreateVertexBuffer(uint32_t vertCount) const;
+		void DestroyBuffer(VkBuffer buffer);
+
+		[[nodiscard]] VkDeviceMemory AllocateMemory(VkBuffer buffer) const;
+		void BindMemory(VkBuffer buffer, VkDeviceMemory memory);
+		void FreeMemory(VkDeviceMemory memory);
+		template <typename T>
+		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, VkDeviceSize size);
+
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
 
@@ -76,5 +86,33 @@ namespace vi
 
 		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const;
+
+		[[nodiscard]] uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
+
+		void DeviceWaitIdle() const;
 	};
+
+	template <typename T>
+	VkBuffer VkRenderer::CreateVertexBuffer(const uint32_t vertCount) const
+	{
+		VkBufferCreateInfo bufferInfo{};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = sizeof(T) * vertCount;
+		bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkBuffer vertexBuffer;
+		const auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer);
+		assert(!result);
+		return vertexBuffer;
+	}
+
+	template <typename T>
+	void VkRenderer::MapMemory(const VkDeviceMemory memory, T* input, const VkDeviceSize offset, const VkDeviceSize size)
+	{
+		void* data;
+		vkMapMemory(device, memory, offset, size, 0, &data);
+		memcpy(data, input, static_cast<size_t>(size));
+		vkUnmapMemory(device, memory);
+	}
 }

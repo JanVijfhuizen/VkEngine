@@ -165,6 +165,7 @@
     <ClInclude Include="Include\FileReader.h" />
     <ClInclude Include="Include\Cecsar.h" />
     <ClInclude Include="Include\Entity.h" />
+    <ClInclude Include="Include\Mesh.h" />
     <ClInclude Include="Include\Set.h" />
     <ClInclude Include="Include\SparseSet.h" />
     <ClInclude Include="Include\pch.h" />

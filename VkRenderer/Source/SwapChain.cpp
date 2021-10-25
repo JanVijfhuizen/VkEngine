@@ -81,9 +81,14 @@ namespace vi
 
 	SwapChain::~SwapChain()
 	{
+		for (auto& fence : imagesInFlight)
+			vkWaitForFences(_renderer->device, 1, &fence, VK_TRUE, UINT64_MAX);
+		_renderer->DeviceWaitIdle();
+
 		auto& device = _renderer->device;
 
 		CleanupFrameBuffers();
+		CleanupCommandBuffers();
 
 		for (const auto& image : images)
 			_renderer->DestroyImageView(image.imageView);
