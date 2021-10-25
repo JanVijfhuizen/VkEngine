@@ -62,7 +62,7 @@ int main()
 	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
-	pipelineInfo.setLayouts.push_back(camLayout);
+	//pipelineInfo.setLayouts.push_back(camLayout);
 	pipelineInfo.modules.push_back(
 		{
 			vertModule,
@@ -134,15 +134,15 @@ int main()
 		swapChain.Present();
 	}
 
+	renderer.DestroyPipeline(pipeline);
+	renderer.DestroyLayout(camLayout);
+	renderer.DestroyRenderPass(renderPass);
+
 	renderer.FreeMemory(vertMem);
 	renderer.FreeMemory(indMem);
 
 	renderer.DestroyBuffer(vertBuffer);
 	renderer.DestroyBuffer(indBuffer);
-
-	renderer.DestroyPipeline(pipeline);
-	renderer.DestroyLayout(camLayout);
-	renderer.DestroyRenderPass(renderPass);
 
 	renderer.DestroyShaderModule(vertModule);
 	renderer.DestroyShaderModule(fragModule);
