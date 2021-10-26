@@ -167,6 +167,11 @@ namespace vi
 		return _extent;
 	}
 
+	uint32_t SwapChain::GetImageCount() const
+	{
+		return _images.size();
+	}
+
 	void SwapChain::CreateBuffers()
 	{
 		const uint32_t count = _images.size();

@@ -153,6 +153,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClInclude Include="Include\VkRenderer\BindingInfo.h" />
     <ClInclude Include="Include\VkRenderer\CommandPoolFactory.h" />
     <ClInclude Include="Include\VkRenderer\DescriptorLayoutInfo.h" />
     <ClInclude Include="Include\VkRenderer\Pipeline.h" />

@@ -46,6 +46,11 @@ namespace vi
 		[[nodiscard]] VkDescriptorSetLayout CreateLayout(const struct DescriptorLayoutInfo& info) const;
 		void DestroyLayout(VkDescriptorSetLayout layout) const;
 
+		[[nodiscard]] VkDescriptorPool CreateDescriptorPool(VkDescriptorType* types, uint32_t typeCount, uint32_t maxSets) const;
+		void CreateDescriptorSets(VkDescriptorPool pool, VkDescriptorSetLayout layout, VkDescriptorSet* outSets, uint32_t setCount) const;
+		void BindBuffer(VkDescriptorSet set, VkBuffer buffer, const struct BindingInfo& info, uint32_t bindingIndex, uint32_t arrayIndex) const;
+		void DestroyDescriptorPool(VkDescriptorPool pool) const;
+
 		[[nodiscard]] Pipeline CreatePipeline(const struct PipelineLayoutInfo& info) const;
 		void DestroyPipeline(Pipeline pipeline) const;
 
@@ -83,8 +88,8 @@ namespace vi
 		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent) const;
 		void EndRenderPass() const;
 
-		void BindPipeline(VkPipeline pipeline) const;
-		void BindDescriptorSets(VkPipelineLayout layout, VkDescriptorSet* sets, uint32_t setCount) const;
+		void BindPipeline(Pipeline pipeline);
+		void BindDescriptorSets(VkDescriptorSet* sets, uint32_t setCount) const;
 
 		void BindVertexBuffer(VkBuffer buffer) const;
 		void BindIndicesBuffer(VkBuffer buffer) const;
@@ -114,6 +119,7 @@ namespace vi
 		VkCommandPool _commandPool;
 
 		VkCommandBuffer _currentCommandBuffer;
+		Pipeline _currentPipeline;
 	};
 
 	template <typename T>

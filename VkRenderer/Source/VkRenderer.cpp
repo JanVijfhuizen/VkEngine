@@ -159,6 +159,79 @@ namespace vi
 		vkDestroyDescriptorSetLayout(_device, layout, nullptr);
 	}
 
+	VkDescriptorPool VkRenderer::CreateDescriptorPool(VkDescriptorType* types, const uint32_t typeCount, const uint32_t maxSets) const
+	{
+		std::vector<VkDescriptorPoolSize> sizes{};
+		sizes.resize(typeCount);
+
+		for (uint32_t i = 0; i < typeCount; ++i)
+		{
+			auto& size = sizes[i];
+			size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			size.descriptorCount = maxSets;
+		}
+
+		VkDescriptorPoolCreateInfo poolInfo{};
+		poolInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+		poolInfo.poolSizeCount = typeCount;
+		poolInfo.pPoolSizes = sizes.data();
+		poolInfo.maxSets = maxSets;
+
+		VkDescriptorPool pool;
+		const auto result = vkCreateDescriptorPool(_device, &poolInfo, nullptr, &pool);
+		assert(!result);
+		return pool;
+	}
+
+	void VkRenderer::CreateDescriptorSets(const VkDescriptorPool pool, const VkDescriptorSetLayout layout, 
+		VkDescriptorSet* outSets, const uint32_t setCount) const
+	{
+		std::vector<VkDescriptorSetLayout> layouts(setCount, layout);
+
+		VkDescriptorSetAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+		allocInfo.descriptorPool = pool;
+		allocInfo.descriptorSetCount = setCount;
+		allocInfo.pSetLayouts = layouts.data();
+
+		const auto result = vkAllocateDescriptorSets(_device, &allocInfo, outSets);
+		assert(!result);
+	}
+
+	void VkRenderer::BindBuffer(const VkDescriptorSet set, const VkBuffer buffer, const BindingInfo& info, 
+		const uint32_t bindingIndex, const uint32_t arrayIndex) const
+	{
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = set;
+		descriptorWrite.dstBinding = bindingIndex;
+		descriptorWrite.dstArrayElement = arrayIndex;
+		descriptorWrite.descriptorType = info.type;
+		descriptorWrite.descriptorCount = 1;
+
+		VkDescriptorBufferInfo bufferInfo{};
+
+		switch (info.type) 
+		{
+		case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
+			bufferInfo.buffer = buffer;
+			bufferInfo.offset = 0;
+			bufferInfo.range = info.size;
+
+			descriptorWrite.pBufferInfo = &bufferInfo;
+			break;
+			// Todo textures and storage buffers.
+		default: ;
+		}
+
+		vkUpdateDescriptorSets(_device, 1, &descriptorWrite, 0, nullptr);
+	}
+
+	void VkRenderer::DestroyDescriptorPool(const VkDescriptorPool pool) const
+	{
+		vkDestroyDescriptorPool(_device, pool, nullptr);
+	}
+
 	Pipeline VkRenderer::CreatePipeline(const PipelineLayoutInfo& info) const
 	{
 		std::vector<VkPipelineShaderStageCreateInfo> modules{};
@@ -498,16 +571,16 @@ namespace vi
 		vkCmdEndRenderPass(_currentCommandBuffer);
 	}
 
-	void VkRenderer::BindPipeline(const VkPipeline pipeline) const
+	void VkRenderer::BindPipeline(const Pipeline pipeline)
 	{
-		vkCmdBindPipeline(_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		_currentPipeline = pipeline;
+		vkCmdBindPipeline(_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline.pipeline);
 	}
 
-	void VkRenderer::BindDescriptorSets(const VkPipelineLayout layout,
-		VkDescriptorSet* sets, const uint32_t setCount) const
+	void VkRenderer::BindDescriptorSets(VkDescriptorSet* sets, const uint32_t setCount) const
 	{
-		vkCmdBindDescriptorSets(_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0,
-			setCount, sets, 0, nullptr);
+		vkCmdBindDescriptorSets(_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, 
+			_currentPipeline.layout, 0, setCount, sets, 0, nullptr);
 	}
 
 	void VkRenderer::BindVertexBuffer(const VkBuffer buffer) const

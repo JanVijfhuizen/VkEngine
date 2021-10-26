@@ -52,7 +52,7 @@ int main()
 	const auto fragModule = renderer.CreateShaderModule(fragCode);
 
 	vi::DescriptorLayoutInfo camLayoutInfo{};
-	vi::DescriptorLayoutInfo::Binding camBinding{};
+	vi::BindingInfo camBinding{};
 	camBinding.size = sizeof Camera;
 	camBinding.flag = VK_SHADER_STAGE_VERTEX_BIT;
 	camLayoutInfo.bindings.push_back(camBinding);
@@ -61,7 +61,7 @@ int main()
 	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
-	//pipelineInfo.setLayouts.push_back(camLayout);
+	pipelineInfo.setLayouts.push_back(camLayout);
 	pipelineInfo.modules.push_back(
 		{
 			vertModule,
@@ -117,6 +117,17 @@ int main()
 	renderer.BindMemory(indBuffer, indMem);
 	renderer.MapMemory(indMem, meshInfo.indices.data(), 0, meshInfo.indices.size());
 
+	auto uboType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	const auto uboPool = renderer.CreateDescriptorPool(&uboType, 1, swapChain.GetImageCount());
+
+	VkDescriptorSet camSet;
+	renderer.CreateDescriptorSets(uboPool, camLayout, &camSet, 1);
+
+	const auto camBuffer = renderer.CreateBuffer<Camera>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	const auto camMem = renderer.AllocateMemory(camBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	renderer.BindMemory(camBuffer, camMem);
+	renderer.BindBuffer(camSet, camBuffer, camBinding, 0, 0);
+
 	while(true)
 	{
 		bool quit;
@@ -133,9 +144,9 @@ int main()
 		renderer.BeginCommandBufferRecording(image.commandBuffer);
 		renderer.BeginRenderPass(image.frameBuffer, swapChain.GetRenderPass(), {}, { extent.width, extent.height});
 
-		renderer.BindPipeline(pipeline.pipeline);
+		renderer.BindPipeline(pipeline);
+		renderer.BindDescriptorSets(&camSet, 1);
 
-		//renderer.BindDescriptorSets(image->commandBuffer, pipeline.layout, &camLayout, 1);
 		renderer.BindVertexBuffer(vertBuffer);
 		renderer.BindIndicesBuffer(indBuffer);
 
@@ -148,6 +159,13 @@ int main()
 		transform.transRot = f;
 
 		renderer.UpdatePushConstant(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
+
+		const auto resolution = windowSystem.GetVkInfo().resolution;
+
+		Camera camera{};
+		camera.aspectRatio = static_cast<float>(resolution.x) / resolution.y;
+		camera.pos.x = f / 10;
+		renderer.MapMemory(camMem, &camera, 0, 1);
 
 		renderer.Draw(meshInfo.indices.size());
 
@@ -163,6 +181,11 @@ int main()
 	}
 
 	swapChain.Cleanup();
+
+	renderer.FreeMemory(camMem);
+	renderer.DestroyBuffer(camBuffer);
+	
+	renderer.DestroyDescriptorPool(uboPool);
 
 	renderer.DestroyPipeline(pipeline);
 	renderer.DestroyLayout(camLayout);

@@ -3,13 +3,13 @@
 
 layout(location = 0) in vec2 inPosition;
 layout(location = 1) in vec2 inTexCoords;
-/*
+
 layout (set = 0, binding = 0) uniform Camera
 {
     vec3 pos;
     float aspectRatio;
 } camera;
-*/
+
 layout (push_constant) uniform PushConstants
 {
     vec2 transPos;
@@ -32,25 +32,23 @@ vec2 get_pos()
 {
     vec2 posRotated = rotate(inPosition, pushConstants.transRot);
     vec2 posScaled = posRotated * pushConstants.transScale;
-    vec2 translatedPos = pushConstants.transPos + posScaled;// - vec2(camera.pos.x, camera.pos.y);
+    vec2 translatedPos = pushConstants.transPos + posScaled;
     return translatedPos;
 }
 
 vec2 make_camera_relative(vec2 pos)
 {
-    /*
+    pos -= vec2(camera.pos.x, camera.pos.y);
     vec2 zoomedPos = pos / (1.0 + camera.pos.z);
     vec2 resPos = vec2(zoomedPos.x, zoomedPos.y * camera.aspectRatio);
     return resPos;
-    */
-    return pos;
 }
 
 void main() 
 {
     vec2 pos = get_pos();
 
-    gl_Position = vec4(pos, 0, 1);//vec4(make_camera_relative(pos), 0.0, 1.0);
+    gl_Position = vec4(make_camera_relative(pos), 0.0, 1.0);
     outFragPos = pos;
     outFragTexCoord = inTexCoords;
 }
