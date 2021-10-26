@@ -10,17 +10,17 @@
 
 namespace vi
 {
-	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) :  windowSystem(system)
+	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) :  _windowSystem(system)
 	{
-		this->settings = std::make_unique<Settings>();
-		*this->settings = settings;
+		_settings = std::make_unique<Settings>();
+		*_settings = settings;
 
-		debugger = Debugger{ *this };
+		_debugger = Debugger{ *this };
 
 		InstanceFactory{*this};
 
-		debugger.Construct();
-		windowSystem.CreateSurface(instance, surface);
+		_debugger.Construct();
+		_windowSystem.CreateSurface(_instance, _surface);
 
 		PhysicalDeviceFactory{*this, settings.physicalDevice};
 		LogicalDeviceFactory{*this};
@@ -33,8 +33,8 @@ namespace vi
 
 		CommandPoolFactory::Cleanup(*this);
 		LogicalDeviceFactory::Cleanup(*this);
-		debugger.Cleanup();
-		vkDestroySurfaceKHR(instance, surface, nullptr);
+		_debugger.Cleanup();
+		vkDestroySurfaceKHR(_instance, _surface, nullptr);
 		InstanceFactory::Cleanup(*this);
 	}
 
@@ -46,7 +46,7 @@ namespace vi
 		createInfo.pCode = reinterpret_cast<const uint32_t*>(data.data());
 
 		VkShaderModule vkModule;
-		const auto result = vkCreateShaderModule(device, &createInfo, nullptr, &vkModule);
+		const auto result = vkCreateShaderModule(_device, &createInfo, nullptr, &vkModule);
 		assert(!result);
 
 		return vkModule;
@@ -54,7 +54,7 @@ namespace vi
 
 	void VkRenderer::DestroyShaderModule(const VkShaderModule module) const
 	{
-		vkDestroyShaderModule(device, module, nullptr);
+		vkDestroyShaderModule(_device, module, nullptr);
 	}
 
 	VkRenderPass VkRenderer::CreateRenderPass(const RenderPassInfo& info) const
@@ -113,14 +113,14 @@ namespace vi
 		renderPassInfo.pDependencies = &dependency;
 
 		VkRenderPass renderPass;
-		const auto result = vkCreateRenderPass(device, &renderPassInfo, nullptr, &renderPass);
+		const auto result = vkCreateRenderPass(_device, &renderPassInfo, nullptr, &renderPass);
 		assert(!result);
 		return renderPass;
 	}
 
 	void VkRenderer::DestroyRenderPass(const VkRenderPass renderPass) const
 	{
-		vkDestroyRenderPass(device, renderPass, nullptr);
+		vkDestroyRenderPass(_device, renderPass, nullptr);
 	}
 
 	VkDescriptorSetLayout VkRenderer::CreateLayout(const DescriptorLayoutInfo& info) const
@@ -148,14 +148,14 @@ namespace vi
 		layoutInfo.pBindings = layoutBindings.data();
 
 		VkDescriptorSetLayout layout;
-		const auto result = vkCreateDescriptorSetLayout(device, &layoutInfo, nullptr, &layout);
+		const auto result = vkCreateDescriptorSetLayout(_device, &layoutInfo, nullptr, &layout);
 		assert(!result);
 		return layout;
 	}
 
 	void VkRenderer::DestroyLayout(const VkDescriptorSetLayout layout) const
 	{
-		vkDestroyDescriptorSetLayout(device, layout, nullptr);
+		vkDestroyDescriptorSetLayout(_device, layout, nullptr);
 	}
 
 	Pipeline VkRenderer::CreatePipeline(const PipelineLayoutInfo& info) const
@@ -259,7 +259,7 @@ namespace vi
 		pipelineLayoutInfo.pPushConstantRanges = pushConstantRanges.data();
 
 		VkPipelineLayout pipelineLayout;
-		auto result = vkCreatePipelineLayout(device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
+		auto result = vkCreatePipelineLayout(_device, &pipelineLayoutInfo, nullptr, &pipelineLayout);
 		assert(!result);
 		
 		VkGraphicsPipelineCreateInfo pipelineInfo{};
@@ -282,7 +282,7 @@ namespace vi
 		pipelineInfo.basePipelineIndex = info.basePipelineIndex;
 
 		VkPipeline graphicsPipeline;
-		result = vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
+		result = vkCreateGraphicsPipelines(_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &graphicsPipeline);
 		assert(!result);
 
 		return
@@ -294,20 +294,20 @@ namespace vi
 
 	void VkRenderer::DestroyPipeline(const Pipeline pipeline) const
 	{
-		vkDestroyPipeline(device, pipeline.pipeline, nullptr);
-		vkDestroyPipelineLayout(device, pipeline.layout, nullptr);
+		vkDestroyPipeline(_device, pipeline.pipeline, nullptr);
+		vkDestroyPipelineLayout(_device, pipeline.layout, nullptr);
 	}
 
 	VkCommandBuffer VkRenderer::CreateCommandBuffer() const
 	{
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = commandPool;
+		allocInfo.commandPool = _commandPool;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandBufferCount = 1;
 
 		VkCommandBuffer commandBuffer;
-		const auto result = vkAllocateCommandBuffers(device, &allocInfo, &commandBuffer);
+		const auto result = vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
 		assert(!result);
 
 		return commandBuffer;
@@ -315,7 +315,7 @@ namespace vi
 
 	void VkRenderer::DestroyCommandBuffer(const VkCommandBuffer commandBuffer) const
 	{
-		vkFreeCommandBuffers(device, commandPool, 1, &commandBuffer);
+		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 	}
 
 	VkImageView VkRenderer::CreateImageView(const VkImage image, const VkFormat format) const
@@ -339,14 +339,14 @@ namespace vi
 		createInfo.subresourceRange.layerCount = 1;
 
 		VkImageView imageView;
-		const auto result = vkCreateImageView(device, &createInfo, nullptr, &imageView);
+		const auto result = vkCreateImageView(_device, &createInfo, nullptr, &imageView);
 		assert(!result);
 		return imageView;
 	}
 
 	void VkRenderer::DestroyImageView(const VkImageView imageView) const
 	{
-		vkDestroyImageView(device, imageView, nullptr);
+		vkDestroyImageView(_device, imageView, nullptr);
 	}
 
 	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass, const VkExtent2D extent) const
@@ -361,14 +361,14 @@ namespace vi
 		framebufferInfo.layers = 1;
 
 		VkFramebuffer frameBuffer;
-		const auto result = vkCreateFramebuffer(device, &framebufferInfo, nullptr, &frameBuffer);
+		const auto result = vkCreateFramebuffer(_device, &framebufferInfo, nullptr, &frameBuffer);
 		assert(!result);
 		return frameBuffer;
 	}
 
 	void VkRenderer::DestroyFrameBuffer(const VkFramebuffer frameBuffer) const
 	{
-		vkDestroyFramebuffer(device, frameBuffer, nullptr);
+		vkDestroyFramebuffer(_device, frameBuffer, nullptr);
 	}
 
 	VkSemaphore VkRenderer::CreateSemaphore() const
@@ -377,14 +377,14 @@ namespace vi
 		semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
 		VkSemaphore semaphore;
-		const auto result = vkCreateSemaphore(device, &semaphoreInfo, nullptr, &semaphore);
+		const auto result = vkCreateSemaphore(_device, &semaphoreInfo, nullptr, &semaphore);
 		assert(!result);
 		return semaphore;
 	}
 
 	void VkRenderer::DestroySemaphore(const VkSemaphore semaphore) const
 	{
-		vkDestroySemaphore(device, semaphore, nullptr);
+		vkDestroySemaphore(_device, semaphore, nullptr);
 	}
 
 	VkFence VkRenderer::CreateFence() const
@@ -394,25 +394,25 @@ namespace vi
 		fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
 		VkFence fence;
-		const auto result = vkCreateFence(device, &fenceInfo, nullptr, &fence);
+		const auto result = vkCreateFence(_device, &fenceInfo, nullptr, &fence);
 		assert(!result);
 		return fence;
 	}
 
 	void VkRenderer::DestroyFence(const VkFence fence) const
 	{
-		vkDestroyFence(device, fence, nullptr);
+		vkDestroyFence(_device, fence, nullptr);
 	}
 
 	void VkRenderer::DestroyBuffer(const VkBuffer buffer)
 	{
-		vkDestroyBuffer(device, buffer, nullptr);
+		vkDestroyBuffer(_device, buffer, nullptr);
 	}
 
 	VkDeviceMemory VkRenderer::AllocateMemory(const VkBuffer buffer) const
 	{
 		VkMemoryRequirements memRequirements;
-		vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+		vkGetBufferMemoryRequirements(_device, buffer, &memRequirements);
 
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
@@ -421,7 +421,7 @@ namespace vi
 			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 
 		VkDeviceMemory memory;
-		const auto result = vkAllocateMemory(device, &allocInfo, nullptr, &memory);
+		const auto result = vkAllocateMemory(_device, &allocInfo, nullptr, &memory);
 		assert(!result);
 
 		return memory;
@@ -429,12 +429,12 @@ namespace vi
 
 	void VkRenderer::BindMemory(const VkBuffer buffer, const VkDeviceMemory memory)
 	{
-		vkBindBufferMemory(device, buffer, memory, 0);
+		vkBindBufferMemory(_device, buffer, memory, 0);
 	}
 
 	void VkRenderer::FreeMemory(const VkDeviceMemory memory)
 	{
-		vkFreeMemory(device, memory, nullptr);
+		vkFreeMemory(_device, memory, nullptr);
 	}
 
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
@@ -445,15 +445,17 @@ namespace vi
 
 		vkResetCommandBuffer(commandBuffer, VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+		_currentCommandBuffer = commandBuffer;
 	}
 
-	void VkRenderer::EndCommandBufferRecording(const VkCommandBuffer commandBuffer)
+	void VkRenderer::EndCommandBufferRecording() const
 	{
-		const auto result = vkEndCommandBuffer(commandBuffer);
+		const auto result = vkEndCommandBuffer(_currentCommandBuffer);
 		assert(!result);
 	}
 
-	void VkRenderer::BeginRenderPass(const VkCommandBuffer commandBuffer, const VkFramebuffer frameBuffer, 
+	void VkRenderer::BeginRenderPass(const VkFramebuffer frameBuffer, 
 		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent)
 	{
 		const VkExtent2D extentVk
@@ -473,40 +475,40 @@ namespace vi
 		renderPassInfo.clearValueCount = 1;
 		renderPassInfo.pClearValues = &clearColor;
 
-		vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+		vkCmdBeginRenderPass(_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
 
-	void VkRenderer::EndRenderPass(const VkCommandBuffer commandBuffer)
+	void VkRenderer::EndRenderPass() const
 	{
-		vkCmdEndRenderPass(commandBuffer);
+		vkCmdEndRenderPass(_currentCommandBuffer);
 	}
 
-	void VkRenderer::BindPipeline(const VkCommandBuffer commandBuffer, const VkPipeline pipeline)
+	void VkRenderer::BindPipeline(const VkPipeline pipeline) const
 	{
-		vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
+		vkCmdBindPipeline(_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, pipeline);
 	}
 
-	void VkRenderer::BindDescriptorSets(const VkCommandBuffer commandBuffer, const VkPipelineLayout layout,
-		VkDescriptorSet* sets, const uint32_t setCount)
+	void VkRenderer::BindDescriptorSets(const VkPipelineLayout layout,
+		VkDescriptorSet* sets, const uint32_t setCount) const
 	{
-		vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0,
+		vkCmdBindDescriptorSets(_currentCommandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, layout, 0,
 			setCount, sets, 0, nullptr);
 	}
 
-	void VkRenderer::BindVertexBuffer(const VkCommandBuffer commandBuffer, const VkBuffer buffer)
+	void VkRenderer::BindVertexBuffer(const VkBuffer buffer) const
 	{
 		VkDeviceSize offset = 0;
-		vkCmdBindVertexBuffers(commandBuffer, 0, 1, &buffer, &offset);
+		vkCmdBindVertexBuffers(_currentCommandBuffer, 0, 1, &buffer, &offset);
 	}
 
-	void VkRenderer::BindIndicesBuffer(const VkCommandBuffer commandBuffer, const VkBuffer buffer)
+	void VkRenderer::BindIndicesBuffer(const VkBuffer buffer) const
 	{
-		vkCmdBindIndexBuffer(commandBuffer, buffer, 0, VK_INDEX_TYPE_UINT16);
+		vkCmdBindIndexBuffer(_currentCommandBuffer, buffer, 0, VK_INDEX_TYPE_UINT16);
 	}
 
-	void VkRenderer::Draw(const VkCommandBuffer commandBuffer, const uint32_t indexCount)
+	void VkRenderer::Draw(const uint32_t indexCount) const
 	{
-		vkCmdDrawIndexed(commandBuffer, indexCount, 1, 0, 0, 0);
+		vkCmdDrawIndexed(_currentCommandBuffer, indexCount, 1, 0, 0, 0);
 	}
 
 	void VkRenderer::Submit(VkCommandBuffer* buffers, const uint32_t buffersCount,
@@ -524,15 +526,15 @@ namespace vi
 		submitInfo.signalSemaphoreCount = 1;
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 
-		vkResetFences(device, 1, &fence);
-		const auto result = vkQueueSubmit(queues.graphics, 1, &submitInfo, fence);
+		vkResetFences(_device, 1, &fence);
+		const auto result = vkQueueSubmit(_queues.graphics, 1, &submitInfo, fence);
 		assert(!result);
 	}
 
 	uint32_t VkRenderer::FindMemoryType(const uint32_t typeFilter, const VkMemoryPropertyFlags properties) const
 	{
 		VkPhysicalDeviceMemoryProperties memProperties;
-		vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+		vkGetPhysicalDeviceMemoryProperties(_physicalDevice, &memProperties);
 
 		for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
 			if (typeFilter & 1 << i)
@@ -550,7 +552,7 @@ namespace vi
 
 	void VkRenderer::DeviceWaitIdle() const
 	{
-		const auto result = vkDeviceWaitIdle(device);
+		const auto result = vkDeviceWaitIdle(_device);
 		assert(!result);
 	}
 }

@@ -16,11 +16,11 @@ namespace vi
 	PhysicalDeviceFactory::PhysicalDeviceFactory(VkRenderer& renderer, const Settings& settings)
 	{
 		uint32_t deviceCount = 0;
-		vkEnumeratePhysicalDevices(renderer.instance, &deviceCount, nullptr);
+		vkEnumeratePhysicalDevices(renderer._instance, &deviceCount, nullptr);
 		assert(deviceCount);
 
 		std::vector<VkPhysicalDevice> devices(deviceCount);
-		vkEnumeratePhysicalDevices(renderer.instance, &deviceCount, devices.data());
+		vkEnumeratePhysicalDevices(renderer._instance, &deviceCount, devices.data());
 
 		std::multimap<uint32_t, VkPhysicalDevice> candidates;
 
@@ -31,11 +31,11 @@ namespace vi
 			vkGetPhysicalDeviceProperties(device, &deviceProperties);
 			vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
-			const auto families = GetQueueFamilies(renderer.surface, device);
+			const auto families = GetQueueFamilies(renderer._surface, device);
 			if (!families)
 				continue;
 
-			if (!CheckDeviceExtensionSupport(device, renderer.settings->deviceExtensions))
+			if (!CheckDeviceExtensionSupport(device, renderer._settings->deviceExtensions))
 				continue;
 
 			const DeviceInfo deviceInfo
@@ -53,12 +53,12 @@ namespace vi
 		}
 		assert(!candidates.empty());
 
-		renderer.physicalDevice = candidates.rbegin()->second;
+		renderer._physicalDevice = candidates.rbegin()->second;
 	}
 
 	bool PhysicalDeviceFactory::IsDeviceSuitable(VkRenderer& renderer, const Settings& settings, const DeviceInfo& deviceInfo)
 	{
-		const auto swapChainSupport = SwapChain::QuerySwapChainSupport(renderer.surface, deviceInfo.device);
+		const auto swapChainSupport = SwapChain::QuerySwapChainSupport(renderer._surface, deviceInfo.device);
 		if (!swapChainSupport)
 			return false;
 

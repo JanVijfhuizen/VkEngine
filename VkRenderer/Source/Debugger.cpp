@@ -20,7 +20,7 @@ namespace vi
 
 		auto info = CreateInfo();
 
-		const auto result = CreateDebugUtilsMessengerEXT(_renderer->instance, &info, nullptr, &_debugMessenger);
+		const auto result = CreateDebugUtilsMessengerEXT(_renderer->_instance, &info, nullptr, &_debugMessenger);
 		assert(!result);
 	}
 
@@ -29,7 +29,7 @@ namespace vi
 		if (!DEBUG)
 			return;
 
-		DestroyDebugUtilsMessengerEXT(_renderer->instance, _debugMessenger, nullptr);
+		DestroyDebugUtilsMessengerEXT(_renderer->_instance, _debugMessenger, nullptr);
 	}
 
 	bool Debugger::CheckValidationLayerSupport() const
@@ -40,7 +40,7 @@ namespace vi
 		std::vector<VkLayerProperties> availableLayers(layerCount);
 		vkEnumerateInstanceLayerProperties(&layerCount, availableLayers.data());
 
-		for (const auto& layer : _renderer->settings->debugger.validationLayers)
+		for (const auto& layer : _renderer->_settings->debugger.validationLayers)
 			if (!IsLayerPresent(layer, availableLayers))
 				return false;
 		return true;
@@ -54,7 +54,7 @@ namespace vi
 			return;
 		}
 
-		auto& validationLayers = _renderer->settings->debugger.validationLayers;
+		auto& validationLayers = _renderer->_settings->debugger.validationLayers;
 		instanceInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 		instanceInfo.ppEnabledLayerNames = validationLayers.data();
 		instanceInfo.pNext = static_cast<VkDebugUtilsMessengerCreateInfoEXT*>(&debugInfo);
@@ -62,7 +62,7 @@ namespace vi
 
 	const std::vector<const char*>& Debugger::GetValidationLayers() const
 	{
-		return _renderer->settings->debugger.validationLayers;
+		return _renderer->_settings->debugger.validationLayers;
 	}
 
 	VkDebugUtilsMessengerCreateInfoEXT Debugger::CreateInfo()

@@ -42,7 +42,7 @@ int main()
 	vi::RenderPassInfo renderPassInfo{};
 	vi::RenderPassInfo::Attachment renderPassAttachment{};
 	renderPassInfo.attachments.push_back(renderPassAttachment);
-	renderPassInfo.format = swapChain.format;
+	renderPassInfo.format = swapChain.GetFormat();
 
 	const auto renderPass = renderer.CreateRenderPass(renderPassInfo);
 	swapChain.SetRenderPass(renderPass);
@@ -80,7 +80,7 @@ int main()
 			VK_SHADER_STAGE_VERTEX_BIT
 		});
 	pipelineInfo.renderPass = renderPass;
-	pipelineInfo.extent = swapChain.extent;
+	pipelineInfo.extent = swapChain.GetExtent();
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
 
@@ -105,32 +105,31 @@ int main()
 		if (quit)
 			break;
 
-		vi::SwapChain::Image* image;
-		vi::SwapChain::Frame* frame;
-
+		vi::SwapChain::Image image;
+		vi::SwapChain::Frame frame;
 		swapChain.GetNext(image, frame);
 
-		auto& extent = swapChain.extent;
+		const auto extent = swapChain.GetExtent();
 
-		renderer.BeginCommandBufferRecording(image->commandBuffer);
-		renderer.BeginRenderPass(image->commandBuffer, image->frameBuffer, swapChain.renderPass, {}, { extent.width, extent.height});
+		renderer.BeginCommandBufferRecording(image.commandBuffer);
+		renderer.BeginRenderPass(image.frameBuffer, swapChain.GetRenderPass(), {}, { extent.width, extent.height});
 
-		renderer.BindPipeline(image->commandBuffer, pipeline.pipeline);
+		renderer.BindPipeline(pipeline.pipeline);
 
 		//renderer.BindDescriptorSets(image->commandBuffer, pipeline.layout, &camLayout, 1);
-		renderer.BindVertexBuffer(image->commandBuffer, vertBuffer);
-		renderer.BindIndicesBuffer(image->commandBuffer, indBuffer);
+		renderer.BindVertexBuffer(vertBuffer);
+		renderer.BindIndicesBuffer(indBuffer);
 
 		Transform transform{};
 
-		renderer.UpdatePushConstant(image->commandBuffer, pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
+		renderer.UpdatePushConstant(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
 
-		renderer.Draw(image->commandBuffer, meshInfo.indices.size());
+		renderer.Draw(meshInfo.indices.size());
 
-		renderer.EndRenderPass(image->commandBuffer);
-		renderer.EndCommandBufferRecording(image->commandBuffer);
+		renderer.EndRenderPass();
+		renderer.EndCommandBufferRecording();
 
-		renderer.Submit(&image->commandBuffer, 1, frame->imageAvailableSemaphore, frame->renderFinishedSemaphore, frame->inFlightFence);
+		renderer.Submit(&image.commandBuffer, 1, frame.imageAvailableSemaphore, frame.renderFinishedSemaphore, frame.inFlightFence);
 		const auto result = swapChain.Present();
 		if (!result)
 		{

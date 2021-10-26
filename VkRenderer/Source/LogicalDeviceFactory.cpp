@@ -7,7 +7,7 @@ namespace vi
 {
 	LogicalDeviceFactory::LogicalDeviceFactory(VkRenderer& renderer)
 	{
-		const auto queueFamilies = PhysicalDeviceFactory::GetQueueFamilies(renderer.surface, renderer.physicalDevice);
+		const auto queueFamilies = PhysicalDeviceFactory::GetQueueFamilies(renderer._surface, renderer._physicalDevice);
 
 		std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 		const float queuePriority = 1.0f;
@@ -31,7 +31,7 @@ namespace vi
 		VkPhysicalDeviceFeatures deviceFeatures{};
 		deviceFeatures.samplerAnisotropy = VK_TRUE;
 
-		const auto& deviceExtensions = renderer.settings->deviceExtensions;
+		const auto& deviceExtensions = renderer._settings->deviceExtensions;
 
 		VkDeviceCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -44,24 +44,24 @@ namespace vi
 		createInfo.enabledLayerCount = 0;
 		if(DEBUG)
 		{
-			const auto& validationLayers = renderer.debugger.GetValidationLayers();
+			const auto& validationLayers = renderer._debugger.GetValidationLayers();
 			createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 			createInfo.ppEnabledLayerNames = validationLayers.data();
 		}
 
-		const auto result = vkCreateDevice(renderer.physicalDevice, &createInfo, nullptr, &renderer.device);
+		const auto result = vkCreateDevice(renderer._physicalDevice, &createInfo, nullptr, &renderer._device);
 		assert(!result);
 
 		uint32_t i = 0;
 		for (const auto& family : queueFamilies.values)
 		{
-			vkGetDeviceQueue(renderer.device, family, 0, &renderer.queues.values[i]);
+			vkGetDeviceQueue(renderer._device, family, 0, &renderer._queues.values[i]);
 			i++;
 		}
 	}
 
 	void LogicalDeviceFactory::Cleanup(VkRenderer& renderer)
 	{
-		vkDestroyDevice(renderer.device, nullptr);
+		vkDestroyDevice(renderer._device, nullptr);
 	}
 }

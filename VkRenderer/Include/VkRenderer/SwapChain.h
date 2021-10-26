@@ -33,21 +33,17 @@ namespace vi
 			VkFence inFlightFence;
 		};
 
-		VkSwapchainKHR swapChain;
-		VkFormat format;
-		VkExtent2D extent;
-		std::vector<Image> images{};
-		std::vector<Frame> frames{};
-		std::vector<VkFence> imagesInFlight{};
-		VkRenderPass renderPass;
-
 		explicit SwapChain(VkRenderer& renderer);
 		~SwapChain();
 
 		void SetRenderPass(VkRenderPass renderPass);
-		void GetNext(Image*& outImage, Frame*& outFrame);
+		void GetNext(Image& outImage, Frame& outFrame);
 
 		[[nodiscard]] VkResult Present();
+
+		[[nodiscard]] VkRenderPass GetRenderPass() const;
+		[[nodiscard]] VkFormat GetFormat() const;
+		[[nodiscard]] VkExtent2D GetExtent() const;
 
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
@@ -55,6 +51,15 @@ namespace vi
 		#define _MAX_FRAMES_IN_FLIGHT 2
 
 		VkRenderer* _renderer;
+		
+		VkSwapchainKHR _swapChain;
+		VkFormat _format;
+		VkExtent2D _extent;
+		std::vector<Frame> _frames{};
+		std::vector<Image> _images{};
+		std::vector<VkFence> _imagesInFlight{};
+		VkRenderPass _renderPass;
+
 		uint32_t _frameIndex = 0;
 		uint32_t _imageIndex;
 

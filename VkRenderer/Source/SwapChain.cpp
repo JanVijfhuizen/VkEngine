@@ -24,24 +24,24 @@ namespace vi
 
 	SwapChain::SwapChain(VkRenderer& renderer) : _renderer(&renderer)
 	{
-		const SupportDetails support = QuerySwapChainSupport(_renderer->surface, _renderer->physicalDevice);
-		const auto families = PhysicalDeviceFactory::GetQueueFamilies(_renderer->surface, _renderer->physicalDevice);
+		const SupportDetails support = QuerySwapChainSupport(_renderer->_surface, _renderer->_physicalDevice);
+		const auto families = PhysicalDeviceFactory::GetQueueFamilies(_renderer->_surface, _renderer->_physicalDevice);
 
 		const VkSurfaceFormatKHR surfaceFormat = ChooseSurfaceFormat(support.formats);
 		const VkPresentModeKHR presentMode = ChoosePresentMode(support.presentModes);
 
-		extent = ChooseExtent(support.capabilities);
-		format = surfaceFormat.format;
+		_extent = ChooseExtent(support.capabilities);
+		_format = surfaceFormat.format;
 
 		const uint32_t imageCount = support.GetRecommendedImageCount();
 
 		VkSwapchainCreateInfoKHR createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
-		createInfo.surface = _renderer->surface;
+		createInfo.surface = _renderer->_surface;
 		createInfo.minImageCount = imageCount;
-		createInfo.imageFormat = format;
+		createInfo.imageFormat = _format;
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
-		createInfo.imageExtent = extent;
+		createInfo.imageExtent = _extent;
 		createInfo.imageArrayLayers = 1;
 		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // TODO: VK_IMAGE_USAGE_TRANSFER_DST_BIT for post processing.
 
@@ -65,14 +65,14 @@ namespace vi
 		createInfo.clipped = VK_TRUE;
 		createInfo.oldSwapchain = VK_NULL_HANDLE; // Todo: store old swapchain.
 
-		auto& device = _renderer->device;
+		auto& device = _renderer->_device;
 
-		const auto result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain);
+		const auto result = vkCreateSwapchainKHR(device, &createInfo, nullptr, &_swapChain);
 		assert(!result);
 
-		images.resize(imageCount);
-		frames.resize(_MAX_FRAMES_IN_FLIGHT);
-		imagesInFlight.resize(images.size(), VK_NULL_HANDLE);
+		_images.resize(imageCount);
+		_frames.resize(_MAX_FRAMES_IN_FLIGHT);
+		_imagesInFlight.resize(_images.size(), VK_NULL_HANDLE);
 
 		CreateImages();
 		CreateSyncObjects();
@@ -80,104 +80,119 @@ namespace vi
 
 	SwapChain::~SwapChain()
 	{
-		for (auto& fence : imagesInFlight)
-			vkWaitForFences(_renderer->device, 1, &fence, VK_TRUE, UINT64_MAX);
+		for (auto& fence : _imagesInFlight)
+			vkWaitForFences(_renderer->_device, 1, &fence, VK_TRUE, UINT64_MAX);
 		_renderer->DeviceWaitIdle();
 
-		auto& device = _renderer->device;
+		auto& device = _renderer->_device;
 
 		CleanupBuffers();
 
-		for (const auto& image : images)
+		for (const auto& image : _images)
 			_renderer->DestroyImageView(image.imageView);
-		images.clear();
+		_images.clear();
 
-		for (const auto& frame : frames)
+		for (const auto& frame : _frames)
 		{
 			_renderer->DestroySemaphore(frame.imageAvailableSemaphore);
 			_renderer->DestroySemaphore(frame.renderFinishedSemaphore);
 			_renderer->DestroyFence(frame.inFlightFence);
 		}
-		frames.clear();
-		imagesInFlight.clear();
+		_frames.clear();
+		_imagesInFlight.clear();
 
-		vkDestroySwapchainKHR(device, swapChain, nullptr);
+		vkDestroySwapchainKHR(device, _swapChain, nullptr);
 	}
 
 	void SwapChain::SetRenderPass(const VkRenderPass renderPass)
 	{
-		this->renderPass = renderPass;
+		this->_renderPass = renderPass;
 		CleanupBuffers();
 		CreateBuffers();
 	}
 
-	void SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
+	void SwapChain::GetNext(Image& outImage, Frame& outFrame)
 	{
 		WaitForImage();
-		outFrame = &frames[_frameIndex];
-		outImage = &images[_imageIndex];
+		outFrame = _frames[_frameIndex];
+		outImage = _images[_imageIndex];
 	}
 
 	void SwapChain::WaitForImage()
 	{
-		auto& frame = frames[_frameIndex];
+		auto& frame = _frames[_frameIndex];
 
-		vkWaitForFences(_renderer->device, 1, &frame.inFlightFence, VK_TRUE, UINT64_MAX);
-		const auto result = vkAcquireNextImageKHR(_renderer->device, swapChain, UINT64_MAX, frame.imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
+		vkWaitForFences(_renderer->_device, 1, &frame.inFlightFence, VK_TRUE, UINT64_MAX);
+		const auto result = vkAcquireNextImageKHR(_renderer->_device, _swapChain, UINT64_MAX, frame.imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
 		assert(!result);
 
-		auto& imageInFlight = imagesInFlight[_imageIndex];
+		auto& imageInFlight = _imagesInFlight[_imageIndex];
 		if (imageInFlight != VK_NULL_HANDLE)
-			vkWaitForFences(_renderer->device, 1, &imageInFlight, VK_TRUE, UINT64_MAX);
+			vkWaitForFences(_renderer->_device, 1, &imageInFlight, VK_TRUE, UINT64_MAX);
 		imageInFlight = frame.inFlightFence;
 	}
 
 	VkResult SwapChain::Present()
 	{
-		auto& frame = frames[_frameIndex];
+		auto& frame = _frames[_frameIndex];
 
 		VkPresentInfoKHR presentInfo{};
 		presentInfo.sType = VK_STRUCTURE_TYPE_PRESENT_INFO_KHR;
 		presentInfo.waitSemaphoreCount = 1;
 		presentInfo.pWaitSemaphores = &frame.renderFinishedSemaphore;
 		presentInfo.swapchainCount = 1;
-		presentInfo.pSwapchains = &swapChain;
+		presentInfo.pSwapchains = &_swapChain;
 		presentInfo.pImageIndices = &_imageIndex;
 
-		const auto result = vkQueuePresentKHR(_renderer->queues.present, &presentInfo);
-		_frameIndex = (_frameIndex + 1) % frames.size();
+		const auto result = vkQueuePresentKHR(_renderer->_queues.present, &presentInfo);
+		_frameIndex = (_frameIndex + 1) % _frames.size();
 
 		return result;
 	}
 
+	VkRenderPass SwapChain::GetRenderPass() const
+	{
+		return _renderPass;
+	}
+
+	VkFormat SwapChain::GetFormat() const
+	{
+		return _format;
+	}
+
+	VkExtent2D SwapChain::GetExtent() const
+	{
+		return _extent;
+	}
+
 	void SwapChain::CreateBuffers()
 	{
-		const uint32_t count = images.size();
+		const uint32_t count = _images.size();
 
 		std::vector<VkCommandBuffer> commandBuffers{};
 		commandBuffers.resize(count);
 
 		VkCommandBufferAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.commandPool = _renderer->commandPool;
+		allocInfo.commandPool = _renderer->_commandPool;
 		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
 		allocInfo.commandBufferCount = static_cast<uint32_t>(commandBuffers.size());
 
-		const auto result = vkAllocateCommandBuffers(_renderer->device, &allocInfo, commandBuffers.data());
+		const auto result = vkAllocateCommandBuffers(_renderer->_device, &allocInfo, commandBuffers.data());
 		assert(!result);
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
-			auto& image = images[i];
+			auto& image = _images[i];
 
-			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass, extent);
+			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, _renderPass, _extent);
 			image.commandBuffer = commandBuffers[i];
 		}
 	}
 
 	void SwapChain::CleanupBuffers()
 	{
-		for (auto& image : images)
+		for (auto& image : _images)
 		{
 			_renderer->DestroyFrameBuffer(image.frameBuffer);
 			_renderer->DestroyCommandBuffer(image.commandBuffer);
@@ -206,7 +221,7 @@ namespace vi
 		if (capabilities.currentExtent.width != UINT32_MAX)
 			return capabilities.currentExtent;
 
-		const auto& windowSystem = _renderer->windowSystem;
+		const auto& windowSystem = _renderer->_windowSystem;
 		const auto& resolution = windowSystem.GetVkInfo().resolution;
 
 		VkExtent2D actualExtent =
@@ -228,24 +243,24 @@ namespace vi
 
 	void SwapChain::CreateImages()
 	{
-		uint32_t count = images.size();
+		uint32_t count = _images.size();
 
 		std::vector<VkImage> vkImages{};
 		vkImages.resize(count);
 
-		vkGetSwapchainImagesKHR(_renderer->device, swapChain, &count, vkImages.data());
+		vkGetSwapchainImagesKHR(_renderer->_device, _swapChain, &count, vkImages.data());
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
-			auto& image = images[i];
+			auto& image = _images[i];
 			image.image = vkImages[i];
-			image.imageView = _renderer->CreateImageView(image.image, format);
+			image.imageView = _renderer->CreateImageView(image.image, _format);
 		}
 	}
 
 	void SwapChain::CreateSyncObjects()
 	{
-		for (auto& frame : frames)
+		for (auto& frame : _frames)
 		{
 			frame.imageAvailableSemaphore = _renderer->CreateSemaphore();
 			frame.renderFinishedSemaphore = _renderer->CreateSemaphore();

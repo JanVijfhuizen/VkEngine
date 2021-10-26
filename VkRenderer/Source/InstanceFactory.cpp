@@ -8,7 +8,7 @@ namespace vi
 {
 	InstanceFactory::InstanceFactory(VkRenderer& renderer)
 	{
-		assert(renderer.debugger.CheckValidationLayerSupport());
+		assert(renderer._debugger.CheckValidationLayerSupport());
 
 		auto appInfo = CreateApplicationInfo(renderer);
 		auto extensions = GetExtensions(renderer);
@@ -20,20 +20,20 @@ namespace vi
 		createInfo.ppEnabledExtensionNames = extensions.data();
 
 		auto debugInfo = Debugger::CreateInfo();
-		renderer.debugger.EnableValidationLayers(debugInfo, createInfo);
+		renderer._debugger.EnableValidationLayers(debugInfo, createInfo);
 
-		const auto result = vkCreateInstance(&createInfo, nullptr, &renderer.instance);
+		const auto result = vkCreateInstance(&createInfo, nullptr, &renderer._instance);
 		assert(!result);
 	}
 
 	void InstanceFactory::Cleanup(VkRenderer& renderer)
 	{
-		vkDestroyInstance(renderer.instance, nullptr);
+		vkDestroyInstance(renderer._instance, nullptr);
 	}
 
 	VkApplicationInfo InstanceFactory::CreateApplicationInfo(VkRenderer& renderer)
 	{
-		const auto& windowInfo = renderer.windowSystem.GetVkInfo();
+		const auto& windowInfo = renderer._windowSystem.GetVkInfo();
 		const auto& name = windowInfo.name.c_str();
 		const auto version = VK_MAKE_VERSION(1, 0, 0);
 
@@ -51,7 +51,7 @@ namespace vi
 	std::vector<const char*> InstanceFactory::GetExtensions(VkRenderer& renderer)
 	{
 		std::vector<const char*> extensions;
-		renderer.windowSystem.GetRequiredExtensions(extensions);
+		renderer._windowSystem.GetRequiredExtensions(extensions);
 		if (DEBUG)
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		return extensions;

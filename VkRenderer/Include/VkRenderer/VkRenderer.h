@@ -6,10 +6,22 @@
 
 namespace vi
 {
+	class LogicalDeviceFactory;
+	class InstanceFactory;
+	class CommandPoolFactory;
+	class SwapChain;
 	class WindowSystem;
 
 	class VkRenderer final
 	{
+		friend Debugger;
+		friend SwapChain;
+
+		friend CommandPoolFactory;
+		friend InstanceFactory;
+		friend LogicalDeviceFactory;
+		friend PhysicalDeviceFactory;
+
 	public:
 		struct Settings final
 		{
@@ -21,18 +33,6 @@ namespace vi
 				VK_KHR_SWAPCHAIN_EXTENSION_NAME
 			};
 		};
-
-		std::unique_ptr<Settings> settings{};
-
-		WindowSystem& windowSystem;
-		Debugger debugger{};
-
-		VkInstance instance;
-		VkSurfaceKHR surface;
-		VkPhysicalDevice physicalDevice;
-		VkDevice device;
-		Queues queues;
-		VkCommandPool commandPool;
 
 		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
 		~VkRenderer();
@@ -75,28 +75,42 @@ namespace vi
 		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, uint32_t count);
 
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
-		void EndCommandBufferRecording(VkCommandBuffer commandBuffer);
+		void EndCommandBufferRecording() const;
 
-		void BeginRenderPass(VkCommandBuffer commandBuffer, VkFramebuffer frameBuffer, 
-			VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
-		void EndRenderPass(VkCommandBuffer commandBuffer);
+		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
+		void EndRenderPass() const;
 
-		void BindPipeline(VkCommandBuffer commandBuffer, VkPipeline pipeline);
-		void BindDescriptorSets(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkDescriptorSet* sets, uint32_t setCount);
+		void BindPipeline(VkPipeline pipeline) const;
+		void BindDescriptorSets(VkPipelineLayout layout, VkDescriptorSet* sets, uint32_t setCount) const;
 
-		void BindVertexBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer);
-		void BindIndicesBuffer(VkCommandBuffer commandBuffer, VkBuffer buffer);
+		void BindVertexBuffer(VkBuffer buffer) const;
+		void BindIndicesBuffer(VkBuffer buffer) const;
 
 		template <typename T>
-		void UpdatePushConstant(VkCommandBuffer commandBuffer, VkPipelineLayout layout, VkFlags flag, const T& input);
+		void UpdatePushConstant(VkPipelineLayout layout, VkFlags flag, const T& input);
 
-		void Draw(VkCommandBuffer commandBuffer, uint32_t indexCount);
+		void Draw(uint32_t indexCount) const;
 		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
 			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const;
 
 		[[nodiscard]] uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 		void DeviceWaitIdle() const;
+
+	private:
+		std::unique_ptr<Settings> _settings{};
+
+		WindowSystem& _windowSystem;
+		Debugger _debugger{};
+
+		VkInstance _instance;
+		VkSurfaceKHR _surface;
+		VkPhysicalDevice _physicalDevice;
+		VkDevice _device;
+		Queues _queues;
+		VkCommandPool _commandPool;
+
+		VkCommandBuffer _currentCommandBuffer;
 	};
 
 	template <typename T>
@@ -109,7 +123,7 @@ namespace vi
 		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
 		VkBuffer vertexBuffer;
-		const auto result = vkCreateBuffer(device, &bufferInfo, nullptr, &vertexBuffer);
+		const auto result = vkCreateBuffer(_device, &bufferInfo, nullptr, &vertexBuffer);
 		assert(!result);
 		return vertexBuffer;
 	}
@@ -119,15 +133,14 @@ namespace vi
 	{
 		void* data;
 		const uint32_t size = count * sizeof(T);
-		vkMapMemory(device, memory, offset, size, 0, &data);
+		vkMapMemory(_device, memory, offset, size, 0, &data);
 		memcpy(data, input, size);
-		vkUnmapMemory(device, memory);
+		vkUnmapMemory(_device, memory);
 	}
 
 	template <typename T>
-	void VkRenderer::UpdatePushConstant(const VkCommandBuffer commandBuffer, 
-		const VkPipelineLayout layout, const VkFlags flag, const T& input)
+	void VkRenderer::UpdatePushConstant(const VkPipelineLayout layout, const VkFlags flag, const T& input)
 	{
-		vkCmdPushConstants(commandBuffer, layout, flag, 0, sizeof(T), &input);
+		vkCmdPushConstants(_currentCommandBuffer, layout, flag, 0, sizeof(T), &input);
 	}
 }
