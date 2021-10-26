@@ -29,7 +29,7 @@ int main()
 	vi::WindowSystemGLFW windowSystem{};
 
 	vi::VkRenderer::Settings settings;
-	settings.debugger.validationLayers.push_back("VK_LAYER_KHRONOS_validation");
+	settings.debugger.validationLayers.push_back("VK_LAYER_RENDERDOC_Capture");
 
 	vi::VkRenderer renderer{};
 	renderer.Construct(windowSystem, settings);
