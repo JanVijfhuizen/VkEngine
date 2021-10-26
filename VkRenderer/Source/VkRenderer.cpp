@@ -136,8 +136,8 @@ namespace vi
 			auto& uboLayoutBinding = layoutBindings[i];
 
 			uboLayoutBinding.binding = i;
-			uboLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			uboLayoutBinding.descriptorCount = 1;
+			uboLayoutBinding.descriptorType = binding.type;
+			uboLayoutBinding.descriptorCount = binding.count;
 			uboLayoutBinding.stageFlags = binding.flag;
 		}
 
