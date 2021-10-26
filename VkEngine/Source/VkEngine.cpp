@@ -13,9 +13,9 @@
 
 struct Transform final
 {
-	glm::vec2 transPos;
-	glm::vec2 transScale;
-	float transRot;
+	glm::vec2 transPos{};
+	glm::vec2 transScale{1};
+	float transRot = 0;
 };
 
 struct Camera final
@@ -139,7 +139,13 @@ int main()
 		renderer.BindVertexBuffer(vertBuffer);
 		renderer.BindIndicesBuffer(indBuffer);
 
+		static float f = 0;
+		f += 0.001f;
+		if (f > 360)
+			f = 0;
+
 		Transform transform{};
+		transform.transRot = f;
 
 		renderer.UpdatePushConstant(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
 
