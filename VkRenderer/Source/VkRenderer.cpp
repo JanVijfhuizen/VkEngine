@@ -405,12 +405,17 @@ namespace vi
 		vkDestroyFence(_device, fence, nullptr);
 	}
 
-	void VkRenderer::DestroyBuffer(const VkBuffer buffer)
+	void VkRenderer::DestroyBuffer(const VkBuffer buffer) const
 	{
 		vkDestroyBuffer(_device, buffer, nullptr);
 	}
 
-	VkDeviceMemory VkRenderer::AllocateMemory(const VkBuffer buffer) const
+	void VkRenderer::WaitForFence(const VkFence fence) const
+	{
+		vkWaitForFences(_device, 1, &fence, VK_TRUE, UINT64_MAX);
+	}
+
+	VkDeviceMemory VkRenderer::AllocateMemory(const VkBuffer buffer, const VkMemoryPropertyFlags flags) const
 	{
 		VkMemoryRequirements memRequirements;
 		vkGetBufferMemoryRequirements(_device, buffer, &memRequirements);
@@ -418,8 +423,7 @@ namespace vi
 		VkMemoryAllocateInfo allocInfo{};
 		allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
 		allocInfo.allocationSize = memRequirements.size;
-		allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, 
-			VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+		allocInfo.memoryTypeIndex = FindMemoryType(memRequirements.memoryTypeBits, flags);
 
 		VkDeviceMemory memory;
 		const auto result = vkAllocateMemory(_device, &allocInfo, nullptr, &memory);
@@ -428,14 +432,49 @@ namespace vi
 		return memory;
 	}
 
-	void VkRenderer::BindMemory(const VkBuffer buffer, const VkDeviceMemory memory)
+	void VkRenderer::BindMemory(const VkBuffer buffer, const VkDeviceMemory memory) const
 	{
 		vkBindBufferMemory(_device, buffer, memory, 0);
 	}
 
-	void VkRenderer::FreeMemory(const VkDeviceMemory memory)
+	void VkRenderer::FreeMemory(const VkDeviceMemory memory) const
 	{
 		vkFreeMemory(_device, memory, nullptr);
+	}
+
+	void VkRenderer::CopyBuffer(const VkBuffer srcBuffer, const VkBuffer dstBuffer, const VkDeviceSize size, 
+		const VkFence fence, const VkDeviceSize srcOffset, const VkDeviceSize dstOffset) const
+	{
+		VkCommandBufferAllocateInfo allocInfo{};
+		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+		allocInfo.commandPool = _commandPool;
+		allocInfo.commandBufferCount = 1;
+
+		VkCommandBuffer commandBuffer;
+		vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
+
+		VkCommandBufferBeginInfo beginInfo{};
+		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+		vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+		VkBufferCopy copyRegion{};
+		copyRegion.srcOffset = srcOffset;
+		copyRegion.dstOffset = dstOffset;
+		copyRegion.size = size;
+		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
+
+		vkEndCommandBuffer(commandBuffer);
+
+		VkSubmitInfo submitInfo{};
+		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+		submitInfo.commandBufferCount = 1;
+		submitInfo.pCommandBuffers = &commandBuffer;
+
+		vkQueueSubmit(_queues.graphics, 1, &submitInfo, fence);
+		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 	}
 
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
@@ -457,7 +496,7 @@ namespace vi
 	}
 
 	void VkRenderer::BeginRenderPass(const VkFramebuffer frameBuffer, 
-		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent)
+		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent) const
 	{
 		const VkExtent2D extentVk
 		{

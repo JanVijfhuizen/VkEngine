@@ -62,22 +62,25 @@ namespace vi
 		void DestroySemaphore(VkSemaphore semaphore) const;
 
 		[[nodiscard]] VkFence CreateFence() const;
+		void WaitForFence(VkFence fence) const;
 		void DestroyFence(VkFence fence) const;
 
 		template <typename T>
 		[[nodiscard]] VkBuffer CreateBuffer(uint32_t count, VkBufferUsageFlags flags) const;
-		void DestroyBuffer(VkBuffer buffer);
+		void DestroyBuffer(VkBuffer buffer) const;
 
-		[[nodiscard]] VkDeviceMemory AllocateMemory(VkBuffer buffer) const;
-		void BindMemory(VkBuffer buffer, VkDeviceMemory memory);
-		void FreeMemory(VkDeviceMemory memory);
+		[[nodiscard]] VkDeviceMemory AllocateMemory(VkBuffer buffer, VkMemoryPropertyFlags flags) const;
+		void BindMemory(VkBuffer buffer, VkDeviceMemory memory) const;
+		void FreeMemory(VkDeviceMemory memory) const;
 		template <typename T>
 		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, uint32_t count);
+
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkFence fence, VkDeviceSize srcOffset = 0, VkDeviceSize dstOffset = 0) const;
 
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording() const;
 
-		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent);
+		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent) const;
 		void EndRenderPass() const;
 
 		void BindPipeline(VkPipeline pipeline) const;

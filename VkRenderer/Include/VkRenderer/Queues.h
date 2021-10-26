@@ -8,6 +8,7 @@ namespace vi
 		{
 			struct
 			{
+				// Todo transfer buffer.
 				VkQueue graphics;
 				VkQueue present;
 			};

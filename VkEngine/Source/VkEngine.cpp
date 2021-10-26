@@ -86,13 +86,28 @@ int main()
 	for (auto& vertex : meshInfo.vertices)
 		vertex.pos /= 2;
 
-	const auto vertBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-	const auto vertMem = renderer.AllocateMemory(vertBuffer);
+	const auto vertStagingBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	const auto vertStagingMem = renderer.AllocateMemory(vertStagingBuffer,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	renderer.BindMemory(vertStagingBuffer, vertStagingMem);
+	renderer.MapMemory(vertStagingMem, meshInfo.vertices.data(), 0, meshInfo.vertices.size());
+
+	const auto vertBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	const auto vertMem = renderer.AllocateMemory(vertBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	renderer.BindMemory(vertBuffer, vertMem);
-	renderer.MapMemory(vertMem, meshInfo.vertices.data(), 0, meshInfo.vertices.size());
+
+	const auto cpyFence = renderer.CreateFence();
+	renderer.CopyBuffer(vertStagingBuffer, vertBuffer, meshInfo.vertices.size() * sizeof(Vertex), cpyFence);
+
+	renderer.WaitForFence(cpyFence);
+	renderer.DestroyFence(cpyFence);
+
+	renderer.DestroyBuffer(vertStagingBuffer);
+	renderer.FreeMemory(vertStagingMem);
 
 	const auto indBuffer = renderer.CreateBuffer<uint16_t>(meshInfo.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-	const auto indMem = renderer.AllocateMemory(indBuffer);
+	const auto indMem = renderer.AllocateMemory(indBuffer,
+		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	renderer.BindMemory(indBuffer, indMem);
 	renderer.MapMemory(indMem, meshInfo.indices.data(), 0, meshInfo.indices.size());
 

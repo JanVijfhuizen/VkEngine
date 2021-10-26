@@ -124,13 +124,13 @@ namespace vi
 	{
 		auto& frame = _frames[_frameIndex];
 
-		vkWaitForFences(_renderer->_device, 1, &frame.inFlightFence, VK_TRUE, UINT64_MAX);
+		_renderer->WaitForFence(frame.inFlightFence);
 		const auto result = vkAcquireNextImageKHR(_renderer->_device, _swapChain, UINT64_MAX, frame.imageAvailableSemaphore, VK_NULL_HANDLE, &_imageIndex);
 		assert(!result);
 
 		auto& imageInFlight = _imagesInFlight[_imageIndex];
 		if (imageInFlight != VK_NULL_HANDLE)
-			vkWaitForFences(_renderer->_device, 1, &imageInFlight, VK_TRUE, UINT64_MAX);
+			_renderer->WaitForFence(imageInFlight);
 		imageInFlight = frame.inFlightFence;
 	}
 
