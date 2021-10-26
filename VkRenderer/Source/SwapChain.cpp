@@ -111,10 +111,11 @@ namespace vi
 		CreateBuffers();
 	}
 
-	void SwapChain::GetNext(Buffers*& outBuffers, Frame*& outFrame)
+	void SwapChain::GetNext(Image*& outImage, Frame*& outFrame)
 	{
+		WaitForImage();
 		outFrame = &frames[_frameIndex];
-		outBuffers = &buffers[_bufferIndex];
+		outImage = &images[_imageIndex];
 	}
 
 	void SwapChain::WaitForImage()
@@ -144,9 +145,7 @@ namespace vi
 		presentInfo.pImageIndices = &_imageIndex;
 
 		const auto result = vkQueuePresentKHR(_renderer->queues.present, &presentInfo);
-
 		_frameIndex = (_frameIndex + 1) % frames.size();
-		_bufferIndex = (_bufferIndex + 1) % buffers.size();
 
 		return result;
 	}
@@ -154,7 +153,6 @@ namespace vi
 	void SwapChain::CreateBuffers()
 	{
 		const uint32_t count = images.size();
-		buffers.resize(count);
 
 		std::vector<VkCommandBuffer> commandBuffers{};
 		commandBuffers.resize(count);
@@ -171,19 +169,18 @@ namespace vi
 		for (uint32_t i = 0; i < count; ++i)
 		{
 			auto& image = images[i];
-			auto& buffer = buffers[i];
 
-			buffer.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass, extent);
-			buffer.commandBuffer = commandBuffers[i];
+			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageView, renderPass, extent);
+			image.commandBuffer = commandBuffers[i];
 		}
 	}
 
 	void SwapChain::CleanupBuffers()
 	{
-		for (auto& buffer : buffers)
+		for (auto& image : images)
 		{
-			_renderer->DestroyFrameBuffer(buffer.frameBuffer);
-			_renderer->DestroyCommandBuffer(buffer.commandBuffer);
+			_renderer->DestroyFrameBuffer(image.frameBuffer);
+			_renderer->DestroyCommandBuffer(image.commandBuffer);
 		}
 	}
 
