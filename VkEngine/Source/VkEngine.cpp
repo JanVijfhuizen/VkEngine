@@ -31,13 +31,11 @@ int main()
 	vi::VkRenderer::Settings settings;
 	settings.debugger.validationLayers.push_back("VK_LAYER_KHRONOS_validation");
 
-	vi::VkRenderer renderer
-	{
-		windowSystem,
-		settings
-	};
+	vi::VkRenderer renderer{};
+	renderer.Construct(windowSystem, settings);
 
-	vi::SwapChain swapChain{ renderer };
+	vi::SwapChain swapChain{};
+	swapChain.Construct(renderer);
 
 	vi::RenderPassInfo renderPassInfo{};
 	vi::RenderPassInfo::Attachment renderPassAttachment{};
@@ -137,6 +135,8 @@ int main()
 		}
 	}
 
+	swapChain.Cleanup();
+
 	renderer.DestroyPipeline(pipeline);
 	renderer.DestroyLayout(camLayout);
 	renderer.DestroyRenderPass(renderPass);
@@ -149,6 +149,8 @@ int main()
 
 	renderer.DestroyShaderModule(vertModule);
 	renderer.DestroyShaderModule(fragModule);
+
+	renderer.Cleanup();
 
 	return 0;
 }

@@ -33,8 +33,8 @@ namespace vi
 			VkFence inFlightFence;
 		};
 
-		explicit SwapChain(VkRenderer& renderer);
-		~SwapChain();
+		void Construct(VkRenderer& renderer);
+		void Cleanup();
 
 		void SetRenderPass(VkRenderPass renderPass);
 		void GetNext(Image& outImage, Frame& outFrame);

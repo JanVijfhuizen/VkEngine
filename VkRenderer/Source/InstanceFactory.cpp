@@ -33,7 +33,7 @@ namespace vi
 
 	VkApplicationInfo InstanceFactory::CreateApplicationInfo(VkRenderer& renderer)
 	{
-		const auto& windowInfo = renderer._windowSystem.GetVkInfo();
+		const auto& windowInfo = renderer._windowSystem->GetVkInfo();
 		const auto& name = windowInfo.name.c_str();
 		const auto version = VK_MAKE_VERSION(1, 0, 0);
 
@@ -51,7 +51,7 @@ namespace vi
 	std::vector<const char*> InstanceFactory::GetExtensions(VkRenderer& renderer)
 	{
 		std::vector<const char*> extensions;
-		renderer._windowSystem.GetRequiredExtensions(extensions);
+		renderer._windowSystem->GetRequiredExtensions(extensions);
 		if (DEBUG)
 			extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
 		return extensions;

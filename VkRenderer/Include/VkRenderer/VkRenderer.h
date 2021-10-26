@@ -34,8 +34,8 @@ namespace vi
 			};
 		};
 
-		explicit VkRenderer(class WindowSystem& system, const Settings& settings = {});
-		~VkRenderer();
+		void Construct(class WindowSystem& system, const Settings& settings = {});
+		void Cleanup();
 
 		[[nodiscard]] VkShaderModule CreateShaderModule(const std::vector<char>& data) const;
 		void DestroyShaderModule(VkShaderModule module) const;
@@ -100,7 +100,7 @@ namespace vi
 	private:
 		std::unique_ptr<Settings> _settings{};
 
-		WindowSystem& _windowSystem;
+		WindowSystem* _windowSystem;
 		Debugger _debugger{};
 
 		VkInstance _instance;

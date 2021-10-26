@@ -10,24 +10,25 @@
 
 namespace vi
 {
-	VkRenderer::VkRenderer(WindowSystem& system, const Settings& settings) :  _windowSystem(system)
+	void VkRenderer::Construct(WindowSystem& system, const Settings& settings)
 	{
+		_windowSystem = &system;
 		_settings = std::make_unique<Settings>();
 		*_settings = settings;
 
 		_debugger = Debugger{ *this };
 
-		InstanceFactory{*this};
+		InstanceFactory{ *this };
 
 		_debugger.Construct();
-		_windowSystem.CreateSurface(_instance, _surface);
+		_windowSystem->CreateSurface(_instance, _surface);
 
-		PhysicalDeviceFactory{*this, settings.physicalDevice};
-		LogicalDeviceFactory{*this};
-		CommandPoolFactory{*this};
+		PhysicalDeviceFactory{ *this, settings.physicalDevice };
+		LogicalDeviceFactory{ *this };
+		CommandPoolFactory{ *this };
 	}
 
-	VkRenderer::~VkRenderer()
+	void VkRenderer::Cleanup()
 	{
 		DeviceWaitIdle();
 

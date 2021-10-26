@@ -22,8 +22,10 @@ namespace vi
 		return imageCount;
 	}
 
-	SwapChain::SwapChain(VkRenderer& renderer) : _renderer(&renderer)
+	void SwapChain::Construct(VkRenderer& renderer)
 	{
+		_renderer = &renderer;
+
 		const SupportDetails support = QuerySwapChainSupport(_renderer->_surface, _renderer->_physicalDevice);
 		const auto families = PhysicalDeviceFactory::GetQueueFamilies(_renderer->_surface, _renderer->_physicalDevice);
 
@@ -78,7 +80,7 @@ namespace vi
 		CreateSyncObjects();
 	}
 
-	SwapChain::~SwapChain()
+	void SwapChain::Cleanup()
 	{
 		for (auto& fence : _imagesInFlight)
 			vkWaitForFences(_renderer->_device, 1, &fence, VK_TRUE, UINT64_MAX);
@@ -222,7 +224,7 @@ namespace vi
 			return capabilities.currentExtent;
 
 		const auto& windowSystem = _renderer->_windowSystem;
-		const auto& resolution = windowSystem.GetVkInfo().resolution;
+		const auto& resolution = windowSystem->GetVkInfo().resolution;
 
 		VkExtent2D actualExtent =
 		{

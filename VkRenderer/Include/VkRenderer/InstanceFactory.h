@@ -11,7 +11,7 @@ namespace vi
 		static void Cleanup(VkRenderer& renderer);
 
 	private:
-		[[nodiscard]] static VkApplicationInfo CreateApplicationInfo(VkRenderer& info);
-		[[nodiscard]] static std::vector<const char*> GetExtensions(VkRenderer& info);
+		[[nodiscard]] static VkApplicationInfo CreateApplicationInfo(VkRenderer& renderer);
+		[[nodiscard]] static std::vector<const char*> GetExtensions(VkRenderer& renderer);
 	};
 }
