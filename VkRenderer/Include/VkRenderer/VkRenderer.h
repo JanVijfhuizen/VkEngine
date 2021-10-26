@@ -75,7 +75,7 @@ namespace vi
 		template <typename T>
 		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, uint32_t count);
 
-		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkFence fence, VkDeviceSize srcOffset = 0, VkDeviceSize dstOffset = 0) const;
+		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset = 0, VkDeviceSize dstOffset = 0) const;
 
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording() const;
@@ -94,7 +94,7 @@ namespace vi
 
 		void Draw(uint32_t indexCount) const;
 		void Submit(VkCommandBuffer* buffers, uint32_t buffersCount, 
-			VkSemaphore waitSemaphore, VkSemaphore signalSemaphore, VkFence fence) const;
+			VkSemaphore waitSemaphore = VK_NULL_HANDLE, VkSemaphore signalSemaphore = VK_NULL_HANDLE, VkFence fence = VK_NULL_HANDLE) const;
 
 		[[nodiscard]] uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 

@@ -443,38 +443,13 @@ namespace vi
 	}
 
 	void VkRenderer::CopyBuffer(const VkBuffer srcBuffer, const VkBuffer dstBuffer, const VkDeviceSize size, 
-		const VkFence fence, const VkDeviceSize srcOffset, const VkDeviceSize dstOffset) const
+		const VkDeviceSize srcOffset, const VkDeviceSize dstOffset) const
 	{
-		VkCommandBufferAllocateInfo allocInfo{};
-		allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-		allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-		allocInfo.commandPool = _commandPool;
-		allocInfo.commandBufferCount = 1;
-
-		VkCommandBuffer commandBuffer;
-		vkAllocateCommandBuffers(_device, &allocInfo, &commandBuffer);
-
-		VkCommandBufferBeginInfo beginInfo{};
-		beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-		beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-		vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
 		VkBufferCopy copyRegion{};
 		copyRegion.srcOffset = srcOffset;
 		copyRegion.dstOffset = dstOffset;
 		copyRegion.size = size;
-		vkCmdCopyBuffer(commandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
-
-		vkEndCommandBuffer(commandBuffer);
-
-		VkSubmitInfo submitInfo{};
-		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-		submitInfo.commandBufferCount = 1;
-		submitInfo.pCommandBuffers = &commandBuffer;
-
-		vkQueueSubmit(_queues.graphics, 1, &submitInfo, fence);
-		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
+		vkCmdCopyBuffer(_currentCommandBuffer, srcBuffer, dstBuffer, 1, &copyRegion);
 	}
 
 	void VkRenderer::BeginCommandBufferRecording(const VkCommandBuffer commandBuffer)
@@ -558,12 +533,12 @@ namespace vi
 		submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
 		VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-		submitInfo.waitSemaphoreCount = 1;
+		submitInfo.waitSemaphoreCount = waitSemaphore ? 1 : 0;
 		submitInfo.pWaitSemaphores = &waitSemaphore;
 		submitInfo.pWaitDstStageMask = &waitStage;
 		submitInfo.commandBufferCount = buffersCount;
 		submitInfo.pCommandBuffers = buffers;
-		submitInfo.signalSemaphoreCount = 1;
+		submitInfo.signalSemaphoreCount = signalSemaphore ? 1 : 0;
 		submitInfo.pSignalSemaphores = &signalSemaphore;
 
 		vkResetFences(_device, 1, &fence);

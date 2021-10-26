@@ -96,11 +96,17 @@ int main()
 	const auto vertMem = renderer.AllocateMemory(vertBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	renderer.BindMemory(vertBuffer, vertMem);
 
+	auto cpyCommandBuffer = renderer.CreateCommandBuffer();
 	const auto cpyFence = renderer.CreateFence();
-	renderer.CopyBuffer(vertStagingBuffer, vertBuffer, meshInfo.vertices.size() * sizeof(Vertex), cpyFence);
 
+	renderer.BeginCommandBufferRecording(cpyCommandBuffer);
+	renderer.CopyBuffer(vertStagingBuffer, vertBuffer, meshInfo.vertices.size() * sizeof(Vertex));
+	renderer.EndCommandBufferRecording();
+
+	renderer.Submit(&cpyCommandBuffer, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, cpyFence);
 	renderer.WaitForFence(cpyFence);
 	renderer.DestroyFence(cpyFence);
+	renderer.DestroyCommandBuffer(cpyCommandBuffer);
 
 	renderer.DestroyBuffer(vertStagingBuffer);
 	renderer.FreeMemory(vertStagingMem);
