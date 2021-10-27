@@ -143,7 +143,7 @@ int main()
 	const auto texStagingBuffer = renderer.CreateBuffer<unsigned char>(w * h * 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	const auto texStagingMem = renderer.AllocateMemory(texStagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	renderer.BindMemory(texStagingBuffer, texStagingMem);
-	renderer.MapMemory(texStagingMem, texture, 0, w * h * d);
+	renderer.MapMemory(texStagingMem, texture, 0, w * h * 4);
 	TextureLoader::Free(texture);
 
 	const auto img = renderer.CreateImage({ w, h });
