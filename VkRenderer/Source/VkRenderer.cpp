@@ -167,7 +167,7 @@ namespace vi
 		for (uint32_t i = 0; i < typeCount; ++i)
 		{
 			auto& size = sizes[i];
-			size.type = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			size.type = types[i];
 			size.descriptorCount = maxSets;
 		}
 
@@ -201,28 +201,39 @@ namespace vi
 	void VkRenderer::BindBuffer(const VkDescriptorSet set, const VkBuffer buffer, const BindingInfo& info, 
 		const uint32_t bindingIndex, const uint32_t arrayIndex) const
 	{
+		VkDescriptorBufferInfo bufferInfo{};
+		bufferInfo.buffer = buffer;
+		bufferInfo.offset = 0;
+		bufferInfo.range = info.size;
+
 		VkWriteDescriptorSet descriptorWrite{};
 		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
 		descriptorWrite.dstSet = set;
 		descriptorWrite.dstBinding = bindingIndex;
 		descriptorWrite.dstArrayElement = arrayIndex;
-		descriptorWrite.descriptorType = info.type;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pBufferInfo = &bufferInfo;
 
-		VkDescriptorBufferInfo bufferInfo{};
+		vkUpdateDescriptorSets(_device, 1, &descriptorWrite, 0, nullptr);
+	}
 
-		switch (info.type) 
-		{
-		case VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER:
-			bufferInfo.buffer = buffer;
-			bufferInfo.offset = 0;
-			bufferInfo.range = info.size;
+	void VkRenderer::BindSampler(const VkDescriptorSet set, const VkImageView imageView, const VkSampler sampler,
+		const uint32_t bindingIndex, const uint32_t arrayIndex) const
+	{
+		VkDescriptorImageInfo imageInfo{};
+		imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+		imageInfo.imageView = imageView;
+		imageInfo.sampler = sampler;
 
-			descriptorWrite.pBufferInfo = &bufferInfo;
-			break;
-			// Todo textures and storage buffers.
-		default: ;
-		}
+		VkWriteDescriptorSet descriptorWrite{};
+		descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+		descriptorWrite.dstSet = set;
+		descriptorWrite.dstBinding = bindingIndex;
+		descriptorWrite.dstArrayElement = arrayIndex;
+		descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+		descriptorWrite.descriptorCount = 1;
+		descriptorWrite.pImageInfo = &imageInfo;
 
 		vkUpdateDescriptorSets(_device, 1, &descriptorWrite, 0, nullptr);
 	}

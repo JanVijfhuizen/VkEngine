@@ -52,6 +52,13 @@ int main()
 	const auto vertModule = renderer.CreateShaderModule(vertCode);
 	const auto fragModule = renderer.CreateShaderModule(fragCode);
 
+	vi::DescriptorLayoutInfo materialLayoutInfo{};
+	vi::BindingInfo diffuseBinding{};
+	diffuseBinding.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	diffuseBinding.flag = VK_SHADER_STAGE_FRAGMENT_BIT;
+	materialLayoutInfo.bindings.push_back(diffuseBinding);
+	const auto materialLayout = renderer.CreateLayout(materialLayoutInfo);
+
 	vi::DescriptorLayoutInfo camLayoutInfo{};
 	vi::BindingInfo camBinding{};
 	camBinding.size = sizeof Camera;
@@ -63,6 +70,7 @@ int main()
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
 	pipelineInfo.setLayouts.push_back(camLayout);
+	pipelineInfo.setLayouts.push_back(materialLayout);
 	pipelineInfo.modules.push_back(
 		{
 			vertModule,
@@ -118,16 +126,17 @@ int main()
 	renderer.BindMemory(indBuffer, indMem);
 	renderer.MapMemory(indMem, meshInfo.indices.data(), 0, meshInfo.indices.size());
 
-	auto uboType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	const auto uboPool = renderer.CreateDescriptorPool(&uboType, 1, swapChain.GetImageCount());
+	VkDescriptorType uboType[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
+	const auto uboPool = renderer.CreateDescriptorPool(uboType, 2, swapChain.GetImageCount() * 2);
 
-	VkDescriptorSet camSet;
-	renderer.CreateDescriptorSets(uboPool, camLayout, &camSet, 1);
+	VkDescriptorSet sets[2];
+	renderer.CreateDescriptorSets(uboPool, camLayout, &sets[0], 1);
+	renderer.CreateDescriptorSets(uboPool, materialLayout, &sets[1], 1);
 
 	const auto camBuffer = renderer.CreateBuffer<Camera>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	const auto camMem = renderer.AllocateMemory(camBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	renderer.BindMemory(camBuffer, camMem);
-	renderer.BindBuffer(camSet, camBuffer, camBinding, 0, 0);
+	renderer.BindBuffer(sets[0], camBuffer, camBinding, 0, 0);
 
 	int32_t w, h, d;
 	const auto texture = TextureLoader::Load("Textures/Example.jpg", w, h, d);
@@ -169,6 +178,7 @@ int main()
 
 	const auto imgView = renderer.CreateImageView(img);
 	const auto imgSampler = renderer.CreateSampler();
+	renderer.BindSampler(sets[1], imgView, imgSampler, 0, 0);
 
 	while(true)
 	{
@@ -187,7 +197,7 @@ int main()
 		renderer.BeginRenderPass(image.frameBuffer, swapChain.GetRenderPass(), {}, { extent.width, extent.height});
 
 		renderer.BindPipeline(pipeline);
-		renderer.BindDescriptorSets(&camSet, 1);
+		renderer.BindDescriptorSets(sets, 2);
 
 		renderer.BindVertexBuffer(vertBuffer);
 		renderer.BindIndicesBuffer(indBuffer);
