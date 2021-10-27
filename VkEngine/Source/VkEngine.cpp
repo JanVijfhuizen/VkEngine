@@ -167,6 +167,9 @@ int main()
 	renderer.DestroyBuffer(texStagingBuffer);
 	renderer.FreeMemory(texStagingMem);
 
+	const auto imgView = renderer.CreateImageView(img);
+	const auto imgSampler = renderer.CreateSampler();
+
 	while(true)
 	{
 		bool quit;
@@ -222,7 +225,9 @@ int main()
 
 	swapChain.Cleanup();
 
+	renderer.DestroySampler(imgSampler);
 	renderer.FreeMemory(imgMem);
+	renderer.DestroyImageView(imgView);
 	renderer.DestroyImage(img);
 
 	renderer.FreeMemory(camMem);

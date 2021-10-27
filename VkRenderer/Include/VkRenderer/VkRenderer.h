@@ -61,8 +61,11 @@ namespace vi
 			VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT) const;
 		void DestroyImage(VkImage image) const;
 
-		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format) const;
+		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB) const;
 		void DestroyImageView(VkImageView imageView) const;
+
+		[[nodiscard]] VkSampler CreateSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR) const;
+		void DestroySampler(VkSampler sampler) const;
 
 		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass, VkExtent2D extent) const;
 		void DestroyFrameBuffer(VkFramebuffer frameBuffer) const;

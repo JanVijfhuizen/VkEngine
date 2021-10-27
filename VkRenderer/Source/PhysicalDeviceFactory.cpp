@@ -28,6 +28,8 @@ namespace vi
 		{
 			VkPhysicalDeviceProperties deviceProperties;
 			VkPhysicalDeviceFeatures deviceFeatures;
+			deviceFeatures.samplerAnisotropy = VK_TRUE;
+
 			vkGetPhysicalDeviceProperties(device, &deviceProperties);
 			vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
 
@@ -60,6 +62,9 @@ namespace vi
 	{
 		const auto swapChainSupport = SwapChain::QuerySwapChainSupport(renderer._surface, deviceInfo.device);
 		if (!swapChainSupport)
+			return false;
+
+		if (!deviceInfo.features.samplerAnisotropy)
 			return false;
 
 		auto& func = settings.deviceSuitableFunc;
