@@ -10,6 +10,7 @@
 #include "VkRenderer/DescriptorLayoutInfo.h"
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
+#include "TextureLoader.h"
 
 struct Transform final
 {
@@ -128,6 +129,44 @@ int main()
 	renderer.BindMemory(camBuffer, camMem);
 	renderer.BindBuffer(camSet, camBuffer, camBinding, 0, 0);
 
+	int32_t w, h, d;
+	const auto texture = TextureLoader::Load("Textures/Example.jpg", w, h, d);
+	const auto texStagingBuffer = renderer.CreateBuffer<unsigned char>(w * h * 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	const auto texStagingMem = renderer.AllocateMemory(texStagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	renderer.BindMemory(texStagingBuffer, texStagingMem);
+	renderer.MapMemory(texStagingMem, texture, 0, w * h * d);
+	TextureLoader::Free(texture);
+
+	const auto img = renderer.CreateImage({ w, h });
+	const auto imgMem = renderer.AllocateMemory(img, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	renderer.BindMemory(img, imgMem);
+
+	auto imgCmd = renderer.CreateCommandBuffer();
+	renderer.BeginCommandBufferRecording(imgCmd);
+	renderer.TransitionImageLayout(img, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	renderer.EndCommandBufferRecording();
+
+	const auto imgFence = renderer.CreateFence();
+	renderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
+	renderer.WaitForFence(imgFence);
+
+	renderer.BeginCommandBufferRecording(imgCmd);
+	renderer.CopyBuffer(texStagingBuffer, img, w, h);
+	renderer.EndCommandBufferRecording();
+	renderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
+	renderer.WaitForFence(imgFence);
+
+	renderer.BeginCommandBufferRecording(imgCmd);
+	renderer.TransitionImageLayout(img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	renderer.EndCommandBufferRecording();
+	renderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
+	renderer.WaitForFence(imgFence);
+
+	renderer.DestroyFence(imgFence);
+	renderer.DestroyCommandBuffer(imgCmd);
+	renderer.DestroyBuffer(texStagingBuffer);
+	renderer.FreeMemory(texStagingMem);
+
 	while(true)
 	{
 		bool quit;
@@ -162,6 +201,7 @@ int main()
 
 		const auto resolution = windowSystem.GetVkInfo().resolution;
 
+		// todo every framebuffer now uses the same buffers, so this is wrong. At the same time, this is only used for testing.
 		Camera camera{};
 		camera.aspectRatio = static_cast<float>(resolution.x) / resolution.y;
 		camera.pos.x = f / 10;
@@ -181,6 +221,9 @@ int main()
 	}
 
 	swapChain.Cleanup();
+
+	renderer.FreeMemory(imgMem);
+	renderer.DestroyImage(img);
 
 	renderer.FreeMemory(camMem);
 	renderer.DestroyBuffer(camBuffer);

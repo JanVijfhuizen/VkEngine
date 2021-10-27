@@ -160,6 +160,7 @@
     </ClCompile>
     <ClCompile Include="Source\VkEngine.cpp" />
     <ClCompile Include="Source\Vertex.cpp" />
+    <ClCompile Include="Source\TextureLoader.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\FileReader.h" />
@@ -170,6 +171,7 @@
     <ClInclude Include="Include\SparseSet.h" />
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Vertex.h" />
+    <ClInclude Include="Include\TextureLoader.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

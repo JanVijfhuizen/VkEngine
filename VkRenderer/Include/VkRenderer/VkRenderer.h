@@ -57,6 +57,10 @@ namespace vi
 		[[nodiscard]] VkCommandBuffer CreateCommandBuffer() const;
 		void DestroyCommandBuffer(VkCommandBuffer commandBuffer) const;
 
+		[[nodiscard]] VkImage CreateImage(glm::ivec2 resolution, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL, 
+			VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT) const;
+		void DestroyImage(VkImage image) const;
+
 		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format) const;
 		void DestroyImageView(VkImageView imageView) const;
 
@@ -74,13 +78,21 @@ namespace vi
 		[[nodiscard]] VkBuffer CreateBuffer(uint32_t count, VkBufferUsageFlags flags) const;
 		void DestroyBuffer(VkBuffer buffer) const;
 
+		[[nodiscard]] VkDeviceMemory AllocateMemory(VkImage image, VkMemoryPropertyFlags flags) const;
 		[[nodiscard]] VkDeviceMemory AllocateMemory(VkBuffer buffer, VkMemoryPropertyFlags flags) const;
+		[[nodiscard]] VkDeviceMemory AllocateMemory(VkMemoryRequirements memRequirements, VkMemoryPropertyFlags flags) const;
+
+		void BindMemory(VkImage image, VkDeviceMemory memory) const;
 		void BindMemory(VkBuffer buffer, VkDeviceMemory memory) const;
+
 		void FreeMemory(VkDeviceMemory memory) const;
 		template <typename T>
 		void MapMemory(VkDeviceMemory memory, T* input, VkDeviceSize offset, uint32_t count);
 
 		void CopyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size, VkDeviceSize srcOffset = 0, VkDeviceSize dstOffset = 0) const;
+		void CopyBuffer(VkBuffer srcBuffer, VkImage dstImage, uint32_t width, uint32_t height) const;
+
+		void TransitionImageLayout(VkImage image, VkImageLayout oldLayout, VkImageLayout newLayout) const;
 
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording() const;
