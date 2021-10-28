@@ -187,6 +187,23 @@ void RenderSystem::DestroyTexture(const Texture& texture)
 	_vkRenderer.FreeMemory(texture.imageMemory);
 }
 
+Material RenderSystem::CreateMaterial() const
+{
+	Material material{};
+
+	auto& frames = material.frames;
+	frames.resize(_swapChain.GetImageCount());
+	for (auto& frame : frames)
+		frame.diffuseSampler = _vkRenderer.CreateSampler();
+	return material;
+}
+
+void RenderSystem::DestroyMaterial(const Material& material) const
+{
+	for (auto& frame : material.frames)
+		_vkRenderer.DestroySampler(frame.diffuseSampler);
+}
+
 vi::WindowSystemGLFW& RenderSystem::GetWindowSystem() const
 {
 	return *_windowSystem;

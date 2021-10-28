@@ -11,6 +11,8 @@
 #include "Mesh.h"
 #include "RenderSystem.h"
 
+// TODO: use material frames and bind material diffuseTexture to active sampler.
+
 struct Transform final
 {
 	glm::vec2 transPos{};
@@ -26,6 +28,7 @@ struct Camera final
 
 int main()
 {
+	Cecsar cecsar{};
 	RenderSystem renderSystem{};
 
 	auto& windowSystem = renderSystem.GetWindowSystem();
