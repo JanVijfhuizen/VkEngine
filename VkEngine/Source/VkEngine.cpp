@@ -11,6 +11,7 @@
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
 #include "TextureLoader.h"
+#include "RenderSystem.h"
 
 struct Transform final
 {
@@ -27,24 +28,11 @@ struct Camera final
 
 int main()
 {
-	vi::WindowSystemGLFW windowSystem{};
+	RenderSystem renderSystem{};
 
-	vi::VkRenderer::Settings settings;
-	settings.debugger.validationLayers.push_back("VK_LAYER_RENDERDOC_Capture");
-
-	vi::VkRenderer renderer{};
-	renderer.Construct(windowSystem, settings);
-
-	vi::SwapChain swapChain{};
-	swapChain.Construct(renderer);
-
-	vi::RenderPassInfo renderPassInfo{};
-	vi::RenderPassInfo::Attachment renderPassAttachment{};
-	renderPassInfo.attachments.push_back(renderPassAttachment);
-	renderPassInfo.format = swapChain.GetFormat();
-
-	const auto renderPass = renderer.CreateRenderPass(renderPassInfo);
-	swapChain.SetRenderPass(renderPass);
+	auto& windowSystem = renderSystem.GetWindowSystem();
+	auto& renderer = renderSystem.GetVkRenderer();
+	auto& swapChain = renderSystem.GetSwapChain();
 
 	const auto vertCode = FileReader::Read("Shaders/vert.spv");
 	const auto fragCode = FileReader::Read("Shaders/frag.spv");
@@ -86,7 +74,7 @@ int main()
 			sizeof Transform,
 			VK_SHADER_STAGE_VERTEX_BIT
 		});
-	pipelineInfo.renderPass = renderPass;
+	pipelineInfo.renderPass = swapChain.GetRenderPass();
 	pipelineInfo.extent = swapChain.GetExtent();
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
@@ -183,18 +171,9 @@ int main()
 	while(true)
 	{
 		bool quit;
-		windowSystem.BeginFrame(quit);
+		renderSystem.BeginFrame(&quit);
 		if (quit)
 			break;
-
-		vi::SwapChain::Image image;
-		vi::SwapChain::Frame frame;
-		swapChain.GetNext(image, frame);
-
-		const auto extent = swapChain.GetExtent();
-
-		renderer.BeginCommandBufferRecording(image.commandBuffer);
-		renderer.BeginRenderPass(image.frameBuffer, swapChain.GetRenderPass(), {}, { extent.width, extent.height});
 
 		renderer.BindPipeline(pipeline);
 		renderer.BindDescriptorSets(sets, 2);
@@ -222,15 +201,7 @@ int main()
 
 		renderer.Draw(meshInfo.indices.size());
 
-		renderer.EndRenderPass();
-		renderer.EndCommandBufferRecording();
-
-		renderer.Submit(&image.commandBuffer, 1, frame.imageAvailableSemaphore, frame.renderFinishedSemaphore, frame.inFlightFence);
-		const auto result = swapChain.Present();
-		if (!result)
-		{
-			// Recreate pipeline.
-		}
+		renderSystem.EndFrame();
 	}
 
 	swapChain.Cleanup();
@@ -247,7 +218,6 @@ int main()
 
 	renderer.DestroyPipeline(pipeline);
 	renderer.DestroyLayout(camLayout);
-	renderer.DestroyRenderPass(renderPass);
 
 	renderer.FreeMemory(vertMem);
 	renderer.FreeMemory(indMem);

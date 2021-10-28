@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\RenderSystem.cpp" />
     <ClCompile Include="Source\FileReader.cpp" />
     <ClCompile Include="Source\pch.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">Create</PrecompiledHeader>
@@ -172,6 +173,7 @@
     <ClInclude Include="Include\pch.h" />
     <ClInclude Include="Include\Vertex.h" />
     <ClInclude Include="Include\TextureLoader.h" />
+    <ClInclude Include="Include\RenderSystem.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">
