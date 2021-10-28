@@ -1,6 +1,7 @@
 ﻿#pragma once
 #include "VkRenderer/VkRenderer.h"
 #include "VkRenderer/SwapChain.h"
+#include "Mesh.h"
 
 namespace vi
 {
@@ -15,6 +16,9 @@ public:
 
 	void BeginFrame(bool* quit);
 	void EndFrame();
+
+	[[nodiscard]] Mesh CreateMesh(const Mesh::Info& info);
+	void DestroyMesh(const Mesh& mesh);
 
 	[[nodiscard]] vi::WindowSystemGLFW& GetWindowSystem() const;
 	[[nodiscard]] vi::VkRenderer& GetVkRenderer();

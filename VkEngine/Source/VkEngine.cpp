@@ -6,7 +6,6 @@
 #include "FileReader.h"
 #include "VkRenderer/PipelineInfo.h"
 #include "Vertex.h"
-#include "VkRenderer/RenderPassInfo.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
@@ -79,7 +78,7 @@ int main()
 
 	const auto pipeline = renderer.CreatePipeline(pipelineInfo);
 
-	vk::Mesh::Info meshInfo{};
+	Mesh::Info meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
 		vertex.pos /= 2;
 
