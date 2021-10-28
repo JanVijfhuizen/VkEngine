@@ -18,6 +18,7 @@ public:
 	void EndFrame();
 
 	[[nodiscard]] Mesh CreateMesh(const Mesh::Info& info);
+	void UseMesh(const Mesh& mesh) const;
 	void DestroyMesh(const Mesh& mesh);
 
 	[[nodiscard]] vi::WindowSystemGLFW& GetWindowSystem() const;

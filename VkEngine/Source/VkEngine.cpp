@@ -81,37 +81,7 @@ int main()
 	Mesh::Info meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
 		vertex.pos /= 2;
-
-	const auto vertStagingBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	const auto vertStagingMem = renderer.AllocateMemory(vertStagingBuffer,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	renderer.BindMemory(vertStagingBuffer, vertStagingMem);
-	renderer.MapMemory(vertStagingMem, meshInfo.vertices.data(), 0, meshInfo.vertices.size());
-
-	const auto vertBuffer = renderer.CreateBuffer<Vertex>(meshInfo.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-	const auto vertMem = renderer.AllocateMemory(vertBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	renderer.BindMemory(vertBuffer, vertMem);
-
-	auto cpyCommandBuffer = renderer.CreateCommandBuffer();
-	const auto cpyFence = renderer.CreateFence();
-
-	renderer.BeginCommandBufferRecording(cpyCommandBuffer);
-	renderer.CopyBuffer(vertStagingBuffer, vertBuffer, meshInfo.vertices.size() * sizeof(Vertex));
-	renderer.EndCommandBufferRecording();
-
-	renderer.Submit(&cpyCommandBuffer, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, cpyFence);
-	renderer.WaitForFence(cpyFence);
-	renderer.DestroyFence(cpyFence);
-	renderer.DestroyCommandBuffer(cpyCommandBuffer);
-
-	renderer.DestroyBuffer(vertStagingBuffer);
-	renderer.FreeMemory(vertStagingMem);
-
-	const auto indBuffer = renderer.CreateBuffer<uint16_t>(meshInfo.indices.size(), VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-	const auto indMem = renderer.AllocateMemory(indBuffer,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	renderer.BindMemory(indBuffer, indMem);
-	renderer.MapMemory(indMem, meshInfo.indices.data(), 0, meshInfo.indices.size());
+	const auto mesh = renderSystem.CreateMesh(meshInfo);
 
 	VkDescriptorType uboType[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
 	const auto uboPool = renderer.CreateDescriptorPool(uboType, 2, swapChain.GetImageCount() * 2);
@@ -177,8 +147,7 @@ int main()
 		renderer.BindPipeline(pipeline);
 		renderer.BindDescriptorSets(sets, 2);
 
-		renderer.BindVertexBuffer(vertBuffer);
-		renderer.BindIndicesBuffer(indBuffer);
+		renderSystem.UseMesh(mesh);
 
 		static float f = 0;
 		f += 0.001f;
@@ -217,12 +186,6 @@ int main()
 
 	renderer.DestroyPipeline(pipeline);
 	renderer.DestroyLayout(camLayout);
-
-	renderer.FreeMemory(vertMem);
-	renderer.FreeMemory(indMem);
-
-	renderer.DestroyBuffer(vertBuffer);
-	renderer.DestroyBuffer(indBuffer);
 
 	renderer.DestroyShaderModule(vertModule);
 	renderer.DestroyShaderModule(fragModule);

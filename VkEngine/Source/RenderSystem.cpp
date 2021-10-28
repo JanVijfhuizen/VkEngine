@@ -113,6 +113,12 @@ Mesh RenderSystem::CreateMesh(const Mesh::Info& info)
 	return mesh;
 }
 
+void RenderSystem::UseMesh(const Mesh& mesh) const
+{
+	_vkRenderer.BindVertexBuffer(mesh.vertexBuffer);
+	_vkRenderer.BindIndicesBuffer(mesh.indexBuffer);
+}
+
 void RenderSystem::DestroyMesh(const Mesh& mesh)
 {
 	_vkRenderer.DestroyBuffer(mesh.vertexBuffer);
