@@ -83,7 +83,7 @@ namespace vi
 	void SwapChain::Cleanup()
 	{
 		for (auto& fence : _imagesInFlight)
-			vkWaitForFences(_renderer->_device, 1, &fence, VK_TRUE, UINT64_MAX);
+			_renderer->WaitForFence(fence);
 		_renderer->DeviceWaitIdle();
 
 		auto& device = _renderer->_device;

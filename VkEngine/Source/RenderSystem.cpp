@@ -3,6 +3,7 @@
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/VkRenderer.h"
 #include "VkRenderer/RenderPassInfo.h"
+#include "TextureLoader.h"
 
 RenderSystem::RenderSystem()
 {
@@ -125,6 +126,65 @@ void RenderSystem::DestroyMesh(const Mesh& mesh)
 	_vkRenderer.FreeMemory(mesh.vertexMemory);
 	_vkRenderer.DestroyBuffer(mesh.indexBuffer);
 	_vkRenderer.FreeMemory(mesh.indexMemory);
+}
+
+Texture RenderSystem::CreateTexture(const std::string& fileName)
+{
+	int32_t w, h, d;
+	const auto tex = TextureLoader::Load("Textures/" + fileName, w, h, d);
+	const auto texStagingBuffer = _vkRenderer.CreateBuffer<unsigned char>(w * h * 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	const auto texStagingMem = _vkRenderer.AllocateMemory(texStagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	_vkRenderer.BindMemory(texStagingBuffer, texStagingMem);
+	_vkRenderer.MapMemory(texStagingMem, tex, 0, w * h * 4);
+	TextureLoader::Free(tex);
+
+	const auto img = _vkRenderer.CreateImage({ w, h });
+	const auto imgMem = _vkRenderer.AllocateMemory(img, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	_vkRenderer.BindMemory(img, imgMem);
+
+	auto imgCmd = _vkRenderer.CreateCommandBuffer();
+	_vkRenderer.BeginCommandBufferRecording(imgCmd);
+	_vkRenderer.TransitionImageLayout(img, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	_vkRenderer.EndCommandBufferRecording();
+
+	const auto imgFence = _vkRenderer.CreateFence();
+	_vkRenderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
+	_vkRenderer.WaitForFence(imgFence);
+
+	_vkRenderer.BeginCommandBufferRecording(imgCmd);
+	_vkRenderer.CopyBuffer(texStagingBuffer, img, w, h);
+	_vkRenderer.EndCommandBufferRecording();
+	_vkRenderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
+	_vkRenderer.WaitForFence(imgFence);
+
+	_vkRenderer.BeginCommandBufferRecording(imgCmd);
+	_vkRenderer.TransitionImageLayout(img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	_vkRenderer.EndCommandBufferRecording();
+	_vkRenderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
+	_vkRenderer.WaitForFence(imgFence);
+
+	_vkRenderer.DestroyFence(imgFence);
+	_vkRenderer.DestroyCommandBuffer(imgCmd);
+	_vkRenderer.DestroyBuffer(texStagingBuffer);
+	_vkRenderer.FreeMemory(texStagingMem);
+
+	const auto imgView = _vkRenderer.CreateImageView(img);
+
+	Texture texture{};
+	texture.resolution = { w, h };
+	texture.channels = d;
+	texture.image = img;
+	texture.imageMemory = imgMem;
+	texture.imageView = imgView;
+
+	return texture;
+}
+
+void RenderSystem::DestroyTexture(const Texture& texture)
+{
+	_vkRenderer.DestroyImageView(texture.imageView);
+	_vkRenderer.DestroyImage(texture.image);
+	_vkRenderer.FreeMemory(texture.imageMemory);
 }
 
 vi::WindowSystemGLFW& RenderSystem::GetWindowSystem() const

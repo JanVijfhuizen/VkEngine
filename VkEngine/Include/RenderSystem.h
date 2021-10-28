@@ -2,6 +2,7 @@
 #include "VkRenderer/VkRenderer.h"
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
+#include "Texture.h"
 
 namespace vi
 {
@@ -20,6 +21,9 @@ public:
 	[[nodiscard]] Mesh CreateMesh(const Mesh::Info& info);
 	void UseMesh(const Mesh& mesh) const;
 	void DestroyMesh(const Mesh& mesh);
+
+	[[nodiscard]] Texture CreateTexture(const std::string& fileName);
+	void DestroyTexture(const Texture& image);
 
 	[[nodiscard]] vi::WindowSystemGLFW& GetWindowSystem() const;
 	[[nodiscard]] vi::VkRenderer& GetVkRenderer();

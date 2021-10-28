@@ -9,7 +9,6 @@
 #include "VkRenderer/DescriptorLayoutInfo.h"
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
-#include "TextureLoader.h"
 #include "RenderSystem.h"
 
 struct Transform final
@@ -95,47 +94,11 @@ int main()
 	renderer.BindMemory(camBuffer, camMem);
 	renderer.BindBuffer(sets[0], camBuffer, camBinding, 0, 0);
 
-	int32_t w, h, d;
-	const auto texture = TextureLoader::Load("Textures/Example.jpg", w, h, d);
-	const auto texStagingBuffer = renderer.CreateBuffer<unsigned char>(w * h * 4, VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	const auto texStagingMem = renderer.AllocateMemory(texStagingBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	renderer.BindMemory(texStagingBuffer, texStagingMem);
-	renderer.MapMemory(texStagingMem, texture, 0, w * h * 4);
-	TextureLoader::Free(texture);
+	const auto texture = renderSystem.CreateTexture("Example.jpg");
 
-	const auto img = renderer.CreateImage({ w, h });
-	const auto imgMem = renderer.AllocateMemory(img, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	renderer.BindMemory(img, imgMem);
-
-	auto imgCmd = renderer.CreateCommandBuffer();
-	renderer.BeginCommandBufferRecording(imgCmd);
-	renderer.TransitionImageLayout(img, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	renderer.EndCommandBufferRecording();
-
-	const auto imgFence = renderer.CreateFence();
-	renderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
-	renderer.WaitForFence(imgFence);
-
-	renderer.BeginCommandBufferRecording(imgCmd);
-	renderer.CopyBuffer(texStagingBuffer, img, w, h);
-	renderer.EndCommandBufferRecording();
-	renderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
-	renderer.WaitForFence(imgFence);
-
-	renderer.BeginCommandBufferRecording(imgCmd);
-	renderer.TransitionImageLayout(img, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
-	renderer.EndCommandBufferRecording();
-	renderer.Submit(&imgCmd, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, imgFence);
-	renderer.WaitForFence(imgFence);
-
-	renderer.DestroyFence(imgFence);
-	renderer.DestroyCommandBuffer(imgCmd);
-	renderer.DestroyBuffer(texStagingBuffer);
-	renderer.FreeMemory(texStagingMem);
-
-	const auto imgView = renderer.CreateImageView(img);
 	const auto imgSampler = renderer.CreateSampler();
-	renderer.BindSampler(sets[1], imgView, imgSampler, 0, 0);
+
+	renderer.BindSampler(sets[1], texture.imageView, imgSampler, 0, 0);
 
 	while(true)
 	{
@@ -172,12 +135,11 @@ int main()
 		renderSystem.EndFrame();
 	}
 
-	swapChain.Cleanup();
-
+	renderer.DeviceWaitIdle();
 	renderer.DestroySampler(imgSampler);
-	renderer.FreeMemory(imgMem);
-	renderer.DestroyImageView(imgView);
-	renderer.DestroyImage(img);
+
+	renderSystem.DestroyMesh(mesh);
+	renderSystem.DestroyTexture(texture);
 
 	renderer.FreeMemory(camMem);
 	renderer.DestroyBuffer(camBuffer);
@@ -186,11 +148,10 @@ int main()
 
 	renderer.DestroyPipeline(pipeline);
 	renderer.DestroyLayout(camLayout);
+	renderer.DestroyLayout(materialLayout);
 
 	renderer.DestroyShaderModule(vertModule);
 	renderer.DestroyShaderModule(fragModule);
-
-	renderer.Cleanup();
 
 	return 0;
 }

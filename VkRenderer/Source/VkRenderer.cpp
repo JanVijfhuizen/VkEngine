@@ -795,8 +795,7 @@ namespace vi
 				return i;
 			}
 
-		assert(false);
-		return -1;
+		throw std::exception("Memory type not available!");
 	}
 
 	void VkRenderer::DeviceWaitIdle() const
