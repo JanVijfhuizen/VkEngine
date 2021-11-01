@@ -1,12 +1,8 @@
 #include "pch.h"
-
 #include "Cecsar.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/VkRenderer.h"
-#include "FileReader.h"
-#include "VkRenderer/PipelineInfo.h"
 #include "Vertex.h"
-#include "VkRenderer/DescriptorLayoutInfo.h"
 #include "Mesh.h"
 #include "RenderSystem.h"
 #include "Singleton.h"
@@ -16,17 +12,28 @@
 
 int main()
 {
-	ce::Cecsar cecsar{100};
+	const uint32_t entityCount = 100;
+
+	ce::Cecsar cecsar{entityCount};
 	RenderSystem renderSystem{};
 
 	auto& windowSystem = renderSystem.GetWindowSystem();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	const auto unlitMaterialSystem = new UnlitMaterial::System(100);
+	ce::SparseSet<Transform> transforms{entityCount};
+	Singleton<ce::SparseSet<Transform>>::Set(&transforms);
+	cecsar.AddSet(&transforms);
+	
+	ce::SparseSet<Mesh> meshes{entityCount};
+	Singleton<ce::SparseSet<Mesh>>::Set(&meshes);
+	cecsar.AddSet(&meshes);
+
+	const auto unlitMaterialSystem = new UnlitMaterial::System(entityCount);
 	Singleton<UnlitMaterial::System>::Set(unlitMaterialSystem);
 	cecsar.AddSet(unlitMaterialSystem);
 
+	/*
 	VkDescriptorType uboType[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
 	const auto uboPool = renderer.CreateDescriptorPool(uboType, 2, swapChain.GetImageCount() * 2);
 
@@ -40,11 +47,10 @@ int main()
 	renderer.BindBuffer(sets[0], camBuffer, camBinding, 0, 0);
 
 	const auto texture = renderSystem.CreateTexture("Example.jpg");
-
 	const auto imgSampler = renderer.CreateSampler();
 
 	renderer.BindSampler(sets[1], texture.imageView, imgSampler, 0, 0);
-
+	*/
 	Mesh::Info meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
 		vertex.pos /= 2;
@@ -86,15 +92,12 @@ int main()
 	}
 
 	renderer.DeviceWaitIdle();
-	renderer.DestroySampler(imgSampler);
 
 	renderSystem.DestroyMesh(mesh);
 	renderSystem.DestroyTexture(texture);
 
 	renderer.FreeMemory(camMem);
 	renderer.DestroyBuffer(camBuffer);
-	
-	renderer.DestroyDescriptorPool(uboPool);
 
 	delete unlitMaterialSystem;
 	return 0;

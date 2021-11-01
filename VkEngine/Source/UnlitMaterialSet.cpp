@@ -5,6 +5,7 @@
 #include "Transform.h"
 #include "VkRenderer/PipelineInfo.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
+#include "VkRenderer/WindowSystemGLFW.h"
 
 UnlitMaterial::System::System(const uint32_t size) : MaterialSet<UnlitMaterial, Frame>(size)
 {
@@ -26,10 +27,9 @@ UnlitMaterial::System::System(const uint32_t size) : MaterialSet<UnlitMaterial, 
 	_materialLayout = renderer.CreateLayout(materialLayoutInfo);
 
 	vi::DescriptorLayoutInfo camLayoutInfo{};
-	vi::BindingInfo camBinding{};
-	camBinding.size = sizeof Camera;
-	camBinding.flag = VK_SHADER_STAGE_VERTEX_BIT;
-	camLayoutInfo.bindings.push_back(camBinding);
+	_camBinding.size = sizeof Camera;
+	_camBinding.flag = VK_SHADER_STAGE_VERTEX_BIT;
+	camLayoutInfo.bindings.push_back(_camBinding);
 	_camLayout = renderer.CreateLayout(camLayoutInfo);
 
 	vi::PipelineLayoutInfo pipelineInfo{};
@@ -56,6 +56,10 @@ UnlitMaterial::System::System(const uint32_t size) : MaterialSet<UnlitMaterial, 
 	pipelineInfo.extent = swapChain.GetExtent();
 
 	_pipeline = renderer.CreatePipeline(pipelineInfo);
+
+	const uint32_t imageCount = swapChain.GetImageCount();
+	VkDescriptorType uboType[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
+	_uboPool = renderer.CreateDescriptorPool(uboType, 2, imageCount * GetSize());
 }
 
 void UnlitMaterial::System::Cleanup()
@@ -68,14 +72,75 @@ void UnlitMaterial::System::Cleanup()
 	renderer.DestroyLayout(_materialLayout);
 	renderer.DestroyShaderModule(_vertModule);
 	renderer.DestroyShaderModule(_fragModule);
+	renderer.DestroyDescriptorPool(_uboPool);
 }
 
 void UnlitMaterial::System::ConstructInstance(const uint32_t denseId)
 {
 	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderer = renderSystem.GetVkRenderer();
+
+	auto& sets = GetSets();
+
+	for (uint32_t i = 1; i < sets.size(); ++i)
+	{
+		auto& set = sets[i];
+		auto& frame = set.Get<Frame>(denseId);
+
+		renderer.CreateDescriptorSets(_uboPool, _camLayout, &frame.camSet, 1);
+		renderer.CreateDescriptorSets(_uboPool, _materialLayout, &frame.matSet, 1);
+
+		// Todo bind camera buffer and create camera system.
+
+		frame.matDiffuseSampler = renderer.CreateSampler();
+	}
 }
 
 void UnlitMaterial::System::CleanupInstance(const uint32_t denseId)
 {
 	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderer = renderSystem.GetVkRenderer();
+
+	auto& sets = GetSets();
+
+	for (uint32_t i = 1; i < sets.size(); ++i)
+	{
+		auto& set = sets[i];
+		auto& frame = set.Get<Frame>(denseId);
+
+		renderer.DestroySampler(frame.matDiffuseSampler);
+	}
+}
+
+void UnlitMaterial::System::Update()
+{
+	MaterialSet<UnlitMaterial, Frame>::Update();
+
+	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderer = renderSystem.GetVkRenderer();
+	auto& swapChain = renderSystem.GetSwapChain();
+
+	auto& frames = GetSets()[swapChain.GetImageCount() + 1];
+	auto& transforms = Singleton<SparseSet<Transform>>::Get();
+	auto& meshes = Singleton<SparseSet<Mesh>>::Get();
+
+	renderer.BindPipeline(_pipeline);
+
+	for (const auto [instance, sparseId] : *this)
+	{
+		const uint32_t denseId = GetDenseId(sparseId);
+		auto& frame = frames.Get<Frame>(denseId);
+		auto& mesh = meshes[sparseId];
+
+		renderer.BindDescriptorSets(frame.sets, 2);
+		renderSystem.UseMesh(mesh);
+
+		const auto& diffuseTex = *instance.diffuseTexture;
+		renderer.BindSampler(frame.matSet, diffuseTex.imageView, frame.matDiffuseSampler, 0, 0);
+
+		auto& transform = transforms[sparseId];
+		renderer.UpdatePushConstant(_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
+
+		renderer.Draw(mesh.indCount);
+	}
 }

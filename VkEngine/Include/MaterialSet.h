@@ -15,7 +15,7 @@ public:
 	virtual void ConstructInstance(uint32_t denseId);
 	virtual void CleanupInstance(uint32_t denseId);
 
-	void Update();
+	virtual void Update();
 
 private:
 	std::vector<uint32_t> _erasableIds{};
