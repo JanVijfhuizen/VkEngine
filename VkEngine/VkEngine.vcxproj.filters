@@ -33,9 +33,6 @@
     <ClCompile Include="Source\RenderSystem.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\SoASet.cpp">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Source\Cecsar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -71,13 +68,16 @@
     <ClInclude Include="Include\RenderSystem.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Material.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Include\Texture.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\SoASet.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Singleton.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\MaterialSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>

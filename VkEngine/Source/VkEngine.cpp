@@ -10,7 +10,8 @@
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
 #include "RenderSystem.h"
-#include "SoASet.h"
+#include "MaterialSet.h"
+#include "Singleton.h"
 
 // TODO: use material frames and bind material diffuseTexture to active sampler.
 
@@ -27,11 +28,23 @@ struct Camera final
 	float aspectRatio;
 };
 
+struct TestMat
+{
+	struct Frame
+	{
+		
+	};
+};
+
+typedef MaterialSet<TestMat, TestMat::Frame> TestMatSystem;
+
 int main()
 {
 	ce::Cecsar cecsar{100};
-
 	RenderSystem renderSystem{};
+
+	Singleton<TestMatSystem>::Set(new TestMatSystem(100));
+	auto& sset = Singleton<TestMatSystem>::Get();
 
 	auto& windowSystem = renderSystem.GetWindowSystem();
 	auto& renderer = renderSystem.GetVkRenderer();

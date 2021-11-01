@@ -160,7 +160,6 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Source\SoASet.cpp" />
     <ClCompile Include="Source\VkEngine.cpp" />
     <ClCompile Include="Source\Vertex.cpp" />
     <ClCompile Include="Source\TextureLoader.cpp" />
@@ -169,8 +168,8 @@
     <ClInclude Include="Include\FileReader.h" />
     <ClInclude Include="Include\Cecsar.h" />
     <ClInclude Include="Include\Entity.h" />
+    <ClInclude Include="Include\Singleton.h" />
     <ClInclude Include="Include\Texture.h" />
-    <ClInclude Include="Include\Material.h" />
     <ClInclude Include="Include\Mesh.h" />
     <ClInclude Include="Include\Set.h" />
     <ClInclude Include="Include\SparseSet.h" />
@@ -179,6 +178,7 @@
     <ClInclude Include="Include\TextureLoader.h" />
     <ClInclude Include="Include\RenderSystem.h" />
     <ClInclude Include="Include\SoASet.h" />
+    <ClInclude Include="Include\MaterialSet.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

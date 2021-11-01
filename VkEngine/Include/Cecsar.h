@@ -6,7 +6,7 @@
 
 namespace ce
 {
-	class Cecsar final
+	class Cecsar
 	{
 	public:
 		explicit Cecsar(uint32_t size);

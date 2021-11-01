@@ -6,7 +6,7 @@
 namespace ce
 {
 	template <typename T>
-	class SparseSet final : public Set
+	class SparseSet : public Set
 	{
 	public:
 		struct Value final
@@ -48,14 +48,14 @@ namespace ce
 
 		[[nodiscard]] constexpr T& operator[](uint32_t sparseId);
 
-		constexpr T& Insert(uint32_t sparseId);
+		virtual T& Insert(uint32_t sparseId);
 		void Erase(uint32_t sparseId) override;
 
 		[[nodiscard]] constexpr bool Contains(uint32_t sparseId) const;
 		[[nodiscard]] constexpr uint32_t GetCount() const;
 		[[nodiscard]] constexpr uint32_t GetSize() const;
 
-		constexpr void Swap(uint32_t aDenseId, uint32_t bDenseId);
+		virtual void Swap(uint32_t aDenseId, uint32_t bDenseId);
 
 		[[nodiscard]] constexpr uint32_t GetDenseId(uint32_t sparseId) const;
 		[[nodiscard]] constexpr uint32_t GetSparseId(uint32_t denseId) const;
@@ -137,7 +137,7 @@ namespace ce
 	}
 
 	template <typename T>
-	constexpr T& SparseSet<T>::Insert(const uint32_t sparseId)
+	T& SparseSet<T>::Insert(const uint32_t sparseId)
 	{
 		if(!Contains(sparseId))
 		{
@@ -178,7 +178,7 @@ namespace ce
 	}
 
 	template <typename T>
-	constexpr void SparseSet<T>::Swap(const uint32_t aDenseId, const uint32_t bDenseId)
+	void SparseSet<T>::Swap(const uint32_t aDenseId, const uint32_t bDenseId)
 	{
 		const int32_t aSparse = _dense[aDenseId];
 		const int32_t bSparse = _dense[aDenseId] = _dense[bDenseId];
