@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Cecsar.cpp" />
     <ClCompile Include="Source\RenderSystem.cpp" />
     <ClCompile Include="Source\FileReader.cpp" />
     <ClCompile Include="Source\pch.cpp">
@@ -159,6 +160,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Source\SoASet.cpp" />
     <ClCompile Include="Source\VkEngine.cpp" />
     <ClCompile Include="Source\Vertex.cpp" />
     <ClCompile Include="Source\TextureLoader.cpp" />

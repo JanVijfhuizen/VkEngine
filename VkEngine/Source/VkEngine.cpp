@@ -29,7 +29,8 @@ struct Camera final
 
 int main()
 {
-	Cecsar cecsar{};
+	ce::Cecsar cecsar{100};
+
 	RenderSystem renderSystem{};
 
 	auto& windowSystem = renderSystem.GetWindowSystem();
