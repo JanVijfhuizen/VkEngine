@@ -20,6 +20,7 @@ public:
 	~SoASet();
 
 	[[nodiscard]] constexpr SubSet operator[](uint32_t setId);
+	[[nodiscard]] constexpr std::vector<SubSet>& GetSets();
 
 	constexpr void Insert(uint32_t sparseId);
 	constexpr void Erase(uint32_t sparseId) override;
@@ -28,6 +29,9 @@ public:
 	[[nodiscard]] constexpr uint32_t GetCount() const;
 
 	constexpr void Swap(uint32_t aDenseId, uint32_t bDenseId);
+
+	[[nodiscard]] constexpr uint32_t GetDenseId(uint32_t sparseId);
+	[[nodiscard]] constexpr uint32_t GetSparseId(uint32_t denseId);
 
 	[[nodiscard]] constexpr typename ce::SparseSet<uint32_t, S>::Iterator begin();
 	[[nodiscard]] constexpr typename ce::SparseSet<uint32_t, S>::Iterator end();
@@ -44,6 +48,12 @@ template <size_t S>
 constexpr typename SoASet<S>::SubSet SoASet<S>::operator[](const uint32_t setId)
 {
 	return _subSets[setId];
+}
+
+template <size_t S>
+constexpr std::vector<typename SoASet<S>::SubSet>& SoASet<S>::GetSets()
+{
+	return _subSets;
 }
 
 template <size_t S>
@@ -88,6 +98,18 @@ constexpr void SoASet<S>::Swap(const uint32_t aDenseId, const uint32_t bDenseId)
 		memcpy(aDense, bDense, unitSize);
 		memcpy(bDense, tempStorage, unitSize);
 	}
+}
+
+template <size_t S>
+constexpr uint32_t SoASet<S>::GetDenseId(const uint32_t sparseId)
+{
+	return _instances.GetDenseId(sparseId);
+}
+
+template <size_t S>
+constexpr uint32_t SoASet<S>::GetSparseId(const uint32_t denseId)
+{
+	return _instances.GetSparseId(denseId);
 }
 
 template <size_t S>

@@ -51,6 +51,9 @@ namespace ce
 
 		constexpr void Swap(uint32_t aDenseId, uint32_t bDenseId);
 
+		[[nodiscard]] constexpr uint32_t GetDenseId(uint32_t sparseId);
+		[[nodiscard]] constexpr uint32_t GetSparseId(uint32_t denseId);
+
 		[[nodiscard]] constexpr Iterator begin();
 		[[nodiscard]] constexpr Iterator end();
 
@@ -148,6 +151,18 @@ namespace ce
 
 		_sparse[aSparse] = bDenseId;
 		_sparse[bSparse] = aDenseId;
+	}
+
+	template <typename T, size_t S>
+	constexpr uint32_t SparseSet<T, S>::GetDenseId(const uint32_t sparseId)
+	{
+		return _sparse[sparseId];
+	}
+
+	template <typename T, size_t S>
+	constexpr uint32_t SparseSet<T, S>::GetSparseId(const uint32_t denseId)
+	{
+		return _dense[denseId];
 	}
 
 	template <typename T, size_t S>

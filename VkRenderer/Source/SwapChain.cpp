@@ -45,7 +45,7 @@ namespace vi
 		createInfo.imageColorSpace = surfaceFormat.colorSpace;
 		createInfo.imageExtent = _extent;
 		createInfo.imageArrayLayers = 1;
-		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT; // TODO: VK_IMAGE_USAGE_TRANSFER_DST_BIT for post processing.
+		createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT;
 
 		uint32_t queueFamilyIndices[] =
 		{
@@ -170,6 +170,11 @@ namespace vi
 	uint32_t SwapChain::GetImageCount() const
 	{
 		return _images.size();
+	}
+
+	uint32_t SwapChain::GetCurrentImageIndex() const
+	{
+		return _imageIndex;
 	}
 
 	void SwapChain::CreateBuffers()

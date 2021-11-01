@@ -187,16 +187,6 @@ void RenderSystem::DestroyTexture(const Texture& texture)
 	_vkRenderer.FreeMemory(texture.imageMemory);
 }
 
-Material RenderSystem::CreateMaterial() const
-{
-	return {};
-}
-
-void RenderSystem::DestroyMaterial(const Material& material) const
-{
-	
-}
-
 vi::WindowSystemGLFW& RenderSystem::GetWindowSystem() const
 {
 	return *_windowSystem;
