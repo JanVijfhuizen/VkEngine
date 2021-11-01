@@ -176,6 +176,7 @@
     <ClInclude Include="Include\Vertex.h" />
     <ClInclude Include="Include\TextureLoader.h" />
     <ClInclude Include="Include\RenderSystem.h" />
+    <ClInclude Include="Include\SoASet.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

@@ -10,6 +10,7 @@
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
 #include "RenderSystem.h"
+#include "SoASet.h"
 
 // TODO: use material frames and bind material diffuseTexture to active sampler.
 
