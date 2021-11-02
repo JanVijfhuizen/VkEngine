@@ -8,6 +8,7 @@ class ShaderSet : public ce::SoASet<Material>
 {
 public:
 	explicit ShaderSet(uint32_t size);
+	virtual void Cleanup();
 
 	Material& Insert(uint32_t sparseId) override;
 	void Erase(uint32_t sparseId) override;
@@ -36,6 +37,25 @@ ShaderSet<Material, Frame>::ShaderSet(const uint32_t size) : ce::SoASet<Material
 	const uint32_t imageCount = swapChain.GetImageCount();
 	for (uint32_t i = 0; i < imageCount; ++i)
 		ce::SoASet<Material>::template AddSubSet<Frame>();
+}
+
+template <typename Material, typename Frame>
+void ShaderSet<Material, Frame>::Cleanup()
+{
+	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& swapChain = renderSystem.GetSwapChain();
+
+	const uint32_t imageCount = swapChain.GetImageCount();
+	auto& sets = ce::SoASet<Material>::GetSets();
+
+	for (const auto [instance, sparseId] : *this)
+	{
+		const uint32_t denseId = ce::SoASet<Material>::GetDenseId(sparseId);
+		CleanupInstance(instance, denseId);
+
+		for (uint32_t i = 1; i < imageCount + 1; ++i)
+			CleanupInstanceFrame(sets[i].template Get<Frame>(denseId), instance, denseId);
+	}
 }
 
 template <typename Material, typename Frame>

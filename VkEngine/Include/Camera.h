@@ -18,6 +18,7 @@ struct Camera final
 	{
 	public:
 		explicit System(uint32_t size);
+		void Cleanup() override;
 		void Update() override;
 
 		[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
@@ -26,7 +27,6 @@ struct Camera final
 		void ConstructInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
 		void CleanupInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
 
-	private:
 		vi::BindingInfo _bindingInfo{};
 		VkDescriptorSetLayout _descriptorLayout;
 		VkDescriptorPool _descriptorPool;

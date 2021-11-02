@@ -60,6 +60,8 @@ UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Fr
 
 void UnlitMaterial::System::Cleanup()
 {
+	ShaderSet<UnlitMaterial, Frame>::Cleanup();
+
 	auto& renderSystem = Singleton<RenderSystem>::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 

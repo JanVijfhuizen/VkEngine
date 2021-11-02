@@ -21,6 +21,17 @@ Camera::System::System(const uint32_t size) : ShaderSet<Camera, Frame>(size)
 	_descriptorPool = renderer.CreateDescriptorPool(&uboType, 1, imageCount);
 }
 
+void Camera::System::Cleanup()
+{
+	ShaderSet<Camera, Frame>::Cleanup();
+
+	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderer = renderSystem.GetVkRenderer();
+
+	renderer.DestroyLayout(_descriptorLayout);
+	renderer.DestroyDescriptorPool(_descriptorPool);
+}
+
 void Camera::System::Update()
 {
 	ShaderSet<Camera, Frame>::Update();

@@ -13,7 +13,7 @@ struct UnlitMaterial final
 	{
 	public:
 		explicit System(uint32_t size);
-		void Cleanup();
+		void Cleanup() override;
 		void Update() override;
 
 	private:

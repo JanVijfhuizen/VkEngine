@@ -73,7 +73,9 @@ int main()
 	renderSystem.DestroyMesh(mesh);
 	renderSystem.DestroyTexture(texture);
 
+	cameraSystem->Cleanup();
 	delete cameraSystem;
+	unlitMaterialSystem->Cleanup();
 	delete unlitMaterialSystem;
 	return 0;
 }
