@@ -67,7 +67,7 @@ namespace ce
 		char* _data = nullptr;
 		T* _values;
 		uint32_t* _dense;
-		uint32_t* _sparse;
+		int32_t* _sparse;
 
 		uint32_t _count = 0;
 		uint32_t _size;
@@ -118,7 +118,7 @@ namespace ce
 		_data = reinterpret_cast<char*>(malloc(memSize));
 		_values = reinterpret_cast<T*>(_data);
 		_dense = reinterpret_cast<uint32_t*>(_data + iSize);
-		_sparse = _dense + iSize;
+		_sparse = reinterpret_cast<int32_t*>(_dense + iSize);
 
 		for (uint32_t i = 0; i < size; ++i)
 			_sparse[i] = -1;

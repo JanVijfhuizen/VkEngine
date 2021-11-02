@@ -96,12 +96,11 @@ void UnlitMaterial::System::Update()
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& cameraSystem = Singleton<Camera::System>::Get();
-	auto& frames = GetSets()[swapChain.GetImageCount() + 1];
+	auto& frames = GetSets()[swapChain.GetCurrentImageIndex() + 1];
 
 	auto& transforms = Singleton<SparseSet<Transform>>::Get();
 	auto& meshes = Singleton<SparseSet<Mesh>>::Get();
-	auto& cameras = Singleton<SparseSet<Camera>>::Get();
-	if (cameras.GetSize() == 0)
+	if (cameraSystem.GetSize() == 0)
 		return;
 
 	union
