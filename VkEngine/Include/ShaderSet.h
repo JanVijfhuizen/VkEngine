@@ -19,8 +19,7 @@ public:
 
 	virtual void Update();
 
-protected:
-	typename ce::SoASet<Material>::SubSet GetCurrentFrameSet();
+	[[nodiscard]] typename ce::SoASet<Material>::SubSet GetCurrentFrameSet();
 
 private:
 	std::vector<uint32_t> _erasableIds{};
@@ -50,13 +49,13 @@ Material& ShaderSet<Material, Frame>::Insert(const uint32_t sparseId)
 	const uint32_t denseId = ce::SoASet<Material>::GetDenseId(sparseId);
 
 	deleteQueue.template Get<int8_t>(denseId) = -1;
-	ConstructInstance(denseId);
+	ConstructInstance(material, denseId);
 
 	const uint32_t imageCount = swapChain.GetImageCount();
 	auto& sets = ce::SoASet<Material>::GetSets();
 
 	for (uint32_t i = 1; i < imageCount + 1; ++i)
-		ConstructInstanceFrame(sets[i], material, denseId);
+		ConstructInstanceFrame(sets[i].template Get<Frame>(denseId), material, denseId);
 
 	return material;
 }
@@ -103,21 +102,21 @@ void ShaderSet<Material, Frame>::Update()
 
 	_erasableIds.clear();
 
-	for (const auto [material, sparseId] : *this)
+	for (const auto [instance, sparseId] : *this)
 	{
-		const uint32_t denseId = GetDenseId(sparseId);
+		const uint32_t denseId = ce::SoASet<Material>::GetDenseId(sparseId);
 
-		auto& countdown = deleteQueue.Get<int8_t>(denseId);
+		auto& countdown = deleteQueue.template Get<int8_t>(denseId);
 		if (countdown == -1)
 			continue;
 
 		if (countdown-- > 0)
 			continue;
 
-		CleanupInstance(denseId);
+		CleanupInstance(instance, denseId);
 
 		for (uint32_t i = 1; i < imageCount + 1; ++i)
-			CleanupInstanceFrame(sets[i], material, denseId);
+			CleanupInstanceFrame(sets[i].template Get<Frame>(denseId), instance, denseId);
 
 		_erasableIds.push_back(sparseId);
 	}

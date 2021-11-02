@@ -36,7 +36,10 @@
     <ClCompile Include="Source\Cecsar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\UnlitMaterialSet.cpp">
+    <ClCompile Include="Source\UnlitMaterial.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -80,10 +83,10 @@
     <ClInclude Include="Include\Singleton.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\MaterialSet.h">
+    <ClInclude Include="Include\ShaderSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\UnlitMaterialSet.h">
+    <ClInclude Include="Include\UnlitMaterial.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Transform.h">

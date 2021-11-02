@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "UnlitMaterialSet.h"
+#include "UnlitMaterial.h"
 #include "FileReader.h"
 #include "Camera.h"
 #include "Transform.h"
@@ -12,6 +12,8 @@ UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Fr
 	auto& renderSystem = Singleton<RenderSystem>::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
+
+	auto& cameraSystem = Singleton<Camera::System>::Get();
 
 	const auto vertCode = FileReader::Read("Shaders/vert.spv");
 	const auto fragCode = FileReader::Read("Shaders/frag.spv");
@@ -29,7 +31,7 @@ UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Fr
 	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
-	pipelineInfo.setLayouts.push_back(_camLayout);
+	pipelineInfo.setLayouts.push_back(cameraSystem.GetLayout());
 	pipelineInfo.setLayouts.push_back(_materialLayout);
 	pipelineInfo.modules.push_back(
 		{
@@ -93,9 +95,25 @@ void UnlitMaterial::System::Update()
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
+	auto& cameraSystem = Singleton<Camera::System>::Get();
 	auto& frames = GetSets()[swapChain.GetImageCount() + 1];
+
 	auto& transforms = Singleton<SparseSet<Transform>>::Get();
 	auto& meshes = Singleton<SparseSet<Mesh>>::Get();
+	auto& cameras = Singleton<SparseSet<Camera>>::Get();
+	if (cameras.GetSize() == 0)
+		return;
+
+	union
+	{
+		struct
+		{
+			VkDescriptorSet cameraSet;
+			VkDescriptorSet materialSet;
+		};
+		VkDescriptorSet sets[2];
+	};
+	cameraSet = cameraSystem.GetCurrentFrameSet().Get<Camera::Frame>(0).descriptor;
 
 	renderer.BindPipeline(_pipeline);
 
@@ -104,16 +122,15 @@ void UnlitMaterial::System::Update()
 		const uint32_t denseId = GetDenseId(sparseId);
 		auto& frame = frames.Get<Frame>(denseId);
 		auto& mesh = meshes[sparseId];
-
-		renderer.BindDescriptorSets(frame.sets, 2);
-		renderSystem.UseMesh(mesh);
-
-		const auto& diffuseTex = *instance.diffuseTexture;
-		renderer.BindSampler(frame.descriptorSet, diffuseTex.imageView, frame.matDiffuseSampler, 0, 0);
-
 		auto& transform = transforms[sparseId];
-		renderer.UpdatePushConstant(_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
+		const auto& diffuseTex = *instance.diffuseTexture;
 
+		materialSet = frame.descriptorSet;
+
+		renderSystem.UseMesh(mesh);
+		renderer.BindDescriptorSets(sets, 2);
+		renderer.BindSampler(frame.descriptorSet, diffuseTex.imageView, frame.matDiffuseSampler, 0, 0);
+		renderer.UpdatePushConstant(_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
 		renderer.Draw(mesh.indCount);
 	}
 }

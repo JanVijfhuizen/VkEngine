@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
     <ClCompile Include="Source\RenderSystem.cpp" />
     <ClCompile Include="Source\FileReader.cpp" />
@@ -163,7 +164,7 @@
     <ClCompile Include="Source\VkEngine.cpp" />
     <ClCompile Include="Source\Vertex.cpp" />
     <ClCompile Include="Source\TextureLoader.cpp" />
-    <ClCompile Include="Source\UnlitMaterialSet.cpp" />
+    <ClCompile Include="Source\UnlitMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Camera.h" />
@@ -181,8 +182,8 @@
     <ClInclude Include="Include\TextureLoader.h" />
     <ClInclude Include="Include\RenderSystem.h" />
     <ClInclude Include="Include\SoASet.h" />
-    <ClInclude Include="Include\MaterialSet.h" />
-    <ClInclude Include="Include\UnlitMaterialSet.h" />
+    <ClInclude Include="Include\ShaderSet.h" />
+    <ClInclude Include="Include\UnlitMaterial.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

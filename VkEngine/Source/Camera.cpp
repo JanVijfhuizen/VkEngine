@@ -47,6 +47,11 @@ void Camera::System::Update()
 	}
 }
 
+VkDescriptorSetLayout Camera::System::GetLayout() const
+{
+	return _descriptorLayout;
+}
+
 void Camera::System::ConstructInstanceFrame(Frame& frame, Camera& material, const uint32_t denseId)
 {
 	auto& renderSystem = Singleton<RenderSystem>::Get();

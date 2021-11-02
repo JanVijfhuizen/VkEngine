@@ -20,6 +20,8 @@ struct Camera final
 		explicit System(uint32_t size);
 		void Update() override;
 
+		[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
+
 	private:
 		void ConstructInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
 		void CleanupInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;

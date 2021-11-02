@@ -1,5 +1,4 @@
 ﻿#pragma once
-#include "VkRenderer/BindingInfo.h"
 #include "ShaderSet.h"
 
 struct UnlitMaterial final
