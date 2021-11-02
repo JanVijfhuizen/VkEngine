@@ -2,7 +2,7 @@
 
 struct Transform final
 {
-	glm::vec2 transPos{};
-	glm::vec2 transScale{ 1 };
-	float transRot = 0;
+	glm::vec2 position{};
+	glm::vec2 scale{ 1 };
+	float rotation = 0;
 };

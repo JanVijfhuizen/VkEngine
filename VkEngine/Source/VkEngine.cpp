@@ -10,6 +10,8 @@
 #include "Camera.h"
 #include "UnlitMaterialSet.h"
 
+// Todo pool descriptor sets.
+
 int main()
 {
 	const uint32_t entityCount = 100;
@@ -17,9 +19,7 @@ int main()
 	ce::Cecsar cecsar{entityCount};
 	RenderSystem renderSystem{};
 
-	auto& windowSystem = renderSystem.GetWindowSystem();
 	auto& renderer = renderSystem.GetVkRenderer();
-	auto& swapChain = renderSystem.GetSwapChain();
 
 	ce::SparseSet<Transform> transforms{entityCount};
 	Singleton<ce::SparseSet<Transform>>::Set(&transforms);
@@ -28,6 +28,10 @@ int main()
 	ce::SparseSet<Mesh> meshes{entityCount};
 	Singleton<ce::SparseSet<Mesh>>::Set(&meshes);
 	cecsar.AddSet(&meshes);
+
+	const auto cameraSystem = new Camera::System{entityCount};
+	Singleton<Camera::System>::Set(cameraSystem);
+	cecsar.AddSet(cameraSystem);
 
 	const auto unlitMaterialSystem = new UnlitMaterial::System(entityCount);
 	Singleton<UnlitMaterial::System>::Set(unlitMaterialSystem);
@@ -63,6 +67,9 @@ int main()
 		if (quit)
 			break;
 
+		cameraSystem->Update();
+		unlitMaterialSystem->Update();
+
 		renderer.BindPipeline(pipeline);
 		renderer.BindDescriptorSets(sets, 2);
 
@@ -78,14 +85,6 @@ int main()
 
 		renderer.UpdatePushConstant(pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, transform);
 
-		const auto resolution = windowSystem.GetVkInfo().resolution;
-
-		// todo every framebuffer now uses the same buffers, so this is wrong. At the same time, this is only used for testing.
-		Camera camera{};
-		camera.aspectRatio = static_cast<float>(resolution.x) / resolution.y;
-		camera.pos.x = f / 10;
-		renderer.MapMemory(camMem, &camera, 0, 1);
-
 		renderer.Draw(meshInfo.indices.size());
 
 		renderSystem.EndFrame();
@@ -96,9 +95,7 @@ int main()
 	renderSystem.DestroyMesh(mesh);
 	renderSystem.DestroyTexture(texture);
 
-	renderer.FreeMemory(camMem);
-	renderer.DestroyBuffer(camBuffer);
-
+	delete cameraSystem;
 	delete unlitMaterialSystem;
 	return 0;
 }

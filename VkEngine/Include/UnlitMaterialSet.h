@@ -1,43 +1,31 @@
 ﻿#pragma once
-#include "MaterialSet.h"
 #include "VkRenderer/BindingInfo.h"
+#include "ShaderSet.h"
 
 struct UnlitMaterial final
 {
 	struct Frame final
 	{
-		union
-		{
-			struct
-			{
-				VkDescriptorSet camSet;
-				VkDescriptorSet matSet;
-			};
-			VkDescriptorSet sets[2];
-		};
-
+		VkDescriptorSet descriptorSet;
 		VkSampler matDiffuseSampler;
 	};
 
-	class System final : public MaterialSet<UnlitMaterial, Frame>
+	class System final : public ShaderSet<UnlitMaterial, Frame>
 	{
 	public:
 		explicit System(uint32_t size);
 		void Cleanup();
-
-		void ConstructInstance(uint32_t denseId) override;
-		void CleanupInstance(uint32_t denseId) override;
-
 		void Update() override;
 
 	private:
-		vi::BindingInfo _camBinding{};
 		vi::Pipeline _pipeline;
-		VkDescriptorSetLayout _camLayout;
 		VkDescriptorSetLayout _materialLayout;
 		VkShaderModule _vertModule;
 		VkShaderModule _fragModule;
 		VkDescriptorPool _uboPool;
+
+		void ConstructInstanceFrame(Frame& frame, UnlitMaterial& material, uint32_t denseId) override;
+		void CleanupInstanceFrame(Frame& frame, UnlitMaterial& material, uint32_t denseId) override;
 	};
 
 	Texture* diffuseTexture = nullptr;
