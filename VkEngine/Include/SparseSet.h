@@ -117,8 +117,8 @@ namespace ce
 
 		_data = reinterpret_cast<char*>(malloc(memSize));
 		_values = reinterpret_cast<T*>(_data);
-		_dense = reinterpret_cast<uint32_t*>(_data + iSize);
-		_sparse = reinterpret_cast<int32_t*>(_dense + iSize);
+		_dense = reinterpret_cast<uint32_t*>(_data + valSize);
+		_sparse = reinterpret_cast<int32_t*>(_data + iSize * 2);
 
 		for (uint32_t i = 0; i < size; ++i)
 			_sparse[i] = -1;
@@ -162,7 +162,8 @@ namespace ce
 	template <typename T>
 	constexpr bool SparseSet<T>::Contains(const uint32_t sparseId) const
 	{
-		return _sparse[sparseId] != -1;
+		const int32_t i = _sparse[sparseId];
+		return i != -1;
 	}
 
 	template <typename T>
