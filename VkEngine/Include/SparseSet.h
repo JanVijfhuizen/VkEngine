@@ -146,7 +146,7 @@ namespace ce
 			_dense[_count++] = sparseId;
 		}
 
-		return _values[sparseId];
+		return _values[_sparse[sparseId]];
 	}
 
 	template <typename T>
