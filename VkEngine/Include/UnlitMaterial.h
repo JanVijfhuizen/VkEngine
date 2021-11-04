@@ -1,5 +1,6 @@
 ﻿#pragma once
 #include "ShaderSet.h"
+#include "DescriptorPool.h"
 
 struct UnlitMaterial final
 {
@@ -18,10 +19,9 @@ struct UnlitMaterial final
 
 	private:
 		vi::Pipeline _pipeline;
-		VkDescriptorSetLayout _materialLayout;
 		VkShaderModule _vertModule;
 		VkShaderModule _fragModule;
-		VkDescriptorPool _uboPool;
+		DescriptorPool _descriptorPool;
 
 		void ConstructInstanceFrame(Frame& frame, UnlitMaterial& material, uint32_t denseId) override;
 		void CleanupInstanceFrame(Frame& frame, UnlitMaterial& material, uint32_t denseId) override;

@@ -153,6 +153,7 @@
   <ItemGroup>
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
+    <ClCompile Include="Source\DescriptorPool.cpp" />
     <ClCompile Include="Source\RenderSystem.cpp" />
     <ClCompile Include="Source\FileReader.cpp" />
     <ClCompile Include="Source\pch.cpp">
@@ -168,9 +169,11 @@
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Camera.h" />
+    <ClInclude Include="Include\DescriptorPool.h" />
     <ClInclude Include="Include\FileReader.h" />
     <ClInclude Include="Include\Cecsar.h" />
     <ClInclude Include="Include\Entity.h" />
+    <ClInclude Include="Include\Pool.h" />
     <ClInclude Include="Include\Singleton.h" />
     <ClInclude Include="Include\Texture.h" />
     <ClInclude Include="Include\Mesh.h" />

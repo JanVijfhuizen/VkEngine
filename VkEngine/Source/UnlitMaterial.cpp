@@ -26,13 +26,13 @@ UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Fr
 	diffuseBinding.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 	diffuseBinding.flag = VK_SHADER_STAGE_FRAGMENT_BIT;
 	materialLayoutInfo.bindings.push_back(diffuseBinding);
-	_materialLayout = renderer.CreateLayout(materialLayoutInfo);
+	auto layout = renderer.CreateLayout(materialLayoutInfo);
 
 	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
 	pipelineInfo.setLayouts.push_back(cameraSystem.GetLayout());
-	pipelineInfo.setLayouts.push_back(_materialLayout);
+	pipelineInfo.setLayouts.push_back(layout);
 	pipelineInfo.modules.push_back(
 		{
 			_vertModule,
@@ -54,8 +54,8 @@ UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Fr
 	_pipeline = renderer.CreatePipeline(pipelineInfo);
 
 	const uint32_t imageCount = swapChain.GetImageCount();
-	VkDescriptorType uboType[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
-	_uboPool = renderer.CreateDescriptorPool(uboType, 2, imageCount * GetSize());
+	VkDescriptorType uboTypes[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
+	_descriptorPool.Construct(imageCount * GetSize(), layout, uboTypes, 2);
 }
 
 void UnlitMaterial::System::Cleanup()
@@ -66,26 +66,26 @@ void UnlitMaterial::System::Cleanup()
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	renderer.DestroyPipeline(_pipeline);
-	renderer.DestroyLayout(_materialLayout);
 	renderer.DestroyShaderModule(_vertModule);
 	renderer.DestroyShaderModule(_fragModule);
-	renderer.DestroyDescriptorPool(_uboPool);
+	_descriptorPool.Cleanup();
 }
 
-void UnlitMaterial::System::ConstructInstanceFrame(Frame& frame, UnlitMaterial& material, const uint32_t denseId)
+void UnlitMaterial::System::ConstructInstanceFrame(Frame& frame, UnlitMaterial&, const uint32_t)
 {
 	auto& renderSystem = Singleton<RenderSystem>::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
-	renderer.CreateDescriptorSets(_uboPool, _materialLayout, &frame.descriptorSet, 1);
+	frame.descriptorSet = _descriptorPool.Get();
 	frame.matDiffuseSampler = renderer.CreateSampler();
 }
 
-void UnlitMaterial::System::CleanupInstanceFrame(Frame& frame, UnlitMaterial& material, const uint32_t denseId)
+void UnlitMaterial::System::CleanupInstanceFrame(Frame& frame, UnlitMaterial&, const uint32_t)
 {
 	auto& renderSystem = Singleton<RenderSystem>::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
+	_descriptorPool.Add(frame.descriptorSet);
 	renderer.DestroySampler(frame.matDiffuseSampler);
 }
 
