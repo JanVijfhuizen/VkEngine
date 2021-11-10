@@ -8,7 +8,7 @@ Mesh::System::System(const uint32_t size) : SparseSet<Mesh>(size)
 
 }
 
-void Mesh::System::LoadMesh(const std::string& path, std::vector<Vertex>& outVertices, std::vector<uint16_t>& outIndices)
+void Mesh::System::Load(const std::string& fileName, std::vector<Vertex>& outVertices, std::vector<int8_t>& outIndices)
 {
 	// It's far from the best method, but it's not the end of the world since I'm only planning to load in very simple models.
 
@@ -19,6 +19,7 @@ void Mesh::System::LoadMesh(const std::string& path, std::vector<Vertex>& outVer
 	std::string warn;
 	std::string err;
 
+	std::string path = "Meshes/" + fileName;
 	const bool success = LoadObj(&attrib, &shapes, &materials, &warn, &err, path.c_str());
 	assert(success);
 
@@ -74,9 +75,10 @@ void Mesh::System::LoadMesh(const std::string& path, std::vector<Vertex>& outVer
 					texCoord.y = texCoords[texSize + 1];
 				}
 
-				index_offset += fv;
 				outVertices.push_back(vertex);
 			}
+
+			index_offset += fv;
 		}
 	}
 

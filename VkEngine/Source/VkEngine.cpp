@@ -43,16 +43,27 @@ int main()
 
 	auto texture = renderSystem.CreateTexture("Example.jpg");
 
+	// Add quad entity.
 	Mesh::Info2d meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
 		vertex.position /= 2;
 
 	const auto quadEntity = cecsar.AddEntity();
-	transformSystem->Insert(quadEntity.id);
-	auto& mesh = meshSystem->Insert(quadEntity.id);
+	transformSystem->Insert(quadEntity.index);
+	auto& mesh = meshSystem->Insert(quadEntity.index);
 	mesh = renderSystem.CreateMesh(meshInfo.vertices, meshInfo.indices);
-	auto& unlitMaterial = unlitMaterialSystem->Insert(quadEntity.id);
+	auto& unlitMaterial = unlitMaterialSystem->Insert(quadEntity.index);
 	unlitMaterial.diffuseTexture = &texture;
+
+	// Add cube entity.
+	std::vector<Vertex> cubeVerts{};
+	std::vector<int8_t> cubeInds{};
+	Mesh::System::Load("Cube.obj", cubeVerts, cubeInds);
+
+	const auto cubeEntity = cecsar.AddEntity();
+	transformSystem->Insert(cubeEntity.index);
+	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
+	cubeMesh = renderSystem.CreateMesh<Vertex, int8_t>(cubeVerts, cubeInds);
 
 	while(true)
 	{
@@ -70,6 +81,7 @@ int main()
 	renderer.DeviceWaitIdle();
 
 	renderSystem.DestroyMesh(mesh);
+	renderSystem.DestroyMesh(cubeMesh);
 	renderSystem.DestroyTexture(texture);
 
 	cameraSystem->Cleanup();

@@ -34,6 +34,6 @@ struct Mesh final
 
         explicit System(uint32_t size);
 
-        static void LoadMesh(const std::string& path, std::vector<Vertex>& outVertices, std::vector<uint16_t>& outIndices);
+        static void Load(const std::string& fileName, std::vector<Vertex>& outVertices, std::vector<int8_t>& outIndices);
     };
 };
