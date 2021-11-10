@@ -1,12 +1,12 @@
 #pragma once
 
-struct Transform final
+struct Transform2d final
 {
 	glm::vec2 position{};
 	glm::vec2 scale{ 1 };
 	float rotation = 0;
 
-	class System final : public ce::SparseSet<Transform>
+	class System final : public ce::SparseSet<Transform2d>
 	{
 	public:
 		typedef Singleton<System> Instance;

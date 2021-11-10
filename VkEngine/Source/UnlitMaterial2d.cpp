@@ -1,8 +1,8 @@
 ﻿#include "pch.h"
 #include "UnlitMaterial2d.h"
 #include "FileReader.h"
-#include "Camera.h"
-#include "Transform.h"
+#include "Camera2d.h"
+#include "Transform2d.h"
 #include "VkRenderer/PipelineInfo.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
 #include "VkRenderer/WindowSystemGLFW.h"
@@ -13,7 +13,7 @@ UnlitMaterial2d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial2d
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	auto& cameraSystem = Camera::System::Instance::Get();
+	auto& cameraSystem = Camera2d::System::Instance::Get();
 
 	const auto vertCode = FileReader::Read("Shaders/vert2d.spv");
 	const auto fragCode = FileReader::Read("Shaders/frag2d.spv");
@@ -45,7 +45,7 @@ UnlitMaterial2d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial2d
 		});
 	pipelineInfo.pushConstants.push_back(
 		{
-			sizeof Transform,
+			sizeof Transform2d,
 			VK_SHADER_STAGE_VERTEX_BIT
 		});
 	pipelineInfo.renderPass = swapChain.GetRenderPass();
@@ -97,10 +97,10 @@ void UnlitMaterial2d::System::Update()
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	auto& cameraSystem = Camera::System::Instance::Get();
+	auto& cameraSystem = Camera2d::System::Instance::Get();
 	auto& frames = GetSets()[swapChain.GetCurrentImageIndex() + 1];
 
-	auto& transforms = Transform::System::Instance::Get();
+	auto& transforms = Transform2d::System::Instance::Get();
 	auto& meshes = Mesh::System::Instance::Get();
 	if (cameraSystem.GetSize() == 0)
 		return;
@@ -114,7 +114,7 @@ void UnlitMaterial2d::System::Update()
 		};
 		VkDescriptorSet sets[2];
 	};
-	cameraSet = cameraSystem.GetCurrentFrameSet().Get<Camera::Frame>(0).descriptor;
+	cameraSet = cameraSystem.GetCurrentFrameSet().Get<Camera2d::Frame>(0).descriptor;
 
 	renderer.BindPipeline(_pipeline);
 

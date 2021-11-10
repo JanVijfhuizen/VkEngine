@@ -2,10 +2,10 @@
 #include "ShaderSet.h"
 #include "VkRenderer/BindingInfo.h"
 
-struct Camera final
+struct Camera2d final
 {
-	glm::vec3 position;
-	float aspectRatio;
+	glm::vec3 position{};
+	float aspectRatio = 1;
 
 	struct Frame final
 	{
@@ -14,7 +14,7 @@ struct Camera final
 		VkDescriptorSet descriptor;
 	};
 
-	class System final : public ShaderSet<Camera, Frame>
+	class System final : public ShaderSet<Camera2d, Frame>
 	{
 	public:
 		typedef Singleton<System> Instance;
@@ -26,8 +26,8 @@ struct Camera final
 		[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
 
 	private:
-		void ConstructInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
-		void CleanupInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
+		void ConstructInstanceFrame(Frame& frame, Camera2d& material, uint32_t denseId) override;
+		void CleanupInstanceFrame(Frame& frame, Camera2d& material, uint32_t denseId) override;
 
 		vi::BindingInfo _bindingInfo{};
 		VkDescriptorSetLayout _descriptorLayout;

@@ -1,17 +1,17 @@
 #include "pch.h"
-#include "Camera.h"
+#include "Camera2d.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
-#include "Transform.h"
+#include "Transform2d.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 
-Camera::System::System(const uint32_t size) : ShaderSet<Camera, Frame>(size)
+Camera2d::System::System(const uint32_t size) : ShaderSet<Camera2d, Frame>(size)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	vi::DescriptorLayoutInfo camLayoutInfo{};
-	_bindingInfo.size = sizeof Camera;
+	_bindingInfo.size = sizeof Camera2d;
 	_bindingInfo.flag = VK_SHADER_STAGE_VERTEX_BIT;
 	camLayoutInfo.bindings.push_back(_bindingInfo);
 	_descriptorLayout = renderer.CreateLayout(camLayoutInfo);
@@ -21,25 +21,25 @@ Camera::System::System(const uint32_t size) : ShaderSet<Camera, Frame>(size)
 	_descriptorPool = renderer.CreateDescriptorPool(&uboType, 1, imageCount);
 }
 
-void Camera::System::Cleanup()
+void Camera2d::System::Cleanup()
 {
-	ShaderSet<Camera, Frame>::Cleanup();
+	ShaderSet<Camera2d, Frame>::Cleanup();
 
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	renderer.DestroyLayout(_descriptorLayout);
 	renderer.DestroyDescriptorPool(_descriptorPool);
 }
 
-void Camera::System::Update()
+void Camera2d::System::Update()
 {
-	ShaderSet<Camera, Frame>::Update();
+	ShaderSet<Camera2d, Frame>::Update();
 
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& windowSystem = renderSystem.GetWindowSystem();
-	auto& transforms = Transform::System::Instance::Get();
+	auto& transforms = Transform2d::System::Instance::Get();
 	auto frames = GetCurrentFrameSet();
 
 	const auto resolution = windowSystem.GetVkInfo().resolution;
@@ -58,27 +58,27 @@ void Camera::System::Update()
 	}
 }
 
-VkDescriptorSetLayout Camera::System::GetLayout() const
+VkDescriptorSetLayout Camera2d::System::GetLayout() const
 {
 	return _descriptorLayout;
 }
 
-void Camera::System::ConstructInstanceFrame(Frame& frame, Camera& material, const uint32_t denseId)
+void Camera2d::System::ConstructInstanceFrame(Frame& frame, Camera2d&, const uint32_t)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	renderer.CreateDescriptorSets(_descriptorPool, _descriptorLayout, &frame.descriptor, 1);
 
-	frame.buffer = renderer.CreateBuffer<Camera>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	frame.buffer = renderer.CreateBuffer<Camera2d>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	frame.memory = renderer.AllocateMemory(frame.buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	renderer.BindMemory(frame.buffer, frame.memory);
 	renderer.BindBuffer(frame.descriptor, frame.buffer, _bindingInfo, 0, 0);
 }
 
-void Camera::System::CleanupInstanceFrame(Frame& frame, Camera& material, const uint32_t denseId)
+void Camera2d::System::CleanupInstanceFrame(Frame& frame, Camera2d&, const uint32_t)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	renderer.FreeMemory(frame.memory);
