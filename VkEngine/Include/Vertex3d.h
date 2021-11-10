@@ -1,6 +1,6 @@
 ﻿#pragma once
 
-struct Vertex final
+struct Vertex3d final
 {
 	glm::vec3 position{};
 	glm::vec3 normal{0, 0, 1};

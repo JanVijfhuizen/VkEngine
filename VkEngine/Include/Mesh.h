@@ -1,11 +1,11 @@
 ﻿#pragma once
 #include "Vertex2d.h"
-#include "Vertex.h"
+#include "Vertex3d.h"
 
 struct Mesh final
 {
     // Defaults to a quad.
-    struct Info2d final
+    struct Quad final
     {
         std::vector<Vertex2d> vertices =
         {
@@ -34,6 +34,6 @@ struct Mesh final
 
         explicit System(uint32_t size);
 
-        static void Load(const std::string& fileName, std::vector<Vertex>& outVertices, std::vector<int8_t>& outIndices);
+        static void Load(const std::string& fileName, std::vector<Vertex3d>& outVertices, std::vector<int8_t>& outIndices);
     };
 };

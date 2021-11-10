@@ -48,13 +48,13 @@
     <ClCompile Include="Source\Transform2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Vertex.cpp">
+    <ClCompile Include="Source\Vertex3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Mesh.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\UnlitMaterial.cpp">
+    <ClCompile Include="Source\UnlitMaterial3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -116,13 +116,13 @@
     <ClInclude Include="Include\DescriptorPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Vertex.h">
+    <ClInclude Include="Include\Vertex3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\tiny_obj_loader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\UnlitMaterial.h">
+    <ClInclude Include="Include\UnlitMaterial3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Camera.h">
