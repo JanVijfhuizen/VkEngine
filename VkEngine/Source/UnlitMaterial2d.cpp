@@ -1,5 +1,5 @@
 ﻿#include "pch.h"
-#include "UnlitMaterial.h"
+#include "UnlitMaterial2d.h"
 #include "FileReader.h"
 #include "Camera.h"
 #include "Transform.h"
@@ -7,16 +7,16 @@
 #include "VkRenderer/DescriptorLayoutInfo.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 
-UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Frame>(size)
+UnlitMaterial2d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial2d, Frame>(size)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	auto& cameraSystem = Singleton<Camera::System>::Get();
+	auto& cameraSystem = Camera::System::Instance::Get();
 
-	const auto vertCode = FileReader::Read("Shaders/vert.spv");
-	const auto fragCode = FileReader::Read("Shaders/frag.spv");
+	const auto vertCode = FileReader::Read("Shaders/vert2d.spv");
+	const auto fragCode = FileReader::Read("Shaders/frag2d.spv");
 
 	_vertModule = renderer.CreateShaderModule(vertCode);
 	_fragModule = renderer.CreateShaderModule(fragCode);
@@ -58,11 +58,11 @@ UnlitMaterial::System::System(const uint32_t size) : ShaderSet<UnlitMaterial, Fr
 	_descriptorPool.Construct(imageCount * GetSize(), layout, uboTypes, 2);
 }
 
-void UnlitMaterial::System::Cleanup()
+void UnlitMaterial2d::System::Cleanup()
 {
-	ShaderSet<UnlitMaterial, Frame>::Cleanup();
+	ShaderSet<UnlitMaterial2d, Frame>::Cleanup();
 
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	renderer.DestroyPipeline(_pipeline);
@@ -71,37 +71,37 @@ void UnlitMaterial::System::Cleanup()
 	_descriptorPool.Cleanup();
 }
 
-void UnlitMaterial::System::ConstructInstanceFrame(Frame& frame, UnlitMaterial&, const uint32_t)
+void UnlitMaterial2d::System::ConstructInstanceFrame(Frame& frame, UnlitMaterial2d&, const uint32_t)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	frame.descriptorSet = _descriptorPool.Get();
 	frame.matDiffuseSampler = renderer.CreateSampler();
 }
 
-void UnlitMaterial::System::CleanupInstanceFrame(Frame& frame, UnlitMaterial&, const uint32_t)
+void UnlitMaterial2d::System::CleanupInstanceFrame(Frame& frame, UnlitMaterial2d&, const uint32_t)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	_descriptorPool.Add(frame.descriptorSet);
 	renderer.DestroySampler(frame.matDiffuseSampler);
 }
 
-void UnlitMaterial::System::Update()
+void UnlitMaterial2d::System::Update()
 {
-	ShaderSet<UnlitMaterial, Frame>::Update();
+	ShaderSet<UnlitMaterial2d, Frame>::Update();
 
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	auto& cameraSystem = Singleton<Camera::System>::Get();
+	auto& cameraSystem = Camera::System::Instance::Get();
 	auto& frames = GetSets()[swapChain.GetCurrentImageIndex() + 1];
 
-	auto& transforms = Singleton<SparseSet<Transform>>::Get();
-	auto& meshes = Singleton<SparseSet<Mesh>>::Get();
+	auto& transforms = Transform::System::Instance::Get();
+	auto& meshes = Mesh::System::Instance::Get();
 	if (cameraSystem.GetSize() == 0)
 		return;
 

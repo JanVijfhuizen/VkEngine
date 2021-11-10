@@ -4,12 +4,9 @@
 #include "VkRenderer/VkRenderer.h"
 #include "VkRenderer/RenderPassInfo.h"
 #include "TextureLoader.h"
-#include "Singleton.h"
 
 RenderSystem::RenderSystem()
 {
-	Singleton<RenderSystem>::Set(this);
-
 	vi::WindowSystemGLFW::VkInfo windowInfo{};
 	windowInfo.name = "Prototype Game";
 	windowInfo.resolution = {800, 600};

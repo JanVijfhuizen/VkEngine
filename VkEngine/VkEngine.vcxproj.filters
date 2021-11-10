@@ -36,13 +36,16 @@
     <ClCompile Include="Source\Cecsar.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\UnlitMaterial.cpp">
+    <ClCompile Include="Source\UnlitMaterial2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\Camera.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\DescriptorPool.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Transform.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -89,7 +92,7 @@
     <ClInclude Include="Include\ShaderSet.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\UnlitMaterial.h">
+    <ClInclude Include="Include\UnlitMaterial2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Transform.h">
@@ -104,5 +107,9 @@
     <ClInclude Include="Include\DescriptorPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\shader3d.frag" />
+    <None Include="Shaders\shader3d.vert" />
   </ItemGroup>
 </Project>

@@ -1,7 +1,6 @@
 ﻿#pragma once
 #include "SoASet.h"
 #include "RenderSystem.h"
-#include "Singleton.h"
 
 template <typename Material, typename Frame>
 class ShaderSet : public ce::SoASet<Material>
@@ -29,7 +28,7 @@ private:
 template <typename Material, typename Frame>
 ShaderSet<Material, Frame>::ShaderSet(const uint32_t size) : ce::SoASet<Material>(size)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	ce::SoASet<Material>::template AddSubSet<int8_t>();
@@ -42,7 +41,7 @@ ShaderSet<Material, Frame>::ShaderSet(const uint32_t size) : ce::SoASet<Material
 template <typename Material, typename Frame>
 void ShaderSet<Material, Frame>::Cleanup()
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	const uint32_t imageCount = swapChain.GetImageCount();
@@ -61,7 +60,7 @@ void ShaderSet<Material, Frame>::Cleanup()
 template <typename Material, typename Frame>
 Material& ShaderSet<Material, Frame>::Insert(const uint32_t sparseId)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& material = ce::SoASet<Material>::Insert(sparseId);
@@ -83,7 +82,7 @@ Material& ShaderSet<Material, Frame>::Insert(const uint32_t sparseId)
 template <typename Material, typename Frame>
 void ShaderSet<Material, Frame>::Erase(const uint32_t sparseId)
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& deleteQueue = ce::SoASet<Material>::GetSets()[0];
@@ -113,12 +112,12 @@ void ShaderSet<Material, Frame>::CleanupInstanceFrame(Frame& frame, Material& ma
 template <typename Material, typename Frame>
 void ShaderSet<Material, Frame>::Update()
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	const uint32_t imageCount = swapChain.GetImageCount();
 	auto& sets = ce::SoASet<Material>::GetSets();
-	auto& deleteQueue = ce::SoASet<Material>::GetSets()[0];
+	auto deleteQueue = ce::SoASet<Material>::GetSets()[0].template Get<int8_t>();
 
 	_erasableIds.clear();
 
@@ -126,7 +125,7 @@ void ShaderSet<Material, Frame>::Update()
 	{
 		const uint32_t denseId = ce::SoASet<Material>::GetDenseId(sparseId);
 
-		auto& countdown = deleteQueue.template Get<int8_t>(denseId);
+		auto& countdown = deleteQueue[denseId];
 		if (countdown == -1)
 			continue;
 
@@ -148,7 +147,7 @@ void ShaderSet<Material, Frame>::Update()
 template <typename Material, typename Frame>
 typename ce::SoASet<Material>::SubSet ShaderSet<Material, Frame>::GetCurrentFrameSet()
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
 	auto& sets = ce::SoASet<Material>::GetSets();
 

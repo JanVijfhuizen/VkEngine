@@ -8,9 +8,7 @@
 #include "Singleton.h"
 #include "Transform.h"
 #include "Camera.h"
-#include "UnlitMaterial.h"
-
-// Todo pool descriptor sets.
+#include "UnlitMaterial2d.h"
 
 int main()
 {
@@ -18,29 +16,30 @@ int main()
 
 	ce::Cecsar cecsar{entityCount};
 	RenderSystem renderSystem{};
+	RenderSystem::Instance::Set(&renderSystem);
 
 	auto& renderer = renderSystem.GetVkRenderer();
 
-	ce::SparseSet<Transform> transforms{entityCount};
-	Singleton<ce::SparseSet<Transform>>::Set(&transforms);
-	cecsar.AddSet(&transforms);
+	const auto transformSystem = new Transform::System(entityCount);
+	Transform::System::Instance::Set(transformSystem);
+	cecsar.AddSet(transformSystem);
 	
-	ce::SparseSet<Mesh> meshes{entityCount};
-	Singleton<ce::SparseSet<Mesh>>::Set(&meshes);
-	cecsar.AddSet(&meshes);
+	const auto meshSystem = new Mesh::System(entityCount);
+	Mesh::System::Instance::Set(meshSystem);
+	cecsar.AddSet(meshSystem);
 
 	const auto cameraSystem = new Camera::System(entityCount);
-	Singleton<Camera::System>::Set(cameraSystem);
+	Camera::System::Instance::Set(cameraSystem);
 	cecsar.AddSet(cameraSystem);
 
-	const auto unlitMaterialSystem = new UnlitMaterial::System(entityCount);
-	Singleton<UnlitMaterial::System>::Set(unlitMaterialSystem);
+	const auto unlitMaterialSystem = new UnlitMaterial2d::System(entityCount);
+	UnlitMaterial2d::System::Instance::Set(unlitMaterialSystem);
 	cecsar.AddSet(unlitMaterialSystem);
 
 	// Create scene instances.
 	const auto camEntity = cecsar.AddEntity();
 	cameraSystem->Insert(camEntity.id);
-	transforms.Insert(camEntity.id);
+	transformSystem->Insert(camEntity.id);
 
 	auto texture = renderSystem.CreateTexture("Example.jpg");
 
@@ -49,8 +48,8 @@ int main()
 		vertex.pos /= 2;
 
 	const auto quadEntity = cecsar.AddEntity();
-	transforms.Insert(quadEntity.id);
-	auto& mesh = meshes.Insert(quadEntity.id);
+	transformSystem->Insert(quadEntity.id);
+	auto& mesh = meshSystem->Insert(quadEntity.id);
 	mesh = renderSystem.CreateMesh(meshInfo);
 	auto& unlitMaterial = unlitMaterialSystem->Insert(quadEntity.id);
 	unlitMaterial.diffuseTexture = &texture;
@@ -74,7 +73,9 @@ int main()
 	renderSystem.DestroyTexture(texture);
 
 	cameraSystem->Cleanup();
+	delete transformSystem;
 	delete cameraSystem;
+	delete meshSystem;
 	unlitMaterialSystem->Cleanup();
 	delete unlitMaterialSystem;
 	return 0;

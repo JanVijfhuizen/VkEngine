@@ -3,6 +3,7 @@
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
 #include "Texture.h"
+#include "Singleton.h"
 
 namespace vi
 {
@@ -12,6 +13,8 @@ namespace vi
 class RenderSystem final
 {
 public:
+	typedef Singleton<RenderSystem> Instance;
+
 	RenderSystem();
 	~RenderSystem();
 

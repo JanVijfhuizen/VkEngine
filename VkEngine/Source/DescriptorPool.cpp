@@ -7,7 +7,7 @@ void DescriptorPool::Construct(const uint32_t size, const VkDescriptorSetLayout 
 {
 	Pool<VkDescriptorSet>::Construct(size);
 
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	_layout = layout;
@@ -17,7 +17,7 @@ void DescriptorPool::Construct(const uint32_t size, const VkDescriptorSetLayout 
 
 void DescriptorPool::Cleanup()
 {
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	renderer.DestroyLayout(_layout);
@@ -32,7 +32,7 @@ VkDescriptorSet DescriptorPool::Get()
 		return Pool<VkDescriptorSet>::Get();
 	_remainingSetsInPool--;
 
-	auto& renderSystem = Singleton<RenderSystem>::Get();
+	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
 	VkDescriptorSet set;

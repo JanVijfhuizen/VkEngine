@@ -12,6 +12,8 @@ namespace ce
 			friend SoASet;
 
 			template <typename U>
+			[[nodiscard]] constexpr U* Get();
+			template <typename U>
 			[[nodiscard]] constexpr U& Get(uint32_t sparseId);
 
 		private:
@@ -32,6 +34,13 @@ namespace ce
 	private:
 		std::vector<SubSet> _subSets{};
 	};
+
+	template <typename T>
+	template <typename U>
+	constexpr U* SoASet<T>::SubSet::Get()
+	{
+		return reinterpret_cast<U*>(_data);
+	}
 
 	template <typename T>
 	template <typename U>

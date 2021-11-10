@@ -17,6 +17,8 @@ struct Camera final
 	class System final : public ShaderSet<Camera, Frame>
 	{
 	public:
+		typedef Singleton<System> Instance;
+
 		explicit System(uint32_t size);
 		void Cleanup() override;
 		void Update() override;

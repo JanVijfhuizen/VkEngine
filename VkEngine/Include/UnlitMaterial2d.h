@@ -2,7 +2,7 @@
 #include "ShaderSet.h"
 #include "DescriptorPool.h"
 
-struct UnlitMaterial final
+struct UnlitMaterial2d final
 {
 	struct Frame final
 	{
@@ -10,9 +10,11 @@ struct UnlitMaterial final
 		VkSampler matDiffuseSampler;
 	};
 
-	class System final : public ShaderSet<UnlitMaterial, Frame>
+	class System final : public ShaderSet<UnlitMaterial2d, Frame>
 	{
 	public:
+		typedef Singleton<System> Instance;
+
 		explicit System(uint32_t size);
 		void Cleanup() override;
 		void Update() override;
@@ -23,8 +25,8 @@ struct UnlitMaterial final
 		VkShaderModule _fragModule;
 		DescriptorPool _descriptorPool;
 
-		void ConstructInstanceFrame(Frame& frame, UnlitMaterial& material, uint32_t denseId) override;
-		void CleanupInstanceFrame(Frame& frame, UnlitMaterial& material, uint32_t denseId) override;
+		void ConstructInstanceFrame(Frame& frame, UnlitMaterial2d& material, uint32_t denseId) override;
+		void CleanupInstanceFrame(Frame& frame, UnlitMaterial2d& material, uint32_t denseId) override;
 	};
 
 	Texture* diffuseTexture = nullptr;

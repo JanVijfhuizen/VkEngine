@@ -1,9 +1,9 @@
 ﻿#pragma once
 #include "Vertex.h"
+#include "Singleton.h"
 
 struct Mesh final
 {
-public:
     // Defaults to a quad.
     struct Info final
     {
@@ -26,4 +26,17 @@ public:
     VkBuffer indexBuffer;
     VkDeviceMemory indexMemory;
     uint32_t indCount;
+
+    class System final : public ce::SparseSet<Mesh>
+    {
+    public:
+        typedef Singleton<System> Instance;
+
+        explicit System(uint32_t size);
+    };
 };
+
+inline Mesh::System::System(const uint32_t size) : SparseSet<Mesh>(size)
+{
+
+}

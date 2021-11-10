@@ -39,7 +39,7 @@ void Camera::System::Update()
 	auto& renderSystem = Singleton<RenderSystem>::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& windowSystem = renderSystem.GetWindowSystem();
-	auto& transforms = Singleton<SparseSet<Transform>>::Get();
+	auto& transforms = Transform::System::Instance::Get();
 	auto frames = GetCurrentFrameSet();
 
 	const auto resolution = windowSystem.GetVkInfo().resolution;

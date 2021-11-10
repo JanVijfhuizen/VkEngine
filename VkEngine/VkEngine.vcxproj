@@ -162,10 +162,11 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
+    <ClCompile Include="Source\Transform.cpp" />
     <ClCompile Include="Source\VkEngine.cpp" />
     <ClCompile Include="Source\Vertex.cpp" />
     <ClCompile Include="Source\TextureLoader.cpp" />
-    <ClCompile Include="Source\UnlitMaterial.cpp" />
+    <ClCompile Include="Source\UnlitMaterial2d.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Include\Camera.h" />
@@ -186,12 +187,16 @@
     <ClInclude Include="Include\RenderSystem.h" />
     <ClInclude Include="Include\SoASet.h" />
     <ClInclude Include="Include\ShaderSet.h" />
-    <ClInclude Include="Include\UnlitMaterial.h" />
+    <ClInclude Include="Include\UnlitMaterial2d.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">
       <Project>{19ef4ac1-ea8d-47d5-9a59-f9c52514f0ea}</Project>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <None Include="Shaders\shader3d.frag" />
+    <None Include="Shaders\shader3d.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
