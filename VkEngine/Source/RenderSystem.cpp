@@ -60,7 +60,7 @@ void RenderSystem::EndFrame()
 	}
 }
 
-Mesh RenderSystem::CreateMesh(const Mesh::Info& info)
+Mesh RenderSystem::CreateMesh(const Mesh::Info2d& info)
 {
 	auto cpyCommandBuffer = _vkRenderer.CreateCommandBuffer();
 	const auto cpyFence = _vkRenderer.CreateFence();

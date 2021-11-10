@@ -43,7 +43,7 @@ int main()
 
 	auto texture = renderSystem.CreateTexture("Example.jpg");
 
-	Mesh::Info meshInfo{};
+	Mesh::Info2d meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
 		vertex.position /= 2;
 

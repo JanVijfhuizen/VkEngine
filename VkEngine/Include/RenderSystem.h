@@ -20,7 +20,7 @@ public:
 	void BeginFrame(bool* quit);
 	void EndFrame();
 
-	[[nodiscard]] Mesh CreateMesh(const Mesh::Info& info);
+	[[nodiscard]] Mesh CreateMesh(const Mesh::Info2d& info);
 	void UseMesh(const Mesh& mesh) const;
 	void DestroyMesh(const Mesh& mesh);
 
