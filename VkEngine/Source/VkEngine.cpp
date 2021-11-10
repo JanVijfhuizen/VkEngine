@@ -10,6 +10,7 @@
 #include "Camera2d.h"
 #include "UnlitMaterial2d.h"
 #include "UnlitMaterial3d.h"
+#include "Transform3d.h"
 
 int main()
 {
@@ -24,6 +25,10 @@ int main()
 	const auto transform2dSystem = new Transform2d::System(entityCount);
 	Transform2d::System::Instance::Set(transform2dSystem);
 	cecsar.AddSet(transform2dSystem);
+
+	const auto transform3dSystem = new Transform3d::System(entityCount);
+	Transform3d::System::Instance::Set(transform3dSystem);
+	cecsar.AddSet(transform3dSystem);
 	
 	const auto meshSystem = new Mesh::System(entityCount);
 	Mesh::System::Instance::Set(meshSystem);
@@ -55,8 +60,8 @@ int main()
 
 	const auto quadEntity = cecsar.AddEntity();
 	transform2dSystem->Insert(quadEntity.index);
-	auto& mesh = meshSystem->Insert(quadEntity.index);
-	mesh = renderSystem.CreateMesh(quadInfo.vertices, quadInfo.indices);
+	auto& quadMesh = meshSystem->Insert(quadEntity.index);
+	quadMesh = renderSystem.CreateMesh(quadInfo.vertices, quadInfo.indices);
 	auto& unlitMaterial2d = unlitMaterial2dSystem->Insert(quadEntity.index);
 	unlitMaterial2d.diffuseTexture = &texture;
 
@@ -77,7 +82,9 @@ int main()
 		if (quit)
 			break;
 
+		transform3dSystem->Update();
 		camera2dSystem->Update();
+
 		unlitMaterial2dSystem->Update();
 		unlitMaterial3dSystem->Update();
 
@@ -86,12 +93,13 @@ int main()
 
 	renderer.DeviceWaitIdle();
 
-	renderSystem.DestroyMesh(mesh);
+	renderSystem.DestroyMesh(quadMesh);
 	renderSystem.DestroyMesh(cubeMesh);
 	renderSystem.DestroyTexture(texture);
 
 	camera2dSystem->Cleanup();
 	delete transform2dSystem;
+	delete transform3dSystem;
 	delete camera2dSystem;
 	delete meshSystem;
 	unlitMaterial2dSystem->Cleanup();

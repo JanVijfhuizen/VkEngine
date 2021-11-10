@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Camera3d.cpp" />
     <ClCompile Include="Source\Camera2d.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
     <ClCompile Include="Source\DescriptorPool.cpp" />
@@ -170,8 +171,10 @@
     <ClCompile Include="Source\UnlitMaterial2d.cpp" />
     <ClCompile Include="Source\Vertex3d.cpp" />
     <ClCompile Include="Source\UnlitMaterial3d.cpp" />
+    <ClCompile Include="Source\Transform3d.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Camera3d.h" />
     <ClInclude Include="Include\Camera.h" />
     <ClInclude Include="Include\Camera2d.h" />
     <ClInclude Include="Include\DescriptorPool.h" />
@@ -195,6 +198,7 @@
     <ClInclude Include="Include\UnlitMaterial2d.h" />
     <ClInclude Include="Include\Vertex3d.h" />
     <ClInclude Include="Include\UnlitMaterial3d.h" />
+    <ClInclude Include="Include\Transform3d.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

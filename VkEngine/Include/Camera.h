@@ -24,6 +24,8 @@ struct alignas(4) Camera final
 		void Update() override;
 
 		[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
+
+	protected:
 		[[nodiscard]] virtual Ubo CreateUbo(Camera& camera, uint32_t index) = 0;
 
 	private:

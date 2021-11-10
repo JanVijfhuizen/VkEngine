@@ -11,5 +11,7 @@ class Camera2dSystem final : public Camera::System<Camera2dUbo>
 {
 public:
 	explicit Camera2dSystem(uint32_t size);
-	Camera2dUbo CreateUbo(Camera& camera, uint32_t index) override;
+
+protected:
+	[[nodiscard]] Camera2dUbo CreateUbo(Camera& camera, uint32_t index) override;
 };
