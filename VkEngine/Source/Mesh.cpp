@@ -1,5 +1,6 @@
 #include "pch.h"
 #include "Mesh.h"
+#define TINYOBJLOADER_IMPLEMENTATION
 #include "tiny_obj_loader.h"
 
 Mesh::System::System(const uint32_t size) : SparseSet<Mesh>(size)

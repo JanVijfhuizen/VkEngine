@@ -154,6 +154,7 @@
     <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
     <ClCompile Include="Source\DescriptorPool.cpp" />
+    <ClCompile Include="Source\Mesh.cpp" />
     <ClCompile Include="Source\RenderSystem.cpp" />
     <ClCompile Include="Source\FileReader.cpp" />
     <ClCompile Include="Source\pch.cpp">
@@ -182,6 +183,7 @@
     <ClInclude Include="Include\Set.h" />
     <ClInclude Include="Include\SparseSet.h" />
     <ClInclude Include="Include\pch.h" />
+    <ClInclude Include="Include\tiny_obj_loader.h" />
     <ClInclude Include="Include\Transform.h" />
     <ClInclude Include="Include\Vertex2d.h" />
     <ClInclude Include="Include\TextureLoader.h" />

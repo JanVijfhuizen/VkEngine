@@ -50,7 +50,7 @@ int main()
 	const auto quadEntity = cecsar.AddEntity();
 	transformSystem->Insert(quadEntity.id);
 	auto& mesh = meshSystem->Insert(quadEntity.id);
-	mesh = renderSystem.CreateMesh(meshInfo);
+	mesh = renderSystem.CreateMesh(meshInfo.vertices, meshInfo.indices);
 	auto& unlitMaterial = unlitMaterialSystem->Insert(quadEntity.id);
 	unlitMaterial.diffuseTexture = &texture;
 
