@@ -11,7 +11,7 @@ Camera2d::System::System(const uint32_t size) : ShaderSet<Camera2d, Frame>(size)
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	vi::DescriptorLayoutInfo camLayoutInfo{};
-	_bindingInfo.size = sizeof Camera2d;
+	_bindingInfo.size = sizeof Ubo;
 	_bindingInfo.flag = VK_SHADER_STAGE_VERTEX_BIT;
 	camLayoutInfo.bindings.push_back(_bindingInfo);
 	_descriptorLayout = renderer.CreateLayout(camLayoutInfo);
@@ -47,10 +47,11 @@ void Camera2d::System::Update()
 		auto& frame = frames.Get<Frame>(denseId);
 		auto& transform = transforms[sparseId];
 
-		instance.aspectRatio = aspectRatio;
-		instance.position = glm::vec3(transform.position, 1);
+		Ubo ubo{};
+		ubo.aspectRatio = aspectRatio;
+		ubo.position = glm::vec3(transform.position, 1);
 
-		renderer.MapMemory(frame.memory, &instance, 0, 1);
+		renderer.MapMemory(frame.memory, &ubo, 0, 1);
 	}
 }
 
@@ -66,7 +67,7 @@ void Camera2d::System::ConstructInstanceFrame(Frame& frame, Camera2d&, const uin
 
 	frame.descriptor = _descriptorPool.Get();
 
-	frame.buffer = renderer.CreateBuffer<Camera2d>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	frame.buffer = renderer.CreateBuffer<Ubo>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	frame.memory = renderer.AllocateMemory(frame.buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	renderer.BindMemory(frame.buffer, frame.memory);
 	renderer.BindBuffer(frame.descriptor, frame.buffer, _bindingInfo, 0, 0);

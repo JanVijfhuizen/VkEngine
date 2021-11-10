@@ -3,11 +3,8 @@
 #include "VkRenderer/BindingInfo.h"
 #include "DescriptorPool.h"
 
-struct Camera2d final
+struct alignas(4) Camera2d final
 {
-	glm::vec3 position{};
-	float aspectRatio = 1;
-
 	struct Frame final
 	{
 		VkBuffer buffer;
@@ -33,5 +30,12 @@ struct Camera2d final
 		vi::BindingInfo _bindingInfo{};
 		VkDescriptorSetLayout _descriptorLayout;
 		DescriptorPool _descriptorPool;
+	};
+
+private:
+	struct Ubo final
+	{
+		glm::vec3 position;
+		float aspectRatio;
 	};
 };
