@@ -18,18 +18,14 @@ Camera2d::System::System(const uint32_t size) : ShaderSet<Camera2d, Frame>(size)
 
 	const uint32_t imageCount = swapChain.GetImageCount();
 	VkDescriptorType uboType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	_descriptorPool = renderer.CreateDescriptorPool(&uboType, 1, imageCount);
+	_descriptorPool.Construct(imageCount * GetSize(), _descriptorLayout, &uboType, 1);
 }
 
 void Camera2d::System::Cleanup()
 {
 	ShaderSet<Camera2d, Frame>::Cleanup();
 
-	auto& renderSystem = RenderSystem::Instance::Get();
-	auto& renderer = renderSystem.GetVkRenderer();
-
-	renderer.DestroyLayout(_descriptorLayout);
-	renderer.DestroyDescriptorPool(_descriptorPool);
+	_descriptorPool.Cleanup();
 }
 
 void Camera2d::System::Update()
@@ -68,7 +64,7 @@ void Camera2d::System::ConstructInstanceFrame(Frame& frame, Camera2d&, const uin
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
-	renderer.CreateDescriptorSets(_descriptorPool, _descriptorLayout, &frame.descriptor, 1);
+	frame.descriptor = _descriptorPool.Get();
 
 	frame.buffer = renderer.CreateBuffer<Camera2d>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
 	frame.memory = renderer.AllocateMemory(frame.buffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
@@ -81,6 +77,7 @@ void Camera2d::System::CleanupInstanceFrame(Frame& frame, Camera2d&, const uint3
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
+	_descriptorPool.Add(frame.descriptor);
 	renderer.FreeMemory(frame.memory);
 	renderer.DestroyBuffer(frame.buffer);
 }

@@ -79,6 +79,7 @@ namespace vi
 		void WaitForFence(VkFence fence) const;
 		void DestroyFence(VkFence fence) const;
 
+		[[nodiscard]] VkBuffer CreateBuffer(VkDeviceSize size, VkBufferUsageFlags flags) const;
 		template <typename T>
 		[[nodiscard]] VkBuffer CreateBuffer(uint32_t count, VkBufferUsageFlags flags) const;
 		void DestroyBuffer(VkBuffer buffer) const;

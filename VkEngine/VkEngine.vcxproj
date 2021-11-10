@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Camera.cpp" />
     <ClCompile Include="Source\Camera2d.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
     <ClCompile Include="Source\DescriptorPool.cpp" />
@@ -172,6 +173,7 @@
     <ClCompile Include="Source\UnlitMaterial.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Camera.h" />
     <ClInclude Include="Include\Camera2d.h" />
     <ClInclude Include="Include\DescriptorPool.h" />
     <ClInclude Include="Include\FileReader.h" />

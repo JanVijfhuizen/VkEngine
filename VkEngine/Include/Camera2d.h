@@ -1,6 +1,7 @@
 #pragma once
 #include "ShaderSet.h"
 #include "VkRenderer/BindingInfo.h"
+#include "DescriptorPool.h"
 
 struct Camera2d final
 {
@@ -31,6 +32,6 @@ struct Camera2d final
 
 		vi::BindingInfo _bindingInfo{};
 		VkDescriptorSetLayout _descriptorLayout;
-		VkDescriptorPool _descriptorPool;
+		DescriptorPool _descriptorPool;
 	};
 };

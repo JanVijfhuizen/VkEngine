@@ -552,6 +552,20 @@ namespace vi
 		vkDestroyFence(_device, fence, nullptr);
 	}
 
+	VkBuffer VkRenderer::CreateBuffer(const VkDeviceSize size, const VkBufferUsageFlags flags) const
+	{
+		VkBufferCreateInfo bufferInfo{};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = size;
+		bufferInfo.usage = flags;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkBuffer vertexBuffer;
+		const auto result = vkCreateBuffer(_device, &bufferInfo, nullptr, &vertexBuffer);
+		assert(!result);
+		return vertexBuffer;
+	}
+
 	void VkRenderer::DestroyBuffer(const VkBuffer buffer) const
 	{
 		vkDestroyBuffer(_device, buffer, nullptr);
