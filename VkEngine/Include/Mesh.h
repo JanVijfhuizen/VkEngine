@@ -1,13 +1,12 @@
 ﻿#pragma once
-#include "Vertex.h"
-#include "Singleton.h"
+#include "Vertex2d.h"
 
 struct Mesh final
 {
     // Defaults to a quad.
     struct Info final
     {
-        std::vector<Vertex> vertices =
+        std::vector<Vertex2d> vertices =
         {
             {{-0.5f, -0.5f}, {1.0f, 0.0f}},
             {{0.5f, -0.5f}, {0.0f, 0.0f}},

@@ -16,10 +16,12 @@ layout (push_constant) uniform PushConstants
     mat4 model;
 } pushConstants;
 
-layout(location = 0) out vec3 outFragTexCoord;
-layout(location = 1) out vec2 outFragPos;
+layout(location = 0) out vec3 outNormal;
+layout(location = 1) out vec2 outFragTexCoord;
 
 void main() 
 {
-    
+    gl_Position = camera.projection * pushConstants.model * camera.view * vec4(inPosition, 1);
+    outNormal = inNormal;
+    outFragTexCoord = inTexCoords;
 }

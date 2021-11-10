@@ -29,8 +29,8 @@ UnlitMaterial2d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial2d
 	auto layout = renderer.CreateLayout(materialLayoutInfo);
 
 	vi::PipelineLayoutInfo pipelineInfo{};
-	pipelineInfo.attributeDescriptions = Vertex::GetAttributeDescriptions();
-	pipelineInfo.bindingDescription = Vertex::GetBindingDescription();
+	pipelineInfo.attributeDescriptions = Vertex2d::GetAttributeDescriptions();
+	pipelineInfo.bindingDescription = Vertex2d::GetBindingDescription();
 	pipelineInfo.setLayouts.push_back(cameraSystem.GetLayout());
 	pipelineInfo.setLayouts.push_back(layout);
 	pipelineInfo.modules.push_back(

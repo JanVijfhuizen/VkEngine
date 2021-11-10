@@ -1,10 +1,11 @@
 ﻿#pragma once
 
-struct Vertex
+struct Vertex final
 {
-    glm::vec2 pos{};
-    glm::vec2 texCoords{};
+	glm::vec3 position{};
+	glm::vec3 normal{0, 0, 1};
+	glm::vec3 textureCoordinates{};
 
-    static VkVertexInputBindingDescription GetBindingDescription();
-    static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
+	[[nodiscard]] static VkVertexInputBindingDescription GetBindingDescription();
+	[[nodiscard]] static std::vector<VkVertexInputAttributeDescription> GetAttributeDescriptions();
 };

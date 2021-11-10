@@ -3,7 +3,6 @@
 #include "VkRenderer/SwapChain.h"
 #include "Mesh.h"
 #include "Texture.h"
-#include "Singleton.h"
 
 namespace vi
 {

@@ -2,7 +2,7 @@
 #include "Cecsar.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/VkRenderer.h"
-#include "Vertex.h"
+#include "Vertex2d.h"
 #include "Mesh.h"
 #include "RenderSystem.h"
 #include "Singleton.h"
@@ -45,7 +45,7 @@ int main()
 
 	Mesh::Info meshInfo{};
 	for (auto& vertex : meshInfo.vertices)
-		vertex.pos /= 2;
+		vertex.position /= 2;
 
 	const auto quadEntity = cecsar.AddEntity();
 	transformSystem->Insert(quadEntity.id);

@@ -66,13 +66,13 @@ Mesh RenderSystem::CreateMesh(const Mesh::Info& info)
 	const auto cpyFence = _vkRenderer.CreateFence();
 
 	// Send vertex data.
-	const auto vertStagingBuffer = _vkRenderer.CreateBuffer<Vertex>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
+	const auto vertStagingBuffer = _vkRenderer.CreateBuffer<Vertex2d>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
 	const auto vertStagingMem = _vkRenderer.AllocateMemory(vertStagingBuffer,
 		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	_vkRenderer.BindMemory(vertStagingBuffer, vertStagingMem);
 	_vkRenderer.MapMemory(vertStagingMem, info.vertices.data(), 0, info.vertices.size());
 
-	const auto vertBuffer = _vkRenderer.CreateBuffer<Vertex>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
+	const auto vertBuffer = _vkRenderer.CreateBuffer<Vertex2d>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
 	const auto vertMem = _vkRenderer.AllocateMemory(vertBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	_vkRenderer.BindMemory(vertBuffer, vertMem);
 
@@ -83,12 +83,12 @@ Mesh RenderSystem::CreateMesh(const Mesh::Info& info)
 	_vkRenderer.BindMemory(indStagingBuffer, indStagingMem);
 	_vkRenderer.MapMemory(indStagingMem, info.indices.data(), 0, info.indices.size());
 
-	const auto indBuffer = _vkRenderer.CreateBuffer<Vertex>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
+	const auto indBuffer = _vkRenderer.CreateBuffer<Vertex2d>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
 	const auto indMem = _vkRenderer.AllocateMemory(indBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 	_vkRenderer.BindMemory(indBuffer, indMem);
 
 	_vkRenderer.BeginCommandBufferRecording(cpyCommandBuffer);
-	_vkRenderer.CopyBuffer(vertStagingBuffer, vertBuffer, info.vertices.size() * sizeof(Vertex));
+	_vkRenderer.CopyBuffer(vertStagingBuffer, vertBuffer, info.vertices.size() * sizeof(Vertex2d));
 	_vkRenderer.CopyBuffer(indStagingBuffer, indBuffer, info.indices.size() * sizeof(int16_t));
 	_vkRenderer.EndCommandBufferRecording();
 
