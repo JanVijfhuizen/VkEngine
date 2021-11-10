@@ -13,7 +13,7 @@ UnlitMaterial2d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial2d
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	auto& cameraSystem = Camera2dSystem::Instance::Get();
+	auto& cameraSystem = Camera2d::System::Instance::Get();
 
 	const auto vertCode = FileReader::Read("Shaders/vert2d.spv");
 	const auto fragCode = FileReader::Read("Shaders/frag2d.spv");
@@ -97,7 +97,7 @@ void UnlitMaterial2d::System::Update()
 	auto& renderer = renderSystem.GetVkRenderer();
 	auto& swapChain = renderSystem.GetSwapChain();
 
-	auto& cameraSystem = Camera2dSystem::Instance::Get();
+	auto& cameraSystem = Camera2d::System::Instance::Get();
 	auto& frames = GetSets()[swapChain.GetCurrentImageIndex() + 1];
 
 	auto& transforms = Transform2d::System::Instance::Get();
@@ -114,7 +114,7 @@ void UnlitMaterial2d::System::Update()
 		};
 		VkDescriptorSet sets[2];
 	};
-	cameraSet = cameraSystem.GetCurrentFrameSet().Get<Camera::Frame>(0).descriptor;
+	cameraSet = cameraSystem.GetCurrentFrameSet().Get<CameraFrame>(0).descriptor;
 
 	renderer.BindPipeline(_pipeline);
 

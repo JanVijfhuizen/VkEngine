@@ -34,8 +34,8 @@ int main()
 	Mesh::System::Instance::Set(meshSystem);
 	cecsar.AddSet(meshSystem);
 
-	const auto camera2dSystem = new Camera2dSystem(entityCount);
-	Camera2dSystem::Instance::Set(camera2dSystem);
+	const auto camera2dSystem = new Camera2d::System(entityCount);
+	Camera2d::System::Instance::Set(camera2dSystem);
 	cecsar.AddSet(camera2dSystem);
 
 	const auto unlitMaterial2dSystem = new UnlitMaterial2d::System(entityCount);

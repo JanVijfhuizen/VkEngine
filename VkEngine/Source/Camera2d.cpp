@@ -3,11 +3,11 @@
 #include "Transform2d.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 
-Camera2dSystem::Camera2dSystem(const uint32_t size): System<Camera2dUbo>(size)
+Camera2d::System::System(const uint32_t size) : CameraSystem<Camera2d, Ubo>(size)
 {
 }
 
-Camera2dUbo Camera2dSystem::CreateUbo(Camera&, const uint32_t index)
+Camera2d::Ubo Camera2d::System::CreateUbo(Camera2d&, const uint32_t index)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& windowSystem = renderSystem.GetWindowSystem();
@@ -18,7 +18,7 @@ Camera2dUbo Camera2dSystem::CreateUbo(Camera&, const uint32_t index)
 	auto& transforms = Transform2d::System::Instance::Get();
 	auto& transform = transforms[index];
 
-	Camera2dUbo ubo{};
+	Ubo ubo{};
 	ubo.position = glm::vec3(transform.position, 1);
 	ubo.aspectRatio = aspectRatio;
 

@@ -4,42 +4,39 @@
 #include "VkRenderer/BindingInfo.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
 
-struct alignas(4) Camera final
+struct CameraFrame final
 {
-	struct Frame final
-	{
-		VkBuffer buffer;
-		VkDeviceMemory memory;
-		VkDescriptorSet descriptor;
-	};
-
-	template <typename Ubo>
-	class System : public ShaderSet<Camera, Frame>
-	{
-	public:
-		typedef Singleton<System> Instance;
-
-		explicit System(uint32_t size);
-		void Cleanup() override;
-		void Update() override;
-
-		[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
-
-	protected:
-		[[nodiscard]] virtual Ubo CreateUbo(Camera& camera, uint32_t index) = 0;
-
-	private:
-		void ConstructInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
-		void CleanupInstanceFrame(Frame& frame, Camera& material, uint32_t denseId) override;
-
-		vi::BindingInfo _bindingInfo{};
-		VkDescriptorSetLayout _descriptorLayout;
-		DescriptorPool _descriptorPool;
-	};
+	VkBuffer buffer;
+	VkDeviceMemory memory;
+	VkDescriptorSet descriptor;
 };
 
-template <typename Ubo>
-Camera::System<Ubo>::System(const uint32_t size) : ShaderSet<Camera, Frame>(size)
+template <typename Camera, typename Ubo>
+class CameraSystem : public ShaderSet<Camera, CameraFrame>
+{
+public:
+	typedef Singleton<CameraSystem> Instance;
+
+	explicit CameraSystem(uint32_t size);
+	void Cleanup() override;
+	void Update() override;
+
+	[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
+
+protected:
+	[[nodiscard]] virtual Ubo CreateUbo(Camera& camera, uint32_t index) = 0;
+
+private:
+	void ConstructInstanceFrame(CameraFrame& frame, Camera& material, uint32_t denseId) override;
+	void CleanupInstanceFrame(CameraFrame& frame, Camera& material, uint32_t denseId) override;
+
+	vi::BindingInfo _bindingInfo{};
+	VkDescriptorSetLayout _descriptorLayout;
+	DescriptorPool _descriptorPool;
+};
+
+template <typename Camera, typename Ubo>
+CameraSystem<Camera, Ubo>::CameraSystem(const uint32_t size) : ShaderSet<Camera, CameraFrame>(size)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
@@ -53,44 +50,44 @@ Camera::System<Ubo>::System(const uint32_t size) : ShaderSet<Camera, Frame>(size
 
 	const uint32_t imageCount = swapChain.GetImageCount();
 	VkDescriptorType uboType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	_descriptorPool.Construct(imageCount * GetSize(), _descriptorLayout, &uboType, 1);
+	_descriptorPool.Construct(imageCount * ShaderSet<Camera, CameraFrame>::GetSize(), _descriptorLayout, &uboType, 1);
 }
 
-template <typename Ubo>
-void Camera::System<Ubo>::Cleanup()
+template <typename Camera, typename Ubo>
+void ::CameraSystem<Camera, Ubo>::Cleanup()
 {
-	ShaderSet<Camera, Frame>::Cleanup();
+	ShaderSet<Camera, CameraFrame>::Cleanup();
 
 	_descriptorPool.Cleanup();
 }
 
-template <typename Ubo>
-void Camera::System<Ubo>::Update()
+template <typename Camera, typename Ubo>
+void ::CameraSystem<Camera, Ubo>::Update()
 {
-	ShaderSet<Camera, Frame>::Update();
+	ShaderSet<Camera, CameraFrame>::Update();
 
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
-	auto frames = GetCurrentFrameSet();
+	auto frames = ShaderSet<Camera, CameraFrame>::GetCurrentFrameSet();
 
 	for (const auto [instance, sparseId] : *this)
 	{
-		const uint32_t denseId = GetDenseId(sparseId);
-		auto& frame = frames.Get<Frame>(denseId);
+		const uint32_t denseId = ShaderSet<Camera, CameraFrame>::GetDenseId(sparseId);
+		auto& frame = frames.template Get<CameraFrame>(denseId);
 
 		Ubo ubo = CreateUbo(instance, sparseId);
 		renderer.MapMemory(frame.memory, &ubo, 0, 1);
 	}
 }
 
-template <typename Ubo>
-VkDescriptorSetLayout Camera::System<Ubo>::GetLayout() const
+template <typename Camera, typename Ubo>
+VkDescriptorSetLayout CameraSystem<Camera, Ubo>::GetLayout() const
 {
 	return _descriptorLayout;
 }
 
-template <typename Ubo>
-void Camera::System<Ubo>::ConstructInstanceFrame(Frame& frame, Camera&, const uint32_t)
+template <typename Camera, typename Ubo>
+void ::CameraSystem<Camera, Ubo>::ConstructInstanceFrame(CameraFrame& frame, Camera&, const uint32_t)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
@@ -103,8 +100,8 @@ void Camera::System<Ubo>::ConstructInstanceFrame(Frame& frame, Camera&, const ui
 	renderer.BindBuffer(frame.descriptor, frame.buffer, _bindingInfo, 0, 0);
 }
 
-template <typename Ubo>
-void Camera::System<Ubo>::CleanupInstanceFrame(Frame& frame, Camera&, const uint32_t)
+template <typename Camera, typename Ubo>
+void ::CameraSystem<Camera, Ubo>::CleanupInstanceFrame(CameraFrame& frame, Camera&, const uint32_t)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();

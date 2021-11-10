@@ -1,17 +1,23 @@
 #pragma once
 #include "Camera.h"
 
-struct Camera2dUbo final
+struct alignas(4) Camera2d final
 {
-	glm::vec3 position;
-	float aspectRatio;
-};
+	struct Ubo;
 
-class Camera2dSystem final : public Camera::System<Camera2dUbo>
-{
-public:
-	explicit Camera2dSystem(uint32_t size);
+	class System final : public CameraSystem<Camera2d, Ubo>
+	{
+	public:
+		explicit System(uint32_t size);
 
-protected:
-	[[nodiscard]] Camera2dUbo CreateUbo(Camera& camera, uint32_t index) override;
+	protected:
+		[[nodiscard]] Ubo CreateUbo(Camera2d& camera, uint32_t index) override;
+	};
+
+private:
+	struct Ubo final
+	{
+		glm::vec3 position;
+		float aspectRatio;
+	};
 };

@@ -4,7 +4,7 @@
 #include "glm/ext.hpp"
 #include "VkRenderer/WindowSystemGLFW.h"
 
-Camera3dUbo Camera3dSystem::CreateUbo(Camera&, const uint32_t index)
+Camera3d::Ubo Camera3d::System::CreateUbo(Camera3d& camera, const uint32_t index)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& windowSystem = renderSystem.GetWindowSystem();
@@ -15,12 +15,12 @@ Camera3dUbo Camera3dSystem::CreateUbo(Camera&, const uint32_t index)
 	auto& transforms = Transform3d::System::Instance::Get();
 	auto& transform = transforms[index];
 
-	Camera3dUbo ubo{};
+	Ubo ubo{};
 
-	ubo.view = glm::lookAt(transform.position, lookat, glm::vec3(0.0f, 1.0f, 0.0f)),
+	ubo.view = glm::lookAt(transform.position, camera.lookat, glm::vec3(0.0f, 1.0f, 0.0f)),
 		glm::vec3(0.0f, 1.0f, 0.0f);
-	ubo.projection = glm::perspective(glm::radians(fieldOfView),
-		aspectRatio, clipNear, clipFar);
+	ubo.projection = glm::perspective(glm::radians(camera.fieldOfView),
+		aspectRatio, camera.clipNear, camera.clipFar);
 
 	return ubo;
 }
