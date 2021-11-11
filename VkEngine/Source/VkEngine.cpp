@@ -74,25 +74,37 @@ int main()
 	const auto cam3dEntity = cecsar.AddEntity();
 	camera3dSystem->Insert(cam3dEntity.id);
 	auto& cam3dTransform = transform3dSystem->Insert(cam3dEntity.id);
-	cam3dTransform.position = { 2, 1, -5 };
 
 	std::vector<Vertex3d> cubeVerts{};
 	std::vector<uint16_t> cubeInds{};
 	Mesh::System::Load("Cube.obj", cubeVerts, cubeInds);
 
 	const auto cubeEntity = cecsar.AddEntity();
-	transform3dSystem->Insert(cubeEntity.index);
+	auto& cubeTransform = transform3dSystem->Insert(cubeEntity.index);
+	cubeTransform.position = { 1, .5f, -1 };
 	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
 	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
 	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
 	unlitMaterial3d.diffuseTexture = &texture;
-
+	
+	const auto cube2Entity = cecsar.AddEntity();
+	auto& cube2Transform = transform3dSystem->Insert(cube2Entity.index);
+	cube2Transform.position = { 1, .5f, -1 };
+	auto& cube2Mesh = meshSystem->Insert(cube2Entity.index);
+	cube2Mesh = cubeMesh;
+	auto& unlitMaterial3d2 = unlitMaterial3dSystem->Insert(cube2Entity.index);
+	unlitMaterial3d2.diffuseTexture = &texture;
+	
 	while(true)
 	{
 		bool quit;
 		renderSystem.BeginFrame(&quit);
 		if (quit)
 			break;
+
+		static float f = 0;
+		f += .001f;
+		cam3dTransform.position = { std::sin(f) * 10, 1, std::cos(f) * 10};
 
 		transform3dSystem->Update();
 		camera2dSystem->Update();
