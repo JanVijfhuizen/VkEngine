@@ -91,14 +91,8 @@ namespace vi
 			attachmentRef.layout = info.colorAttachments[i].layout;
 		}
 
-		const auto depthFormat = FindSupportedFormat(
-			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-		);
-
 		VkAttachmentDescription depthAttachment{};
-		depthAttachment.format = depthFormat;
+		depthAttachment.format = GetDepthBufferFormat();
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = info.depthStoreOp;
@@ -108,7 +102,7 @@ namespace vi
 		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference depthAttachmentRef{};
-		depthAttachmentRef.attachment = 1;
+		depthAttachmentRef.attachment = colorAttachmentsCount;
 		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass{};
@@ -136,7 +130,7 @@ namespace vi
 		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = descriptions.size();
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(descriptions.size());
 		renderPassInfo.pAttachments = descriptions.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
@@ -711,6 +705,15 @@ namespace vi
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
 
+		if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+		{
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			const auto format = GetDepthBufferFormat();
+			if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
+				barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+
 		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 		{
 			barrier.srcAccessMask = 0;
@@ -726,6 +729,14 @@ namespace vi
 
 			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		}
 		else
 			throw std::exception("Layout transition not supported!");
@@ -872,5 +883,14 @@ namespace vi
 		}
 
 		throw std::exception("Format not available!");
+	}
+
+	VkFormat VkRenderer::GetDepthBufferFormat() const
+	{
+		return FindSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
 	}
 }

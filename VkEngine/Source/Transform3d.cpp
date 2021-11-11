@@ -1,7 +1,5 @@
 ﻿#include "pch.h"
 #include "Transform3d.h"
-#include "glm/ext.hpp"
-#include "glm/gtx/euler_angles.hpp"
 
 Transform3d::System::System(const uint32_t size) : SoASet<Transform3d>(size)
 {

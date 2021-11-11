@@ -128,6 +128,8 @@ namespace vi
 		[[nodiscard]] VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
 			VkImageTiling tiling, VkFormatFeatureFlags features) const;
 
+		[[nodiscard]] VkFormat GetDepthBufferFormat() const;
+
 	private:
 		std::unique_ptr<Settings> _settings{};
 

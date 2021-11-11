@@ -19,7 +19,6 @@ Camera3d::Ubo Camera3d::System::CreateUbo(Camera3d& camera, const uint32_t index
 	auto& transform = transforms[index];
 
 	Ubo ubo{};
-
 	ubo.view = glm::lookAt(transform.position, camera.lookat, glm::vec3(0, 1, 0));
 	ubo.projection = glm::perspective(glm::radians(camera.fieldOfView),
 		aspectRatio, camera.clipNear, camera.clipFar);

@@ -30,7 +30,7 @@ public:
 	[[nodiscard]] Texture CreateTexture(const std::string& fileName);
 	void DestroyTexture(const Texture& texture);
 
-	[[nodiscard]] DepthBuffer CreateDepthBuffer(glm::ivec2 resolution) const;
+	[[nodiscard]] DepthBuffer CreateDepthBuffer(glm::ivec2 resolution);
 	void DestroyDepthBuffer(DepthBuffer& depthBuffer) const;
 
 	[[nodiscard]] vi::WindowSystemGLFW& GetWindowSystem() const;

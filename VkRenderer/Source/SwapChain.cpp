@@ -162,15 +162,6 @@ namespace vi
 		return _format;
 	}
 
-	VkFormat SwapChain::GetDepthBufferFormat() const
-	{
-		return _renderer->FindSupportedFormat(
-			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-		);
-	}
-
 	VkExtent2D SwapChain::GetExtent() const
 	{
 		return _extent;
@@ -202,7 +193,7 @@ namespace vi
 		const auto result = vkAllocateCommandBuffers(_renderer->_device, &allocInfo, commandBuffers.data());
 		assert(!result);
 
-		const auto format = GetDepthBufferFormat();
+		const auto format = _renderer->GetDepthBufferFormat();
 		const auto extent = GetExtent();
 
 		for (uint32_t i = 0; i < count; ++i)
@@ -214,6 +205,18 @@ namespace vi
 			image.depthImageMemory = _renderer->AllocateMemory(image.depthImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 			_renderer->BindMemory(image.depthImage, image.depthImageMemory);
 			image.depthImageView = _renderer->CreateImageView(image.depthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+			auto cmdBuffer = _renderer->CreateCommandBuffer();
+			const auto fence = _renderer->CreateFence();
+
+			_renderer->BeginCommandBufferRecording(cmdBuffer);
+			_renderer->TransitionImageLayout(image.depthImage, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+			_renderer->EndCommandBufferRecording();
+			_renderer->Submit(&cmdBuffer, 1, nullptr, nullptr, fence);
+			_renderer->WaitForFence(fence);
+
+			_renderer->DestroyCommandBuffer(cmdBuffer);
+			_renderer->DestroyFence(fence);
 
 			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageViews, 2, _renderPass, _extent);
 			image.commandBuffer = commandBuffers[i];
