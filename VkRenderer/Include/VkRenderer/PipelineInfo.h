@@ -33,7 +33,7 @@ namespace vi
 		float lineWidth = 1;
 
 		VkCullModeFlags cullMode = VK_CULL_MODE_BACK_BIT;
-		VkFrontFace frontFace = VK_FRONT_FACE_CLOCKWISE;
+		VkFrontFace frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
 
 		VkPipeline basePipeline = VK_NULL_HANDLE;
 		int32_t basePipelineIndex = -1;
