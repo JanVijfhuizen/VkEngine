@@ -22,5 +22,6 @@ namespace vi
 
 		bool useDepthAttachment = false;
 		VkFormat depthFormat;
+		VkAttachmentStoreOp depthStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	};
 }
