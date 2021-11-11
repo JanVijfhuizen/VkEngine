@@ -60,15 +60,15 @@ namespace vi
 
 	VkRenderPass VkRenderer::CreateRenderPass(const RenderPassInfo& info) const
 	{
-		const uint32_t attachmentsCount = info.attachments.size();
-		const auto& format = info.format;
+		const uint32_t colorAttachmentsCount = info.colorAttachments.size();
+		const auto& format = info.colorFormat;
 
 		std::vector<VkAttachmentDescription> descriptions{};
-		descriptions.resize(info.attachments.size());
+		descriptions.resize(info.colorAttachments.size());
 
-		for (uint32_t i = 0; i < attachmentsCount; ++i)
+		for (uint32_t i = 0; i < colorAttachmentsCount; ++i)
 		{
-			auto& descriptionInfo = info.attachments[i];
+			auto& descriptionInfo = info.colorAttachments[i];
 			auto& description = descriptions[i];
 
 			description.format = format;
@@ -82,18 +82,38 @@ namespace vi
 		}
 		
 		std::vector<VkAttachmentReference> colorAttachmentRefs{};
-		colorAttachmentRefs.resize(attachmentsCount);
+		colorAttachmentRefs.resize(colorAttachmentsCount);
 
-		for (uint32_t i = 0; i < attachmentsCount; ++i)
+		for (uint32_t i = 0; i < colorAttachmentsCount; ++i)
 		{
 			auto& attachmentRef = colorAttachmentRefs[i];
 			attachmentRef.attachment = i;
-			attachmentRef.layout = info.attachments[i].layout;
+			attachmentRef.layout = info.colorAttachments[i].layout;
 		}
+
+		const auto depthFormat = FindSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL,
+			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
+
+		VkAttachmentDescription depthAttachment{};
+		depthAttachment.format = depthFormat;
+		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthAttachmentRef{};
+		depthAttachmentRef.attachment = 1;
+		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass{};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = attachmentsCount;
+		subpass.colorAttachmentCount = colorAttachmentsCount;
 		subpass.pColorAttachments = colorAttachmentRefs.data();
 
 		VkSubpassDependency dependency{};
@@ -103,10 +123,20 @@ namespace vi
 		dependency.srcAccessMask = 0;
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		if (info.useDepthAttachment)
+		{
+			subpass.pDepthStencilAttachment = &depthAttachmentRef;
+			descriptions.push_back(depthAttachment);
+
+			dependency.srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
 		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = attachmentsCount;
+		renderPassInfo.attachmentCount = descriptions.size();
 		renderPassInfo.pAttachments = descriptions.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;

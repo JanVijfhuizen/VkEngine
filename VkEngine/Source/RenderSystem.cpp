@@ -21,8 +21,8 @@ RenderSystem::RenderSystem()
 
 	vi::RenderPassInfo renderPassInfo{};
 	const vi::RenderPassInfo::Attachment renderPassAttachment{};
-	renderPassInfo.attachments.push_back(renderPassAttachment);
-	renderPassInfo.format = _swapChain.GetFormat();
+	renderPassInfo.colorAttachments.push_back(renderPassAttachment);
+	renderPassInfo.colorFormat = _swapChain.GetFormat();
 	_renderPass = _vkRenderer.CreateRenderPass(renderPassInfo);
 
 	_swapChain.SetRenderPass(_renderPass);
