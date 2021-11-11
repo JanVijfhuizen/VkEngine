@@ -202,39 +202,35 @@ namespace vi
 		const auto result = vkAllocateCommandBuffers(_renderer->_device, &allocInfo, commandBuffers.data());
 		assert(!result);
 
-		CreateDepthBuffer();
+		const auto format = GetDepthBufferFormat();
+		const auto extent = GetExtent();
 
 		for (uint32_t i = 0; i < count; ++i)
 		{
 			auto& image = _images[i];
 
-			VkImageView imageViews[2]
-			{
-				image.imageView,
-				_depthBuffer.imageView
-			};
+			image.depthImage = _renderer->CreateImage({ extent.width, extent.height }, format, VK_IMAGE_TILING_OPTIMAL,
+				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			image.depthImageMemory = _renderer->AllocateMemory(image.depthImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+			_renderer->BindMemory(image.depthImage, image.depthImageMemory);
+			image.depthImageView = _renderer->CreateImageView(image.depthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT);
 
-			image.frameBuffer = _renderer->CreateFrameBuffer(imageViews, 2, _renderPass, _extent);
+			image.frameBuffer = _renderer->CreateFrameBuffer(image.imageViews, 2, _renderPass, _extent);
 			image.commandBuffer = commandBuffers[i];
 		}
 	}
 
 	void SwapChain::CleanupBuffers()
 	{
-		CleanupDepthBuffer();
-
 		for (auto& image : _images)
 		{
+			_renderer->DestroyImageView(image.depthImageView);
+			_renderer->DestroyImage(image.depthImage);
+			_renderer->FreeMemory(image.depthImageMemory);
+
 			_renderer->DestroyFrameBuffer(image.frameBuffer);
 			_renderer->DestroyCommandBuffer(image.commandBuffer);
 		}
-	}
-
-	void SwapChain::CleanupDepthBuffer() const
-	{
-		_renderer->DestroyImageView(_depthBuffer.imageView);
-		_renderer->DestroyImage(_depthBuffer.image);
-		_renderer->FreeMemory(_depthBuffer.imageMemory);
 	}
 
 	VkSurfaceFormatKHR SwapChain::ChooseSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& availableFormats)
@@ -294,18 +290,6 @@ namespace vi
 			image.image = vkImages[i];
 			image.imageView = _renderer->CreateImageView(image.image, _format);
 		}
-	}
-
-	void SwapChain::CreateDepthBuffer()
-	{
-		const auto format = GetDepthBufferFormat();
-		const auto extent = GetExtent();
-
-		_depthBuffer.image = _renderer->CreateImage({extent.width, extent.height}, format, VK_IMAGE_TILING_OPTIMAL,
-			VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
-		_depthBuffer.imageMemory = _renderer->AllocateMemory(_depthBuffer.image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-		_renderer->BindMemory(_depthBuffer.image, _depthBuffer.imageMemory);
-		_depthBuffer.imageView = _renderer->CreateImageView(_depthBuffer.image, format, VK_IMAGE_ASPECT_DEPTH_BIT);
 	}
 
 	void SwapChain::CreateSyncObjects()

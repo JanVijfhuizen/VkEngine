@@ -19,8 +19,19 @@ namespace vi
 
 		struct Image final
 		{
+			union
+			{
+				struct
+				{
+					VkImageView imageView;
+					VkImageView depthImageView;
+				};
+				VkImageView imageViews[2];
+			};
+
 			VkImage image;
-			VkImageView imageView;
+			VkImage depthImage;
+			VkDeviceMemory depthImageMemory;
 
 			VkFramebuffer frameBuffer;
 			VkCommandBuffer commandBuffer;
@@ -51,13 +62,6 @@ namespace vi
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
 	private:
-		struct DepthBuffer
-		{
-			VkImage image;
-			VkImageView imageView;
-			VkDeviceMemory imageMemory;
-		};
-
 		#define _MAX_FRAMES_IN_FLIGHT 2
 
 		VkRenderer* _renderer;
@@ -70,18 +74,14 @@ namespace vi
 		std::vector<VkFence> _imagesInFlight{};
 		VkRenderPass _renderPass;
 
-		DepthBuffer _depthBuffer{};
-
 		uint32_t _frameIndex = 0;
 		uint32_t _imageIndex;
 
 		void CreateImages();
-		void CreateDepthBuffer();
 		void CreateSyncObjects();
 
 		void CreateBuffers();
 		void CleanupBuffers();
-		void CleanupDepthBuffer() const;
 
 		void WaitForImage();
 

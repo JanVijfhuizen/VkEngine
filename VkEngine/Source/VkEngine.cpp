@@ -98,7 +98,7 @@ int main()
 
 	const auto cube3Entity = cecsar.AddEntity();
 	auto& cube3Transform = transform3dSystem->Insert(cube3Entity.index);
-	cube3Transform.position = { 1.8f, .8f, -.5f };
+	cube3Transform.position = { 0, 0, 0 };
 	cube3Transform.rotation = { 45, 38, 12 };
 	auto& cube3Mesh = meshSystem->Insert(cube3Entity.index);
 	cube3Mesh = cubeMesh;
