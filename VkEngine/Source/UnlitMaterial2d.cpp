@@ -98,7 +98,7 @@ void UnlitMaterial2d::System::Update()
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& cameraSystem = Camera2d::System::Instance::Get();
-	auto& frames = GetSets()[swapChain.GetCurrentImageIndex() + 1];
+	const auto frames = GetSets()[swapChain.GetCurrentImageIndex() + 1].Get<Frame>();
 
 	auto& transforms = Transform2d::System::Instance::Get();
 	auto& meshes = Mesh::System::Instance::Get();
@@ -121,7 +121,7 @@ void UnlitMaterial2d::System::Update()
 	for (const auto [instance, sparseId] : *this)
 	{
 		const uint32_t denseId = GetDenseId(sparseId);
-		auto& frame = frames.Get<Frame>(denseId);
+		auto& frame = frames[denseId];
 		auto& mesh = meshes[sparseId];
 		auto& transform = transforms[sparseId];
 		const auto& diffuseTex = *instance.diffuseTexture;

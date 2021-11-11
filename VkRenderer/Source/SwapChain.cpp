@@ -209,8 +209,8 @@ namespace vi
 		{
 			auto& image = _images[i];
 
-			image.depthImage = _renderer->CreateImage({ extent.width, extent.height }, format, VK_IMAGE_TILING_OPTIMAL,
-				VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+			image.depthImage = _renderer->CreateImage({ extent.width, extent.height }, format, 
+				VK_IMAGE_TILING_OPTIMAL, VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
 			image.depthImageMemory = _renderer->AllocateMemory(image.depthImage, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
 			_renderer->BindMemory(image.depthImage, image.depthImageMemory);
 			image.depthImageView = _renderer->CreateImageView(image.depthImage, format, VK_IMAGE_ASPECT_DEPTH_BIT);

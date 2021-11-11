@@ -56,8 +56,8 @@ int main()
 
 	// Add quad entity + camera.
 	const auto cam2dEntity = cecsar.AddEntity();
-	camera2dSystem->Insert(cam2dEntity.id);
-	transform2dSystem->Insert(cam2dEntity.id);
+	camera2dSystem->Insert(cam2dEntity.index);
+	transform2dSystem->Insert(cam2dEntity.index);
 
 	Mesh::Quad quadInfo{};
 	for (auto& vertex : quadInfo.vertices)
@@ -70,10 +70,19 @@ int main()
 	auto& unlitMaterial2d = unlitMaterial2dSystem->Insert(quadEntity.index);
 	unlitMaterial2d.diffuseTexture = &texture;
 
+	const auto quad2Entity = cecsar.AddEntity();
+	auto& quad2Transform = transform2dSystem->Insert(quad2Entity.index);
+	quad2Transform.position = { -1, -1 };
+	auto& quad2Mesh = meshSystem->Insert(quad2Entity.index);
+	quad2Mesh = quadMesh;
+
+	auto& unlitMaterial2d2 = unlitMaterial2dSystem->Insert(quad2Entity.index);
+	unlitMaterial2d2.diffuseTexture = &texture;
+
 	// Add cube entity.
 	const auto cam3dEntity = cecsar.AddEntity();
-	camera3dSystem->Insert(cam3dEntity.id);
-	auto& cam3dTransform = transform3dSystem->Insert(cam3dEntity.id);
+	camera3dSystem->Insert(cam3dEntity.index);
+	auto& cam3dTransform = transform3dSystem->Insert(cam3dEntity.index);
 
 	std::vector<Vertex3d> cubeVerts{};
 	std::vector<uint16_t> cubeInds{};
