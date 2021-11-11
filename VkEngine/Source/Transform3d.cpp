@@ -17,7 +17,7 @@ void Transform3d::System::Update()
 		const uint32_t denseId = GetDenseId(sparseId);
 
 		auto& bake = bakes[denseId];
-		if (bake.manual)
+		if (instance.manualBake)
 			continue;
 		Bake(instance, bake);
 	}

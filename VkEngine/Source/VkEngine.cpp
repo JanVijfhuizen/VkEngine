@@ -76,13 +76,15 @@ int main()
 	transform3dSystem->Insert(cam3dEntity.id);
 
 	std::vector<Vertex3d> cubeVerts{};
-	std::vector<int8_t> cubeInds{};
+	std::vector<uint16_t> cubeInds{};
 	Mesh::System::Load("Cube.obj", cubeVerts, cubeInds);
 
 	const auto cubeEntity = cecsar.AddEntity();
 	transform3dSystem->Insert(cubeEntity.index);
 	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
-	cubeMesh = renderSystem.CreateMesh<Vertex3d, int8_t>(cubeVerts, cubeInds);
+	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
+	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
+	unlitMaterial3d.diffuseTexture = &texture;
 
 	while(true)
 	{

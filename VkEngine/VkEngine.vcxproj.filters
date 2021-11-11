@@ -141,8 +141,4 @@
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\shader3d.frag" />
-    <None Include="Shaders\shader3d.vert" />
-  </ItemGroup>
 </Project>

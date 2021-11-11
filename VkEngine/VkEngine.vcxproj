@@ -205,10 +205,6 @@
       <Project>{19ef4ac1-ea8d-47d5-9a59-f9c52514f0ea}</Project>
     </ProjectReference>
   </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\shader3d.frag" />
-    <None Include="Shaders\shader3d.vert" />
-  </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
   </ImportGroup>

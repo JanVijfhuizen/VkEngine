@@ -8,7 +8,7 @@ Mesh::System::System(const uint32_t size) : SparseSet<Mesh>(size)
 
 }
 
-void Mesh::System::Load(const std::string& fileName, std::vector<Vertex3d>& outVertices, std::vector<int8_t>& outIndices)
+void Mesh::System::Load(const std::string& fileName, std::vector<Vertex3d>& outVertices, std::vector<uint16_t>& outIndices)
 {
 	// It's far from the best method, but it's not the end of the world since I'm only planning to load in very simple models.
 

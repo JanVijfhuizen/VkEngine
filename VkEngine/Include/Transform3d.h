@@ -6,10 +6,10 @@ struct Transform3d final
 	glm::vec3 position{};
 	glm::vec3 rotation{};
 	glm::vec3 scale{1};
+	bool manualBake = false;
 
 	struct Baked final
 	{
-		bool manual = false;
 		glm::mat4 model{1};
 	};
 

@@ -20,7 +20,7 @@ public:
 	void BeginFrame(bool* quit);
 	void EndFrame();
 
-	template <typename Vert = Vertex2d, typename Ind = int8_t>
+	template <typename Vert = Vertex2d, typename Ind = uint16_t>
 	[[nodiscard]] Mesh CreateMesh(const std::vector<Vert>& vertices, const std::vector<Ind>& indices);
 	void UseMesh(const Mesh& mesh) const;
 	void DestroyMesh(const Mesh& mesh);
