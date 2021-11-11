@@ -73,7 +73,8 @@ int main()
 	// Add cube entity.
 	const auto cam3dEntity = cecsar.AddEntity();
 	camera3dSystem->Insert(cam3dEntity.id);
-	transform3dSystem->Insert(cam3dEntity.id);
+	auto& cam3dTransform = transform3dSystem->Insert(cam3dEntity.id);
+	cam3dTransform.position = { 2, 1, -5 };
 
 	std::vector<Vertex3d> cubeVerts{};
 	std::vector<uint16_t> cubeInds{};
