@@ -4,6 +4,10 @@
 #include "glm/ext.hpp"
 #include "VkRenderer/WindowSystemGLFW.h"
 
+Camera3d::System::System(const uint32_t size) : CameraSystem<Camera3d, Ubo>(size)
+{
+}
+
 Camera3d::Ubo Camera3d::System::CreateUbo(Camera3d& camera, const uint32_t index)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();

@@ -11,6 +11,7 @@
 #include "UnlitMaterial2d.h"
 #include "UnlitMaterial3d.h"
 #include "Transform3d.h"
+#include "Camera3d.h"
 
 int main()
 {
@@ -38,6 +39,10 @@ int main()
 	Camera2d::System::Instance::Set(camera2dSystem);
 	cecsar.AddSet(camera2dSystem);
 
+	const auto camera3dSystem = new Camera3d::System(entityCount);
+	Camera3d::System::Instance::Set(camera3dSystem);
+	cecsar.AddSet(camera3dSystem);
+
 	const auto unlitMaterial2dSystem = new UnlitMaterial2d::System(entityCount);
 	UnlitMaterial2d::System::Instance::Set(unlitMaterial2dSystem);
 	cecsar.AddSet(unlitMaterial2dSystem);
@@ -47,13 +52,13 @@ int main()
 	cecsar.AddSet(unlitMaterial3dSystem);
 
 	// Create scene instances.
+	auto texture = renderSystem.CreateTexture("Example.jpg");
+
+	// Add quad entity + camera.
 	const auto cam2dEntity = cecsar.AddEntity();
 	camera2dSystem->Insert(cam2dEntity.id);
 	transform2dSystem->Insert(cam2dEntity.id);
 
-	auto texture = renderSystem.CreateTexture("Example.jpg");
-
-	// Add quad entity.
 	Mesh::Quad quadInfo{};
 	for (auto& vertex : quadInfo.vertices)
 		vertex.position /= 2;
@@ -66,12 +71,16 @@ int main()
 	unlitMaterial2d.diffuseTexture = &texture;
 
 	// Add cube entity.
+	const auto cam3dEntity = cecsar.AddEntity();
+	camera3dSystem->Insert(cam3dEntity.id);
+	transform3dSystem->Insert(cam3dEntity.id);
+
 	std::vector<Vertex3d> cubeVerts{};
 	std::vector<int8_t> cubeInds{};
 	Mesh::System::Load("Cube.obj", cubeVerts, cubeInds);
 
 	const auto cubeEntity = cecsar.AddEntity();
-	transform2dSystem->Insert(cubeEntity.index);
+	transform3dSystem->Insert(cubeEntity.index);
 	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
 	cubeMesh = renderSystem.CreateMesh<Vertex3d, int8_t>(cubeVerts, cubeInds);
 
@@ -84,6 +93,7 @@ int main()
 
 		transform3dSystem->Update();
 		camera2dSystem->Update();
+		camera3dSystem->Update();
 
 		unlitMaterial2dSystem->Update();
 		unlitMaterial3dSystem->Update();
@@ -98,10 +108,14 @@ int main()
 	renderSystem.DestroyTexture(texture);
 
 	camera2dSystem->Cleanup();
+	delete camera2dSystem;
+	camera3dSystem->Cleanup();
+	delete camera3dSystem;
+
 	delete transform2dSystem;
 	delete transform3dSystem;
-	delete camera2dSystem;
 	delete meshSystem;
+	
 	unlitMaterial2dSystem->Cleanup();
 	delete unlitMaterial2dSystem;
 	unlitMaterial3dSystem->Cleanup();

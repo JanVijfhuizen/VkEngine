@@ -12,6 +12,9 @@ struct Camera3d final
 
 	class System final : public CameraSystem<Camera3d, Ubo>
 	{
+	public:
+		explicit System(uint32_t size);
+
 	protected:
 		[[nodiscard]] Ubo CreateUbo(Camera3d& camera, uint32_t index) override;
 	};
