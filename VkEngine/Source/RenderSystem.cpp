@@ -23,6 +23,8 @@ RenderSystem::RenderSystem()
 	const vi::RenderPassInfo::Attachment renderPassAttachment{};
 	renderPassInfo.colorAttachments.push_back(renderPassAttachment);
 	renderPassInfo.colorFormat = _swapChain.GetFormat();
+	renderPassInfo.useDepthAttachment = true;
+	renderPassInfo.depthFormat = _swapChain.GetDepthBufferFormat();
 	_renderPass = _vkRenderer.CreateRenderPass(renderPassInfo);
 
 	_swapChain.SetRenderPass(_renderPass);
@@ -46,7 +48,12 @@ void RenderSystem::BeginFrame(bool* quit)
 
 	const auto extent = _swapChain.GetExtent();
 	_vkRenderer.BeginCommandBufferRecording(_image.commandBuffer);
-	_vkRenderer.BeginRenderPass(_image.frameBuffer, _swapChain.GetRenderPass(), {}, { extent.width, extent.height });
+
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 0, 0, 0, 1 };
+	clearColors[1].depthStencil = { 1, 0 };
+
+	_vkRenderer.BeginRenderPass(_image.frameBuffer, _swapChain.GetRenderPass(), {}, { extent.width, extent.height }, clearColors, 2);
 }
 
 void RenderSystem::EndFrame()

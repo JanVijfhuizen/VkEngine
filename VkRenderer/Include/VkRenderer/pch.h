@@ -12,6 +12,7 @@
 #include <functional>
 #include <map>
 #include <set>
+#include <array>
 
 constexpr bool DEBUG =
 #ifdef NDEBUG

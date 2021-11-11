@@ -43,6 +43,7 @@ namespace vi
 
 		[[nodiscard]] VkRenderPass GetRenderPass() const;
 		[[nodiscard]] VkFormat GetFormat() const;
+		[[nodiscard]] VkFormat GetDepthBufferFormat() const;
 		[[nodiscard]] VkExtent2D GetExtent() const;
 		[[nodiscard]] uint32_t GetImageCount() const;
 		[[nodiscard]] uint32_t GetCurrentImageIndex() const;
@@ -50,6 +51,13 @@ namespace vi
 		[[nodiscard]] static SupportDetails QuerySwapChainSupport(VkSurfaceKHR surface, VkPhysicalDevice device);
 
 	private:
+		struct DepthBuffer
+		{
+			VkImage image;
+			VkImageView imageView;
+			VkDeviceMemory imageMemory;
+		};
+
 		#define _MAX_FRAMES_IN_FLIGHT 2
 
 		VkRenderer* _renderer;
@@ -62,14 +70,18 @@ namespace vi
 		std::vector<VkFence> _imagesInFlight{};
 		VkRenderPass _renderPass;
 
+		DepthBuffer _depthBuffer{};
+
 		uint32_t _frameIndex = 0;
 		uint32_t _imageIndex;
 
 		void CreateImages();
+		void CreateDepthBuffer();
 		void CreateSyncObjects();
 
 		void CreateBuffers();
 		void CleanupBuffers();
+		void CleanupDepthBuffer() const;
 
 		void WaitForImage();
 

@@ -366,6 +366,14 @@ namespace vi
 			pushConstantRanges.push_back(pushConstantRange);
 		}
 
+		VkPipelineDepthStencilStateCreateInfo depthStencil{};
+		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencil.depthTestEnable = VK_TRUE;
+		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.stencilTestEnable = VK_FALSE;
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = info.setLayouts.size();
@@ -386,8 +394,7 @@ namespace vi
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
-		// Todo add depth stencil.
-		pipelineInfo.pDepthStencilState = nullptr;
+		pipelineInfo.pDepthStencilState = info.depthBufferEnabled ? &depthStencil : nullptr;
 		pipelineInfo.pColorBlendState = &colorBlending;
 		pipelineInfo.pDynamicState = nullptr;
 		pipelineInfo.layout = pipelineLayout;
@@ -528,13 +535,14 @@ namespace vi
 		vkDestroySampler(_device, sampler, nullptr);
 	}
 
-	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass, const VkExtent2D extent) const
+	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView* imageViews, const uint32_t imageViewCount, 
+		const VkRenderPass renderPass, const VkExtent2D extent) const
 	{
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &imageView;
+		framebufferInfo.attachmentCount = imageViewCount;
+		framebufferInfo.pAttachments = imageViews;
 		framebufferInfo.width = extent.width;
 		framebufferInfo.height = extent.height;
 		framebufferInfo.layers = 1;
@@ -750,7 +758,8 @@ namespace vi
 	}
 
 	void VkRenderer::BeginRenderPass(const VkFramebuffer frameBuffer, 
-		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent) const
+		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent, 
+		VkClearValue* clearColors, const uint32_t clearColorsCount) const
 	{
 		const VkExtent2D extentVk
 		{
@@ -765,9 +774,8 @@ namespace vi
 		renderPassInfo.renderArea.offset = {offset.x, offset.y};
 		renderPassInfo.renderArea.extent = extentVk;
 
-		VkClearValue clearColor = { {{0, 0, 0, 1}} };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		renderPassInfo.clearValueCount = clearColorsCount;
+		renderPassInfo.pClearValues = clearColors;
 
 		vkCmdBeginRenderPass(_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}

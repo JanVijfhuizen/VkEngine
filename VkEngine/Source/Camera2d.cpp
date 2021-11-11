@@ -7,7 +7,7 @@ Camera2d::System::System(const uint32_t size) : CameraSystem<Camera2d, Ubo>(size
 {
 }
 
-Camera2d::Ubo Camera2d::System::CreateUbo(Camera2d&, const uint32_t index)
+Camera2d::Ubo Camera2d::System::CreateUbo(Camera2d& camera, const uint32_t index)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& windowSystem = renderSystem.GetWindowSystem();
@@ -19,7 +19,7 @@ Camera2d::Ubo Camera2d::System::CreateUbo(Camera2d&, const uint32_t index)
 	auto& transform = transforms[index];
 
 	Ubo ubo{};
-	ubo.position = glm::vec3(transform.position, 1);
+	ubo.position = glm::vec3(transform.position, camera.depth);
 	ubo.aspectRatio = aspectRatio;
 
 	return ubo;
