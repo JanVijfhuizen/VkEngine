@@ -82,6 +82,7 @@ int main()
 	const auto cubeEntity = cecsar.AddEntity();
 	auto& cubeTransform = transform3dSystem->Insert(cubeEntity.index);
 	cubeTransform.position = { 1, .5f, -1 };
+	cubeTransform.scale = glm::vec3{ .5f };
 	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
 	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
 	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
@@ -94,6 +95,15 @@ int main()
 	cube2Mesh = cubeMesh;
 	auto& unlitMaterial3d2 = unlitMaterial3dSystem->Insert(cube2Entity.index);
 	unlitMaterial3d2.diffuseTexture = &texture;
+
+	const auto cube3Entity = cecsar.AddEntity();
+	auto& cube3Transform = transform3dSystem->Insert(cube3Entity.index);
+	cube3Transform.position = { 1.8f, .8f, -.5f };
+	cube3Transform.rotation = { 45, 38, 12 };
+	auto& cube3Mesh = meshSystem->Insert(cube3Entity.index);
+	cube3Mesh = cubeMesh;
+	auto& unlitMaterial3d3 = unlitMaterial3dSystem->Insert(cube3Entity.index);
+	unlitMaterial3d3.diffuseTexture = &texture;
 	
 	while(true)
 	{
@@ -104,7 +114,7 @@ int main()
 
 		static float f = 0;
 		f += .001f;
-		cam3dTransform.position = { std::sin(f) * 10, 1, std::cos(f) * 10};
+		cam3dTransform.position = { std::sin(f) * 30, std::sin(f * 4) * 10, std::cos(f) * 30};
 
 		transform3dSystem->Update();
 		camera2dSystem->Update();

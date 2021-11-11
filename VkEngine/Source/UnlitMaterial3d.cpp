@@ -104,7 +104,7 @@ void UnlitMaterial3d::System::Update()
 		const uint32_t denseId = GetDenseId(sparseId);
 		auto& frame = frames.Get<Frame>(denseId);
 		auto& mesh = meshes[sparseId];
-		auto& bakedTransform = bakedTransforms[denseId];
+		auto& bakedTransform = bakedTransforms[transforms.GetDenseId(sparseId)];
 		const auto& diffuseTex = *instance.diffuseTexture;
 
 		materialSet = frame.descriptorSet;
