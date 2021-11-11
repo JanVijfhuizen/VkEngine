@@ -403,7 +403,7 @@ namespace vi
 		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 	}
 
-	VkImage VkRenderer::CreateImage(const glm::ivec2 resolution, 
+	VkImage VkRenderer::CreateImage(const glm::ivec2 resolution, const VkFormat format,
 		const VkImageTiling tiling, const VkImageUsageFlags usage) const
 	{
 		VkImageCreateInfo imageInfo{};
@@ -414,7 +414,7 @@ namespace vi
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
-		imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		imageInfo.format = format;
 		imageInfo.tiling = tiling;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = usage;
@@ -432,7 +432,8 @@ namespace vi
 		vkDestroyImage(_device, image, nullptr);
 	}
 
-	VkImageView VkRenderer::CreateImageView(const VkImage image, const VkFormat format) const
+	VkImageView VkRenderer::CreateImageView(const VkImage image, const VkFormat format,
+		const VkImageAspectFlags aspectFlags) const
 	{
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -446,7 +447,7 @@ namespace vi
 		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.aspectMask = aspectFlags;
 		createInfo.subresourceRange.baseMipLevel = 0;
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.baseArrayLayer = 0;
@@ -816,5 +817,22 @@ namespace vi
 	{
 		const auto result = vkDeviceWaitIdle(_device);
 		assert(!result);
+	}
+
+	VkFormat VkRenderer::FindSupportedFormat(const std::vector<VkFormat>& candidates, 
+		const VkImageTiling tiling, const VkFormatFeatureFlags features) const
+	{
+		for (VkFormat format : candidates) 
+		{
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(_physicalDevice, format, &props);
+
+			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+				return format;
+			if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+				return format;
+		}
+
+		throw std::exception("Format not available!");
 	}
 }

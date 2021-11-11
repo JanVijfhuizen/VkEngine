@@ -4,6 +4,8 @@
 #include "Mesh.h"
 #include "Texture.h"
 
+struct DepthBuffer;
+
 namespace vi
 {
 	class WindowSystemGLFW;
@@ -27,6 +29,9 @@ public:
 
 	[[nodiscard]] Texture CreateTexture(const std::string& fileName);
 	void DestroyTexture(const Texture& texture);
+
+	[[nodiscard]] DepthBuffer CreateDepthBuffer(glm::ivec2 resolution) const;
+	void DestroyDepthBuffer(DepthBuffer& depthBuffer) const;
 
 	[[nodiscard]] vi::WindowSystemGLFW& GetWindowSystem() const;
 	[[nodiscard]] vi::VkRenderer& GetVkRenderer();

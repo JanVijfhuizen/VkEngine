@@ -59,11 +59,12 @@ namespace vi
 		[[nodiscard]] VkCommandBuffer CreateCommandBuffer() const;
 		void DestroyCommandBuffer(VkCommandBuffer commandBuffer) const;
 
-		[[nodiscard]] VkImage CreateImage(glm::ivec2 resolution, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL, 
+		[[nodiscard]] VkImage CreateImage(glm::ivec2 resolution, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL,
 			VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT) const;
 		void DestroyImage(VkImage image) const;
 
-		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB) const;
+		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, 
+			VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT) const;
 		void DestroyImageView(VkImageView imageView) const;
 
 		[[nodiscard]] VkSampler CreateSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR) const;
@@ -122,6 +123,9 @@ namespace vi
 		[[nodiscard]] uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 		void DeviceWaitIdle() const;
+
+		[[nodiscard]] VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
+			VkImageTiling tiling, VkFormatFeatureFlags features) const;
 
 	private:
 		std::unique_ptr<Settings> _settings{};

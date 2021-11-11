@@ -177,6 +177,7 @@
     <ClInclude Include="Include\Camera3d.h" />
     <ClInclude Include="Include\Camera.h" />
     <ClInclude Include="Include\Camera2d.h" />
+    <ClInclude Include="Include\DepthBuffer.h" />
     <ClInclude Include="Include\DescriptorPool.h" />
     <ClInclude Include="Include\FileReader.h" />
     <ClInclude Include="Include\Cecsar.h" />

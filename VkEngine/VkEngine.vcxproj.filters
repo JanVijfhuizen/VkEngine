@@ -140,5 +140,8 @@
     <ClInclude Include="Include\Camera3d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Include\DepthBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

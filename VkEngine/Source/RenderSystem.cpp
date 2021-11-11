@@ -4,6 +4,7 @@
 #include "VkRenderer/VkRenderer.h"
 #include "VkRenderer/RenderPassInfo.h"
 #include "TextureLoader.h"
+#include "DepthBuffer.h"
 
 RenderSystem::RenderSystem()
 {
@@ -131,6 +132,31 @@ void RenderSystem::DestroyTexture(const Texture& texture)
 	_vkRenderer.DestroyImageView(texture.imageView);
 	_vkRenderer.DestroyImage(texture.image);
 	_vkRenderer.FreeMemory(texture.imageMemory);
+}
+
+DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution) const
+{
+	const auto format = _vkRenderer.FindSupportedFormat(
+		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+		VK_IMAGE_TILING_OPTIMAL,
+		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+	);
+
+	DepthBuffer depthBuffer{};
+	depthBuffer.image = _vkRenderer.CreateImage(resolution, format, VK_IMAGE_TILING_OPTIMAL, 
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	depthBuffer.imageMemory = _vkRenderer.AllocateMemory(depthBuffer.image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	_vkRenderer.BindMemory(depthBuffer.image, depthBuffer.imageMemory);
+	depthBuffer.imageView = _vkRenderer.CreateImageView(depthBuffer.image, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+	return depthBuffer;
+}
+
+void RenderSystem::DestroyDepthBuffer(DepthBuffer& depthBuffer) const
+{
+	_vkRenderer.DestroyImageView(depthBuffer.imageView);
+	_vkRenderer.DestroyImage(depthBuffer.image);
+	_vkRenderer.FreeMemory(depthBuffer.imageMemory);
 }
 
 vi::WindowSystemGLFW& RenderSystem::GetWindowSystem() const
