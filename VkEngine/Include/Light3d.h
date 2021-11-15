@@ -4,10 +4,8 @@
 #include "DescriptorPool.h"
 #include "VkRenderer/BindingInfo.h"
 
-struct Light3d final
+struct alignas(4) Light3d final
 {
-	glm::vec3 direction;
-
 	struct Frame final 
 	{
 		DepthBuffer depthBuffer;

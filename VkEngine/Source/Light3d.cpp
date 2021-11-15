@@ -7,6 +7,7 @@
 #include "ShadowCaster.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/DescriptorLayoutInfo.h"
+#include "Camera3d.h"
 
 Light3d::System::System(const uint32_t size, const Info& info) : ShaderSet<Light3d, Frame>(size), _info(info)
 {
@@ -85,6 +86,7 @@ void Light3d::System::Update()
 	auto& meshes = Mesh::System::Instance::Get();
 	auto& transforms = Transform3d::System::Instance::Get();
 	const auto bakedTransforms = transforms.GetSets()[0].Get<Transform3d::Baked>();
+	auto& camera = Camera3d::System::Instance::Get()[0];
 
 	VkClearValue clearValue{};
 	clearValue.depthStencil = { 1, 0 };
@@ -100,7 +102,7 @@ void Light3d::System::Update()
 
 		renderer.BeginRenderPass(frame.frameBuffer, _renderPass, {}, _info.shadowResolution, &clearValue, 1);
 
-		glm::mat4 view = glm::lookAt(transform.position - light.direction, transform.position, glm::vec3(0, 1, 0));
+		glm::mat4 view = glm::lookAt(transform.position, camera.lookat, glm::vec3(0, 1, 0));
 		glm::mat4 projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, .1f, 1000.f);
 
 		Ubo ubo{};
