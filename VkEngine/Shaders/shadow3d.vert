@@ -5,11 +5,10 @@ layout(location = 0) in vec3 inPosition;
 layout(location = 1) in vec3 inNormal;
 layout(location = 2) in vec2 inTexCoords;
 
-layout (set = 0, binding = 0) uniform Camera
+layout (set = 0, binding = 0) uniform Light
 {
-    mat4 view;
-    mat4 projection;
-} camera;
+    mat4 spaceMatrix;
+} light;
 
 layout (push_constant) uniform PushConstants
 {
@@ -18,5 +17,5 @@ layout (push_constant) uniform PushConstants
 
 void main() 
 {
-    gl_Position = camera.projection * camera.view * pushConstants.model * vec4(inPosition, 1);
+    gl_Position = light.spaceMatrix * pushConstants.model * vec4(inPosition, 1);
 }

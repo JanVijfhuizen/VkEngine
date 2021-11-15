@@ -3,6 +3,12 @@
 
 struct Camera3d final
 {
+	enum class Type
+	{
+		Orthographic,
+		Perspective
+	};
+
 	glm::vec3 lookat{};
 	float fieldOfView = 45;
 	float clipNear = 0.1f;
