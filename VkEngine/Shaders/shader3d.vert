@@ -22,6 +22,7 @@ layout(location = 1) out vec2 outFragTexCoord;
 void main() 
 {
     gl_Position = camera.projection * camera.view * pushConstants.model * vec4(inPosition, 1);
+
     outNormal = inNormal;
     outFragTexCoord = inTexCoords;
 }

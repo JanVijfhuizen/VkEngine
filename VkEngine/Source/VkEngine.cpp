@@ -64,7 +64,8 @@ int main()
 		vertex.position /= 2;
 
 	const auto quadEntity = cecsar.AddEntity();
-	transform2dSystem->Insert(quadEntity.index);
+	auto& quadTransform = transform2dSystem->Insert(quadEntity.index);
+	quadTransform.position = { 1, 1 };
 	auto& quadMesh = meshSystem->Insert(quadEntity.index);
 	quadMesh = renderSystem.CreateMesh(quadInfo.vertices, quadInfo.indices);
 	auto& unlitMaterial2d = unlitMaterial2dSystem->Insert(quadEntity.index);
@@ -90,13 +91,13 @@ int main()
 
 	const auto cubeEntity = cecsar.AddEntity();
 	auto& cubeTransform = transform3dSystem->Insert(cubeEntity.index);
-	cubeTransform.position = { 1, .5f, -1 };
-	cubeTransform.scale = glm::vec3{ .5f };
+	cubeTransform.position = { 0, 0, 0 };
+	cubeTransform.scale = glm::vec3{ .05f };
 	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
 	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
 	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
 	unlitMaterial3d.diffuseTexture = &texture;
-	
+
 	const auto cube2Entity = cecsar.AddEntity();
 	auto& cube2Transform = transform3dSystem->Insert(cube2Entity.index);
 	cube2Transform.position = { 1, .5f, -1 };
@@ -113,7 +114,7 @@ int main()
 	cube3Mesh = cubeMesh;
 	auto& unlitMaterial3d3 = unlitMaterial3dSystem->Insert(cube3Entity.index);
 	unlitMaterial3d3.diffuseTexture = &texture;
-	
+
 	while(true)
 	{
 		bool quit;
@@ -123,7 +124,7 @@ int main()
 
 		static float f = 0;
 		f += .001f;
-		cam3dTransform.position = { std::sin(f) * 30, std::sin(f * 4) * 10, std::cos(f) * 30};
+		cam3dTransform.position = { std::sin(f) * 20, -5, std::cos(f) * 20};
 
 		transform3dSystem->Update();
 		camera2dSystem->Update();

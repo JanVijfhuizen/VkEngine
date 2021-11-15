@@ -5,7 +5,7 @@ struct Camera3d final
 {
 	glm::vec3 lookat{};
 	float fieldOfView = 45;
-	float clipNear = 0;
+	float clipNear = 0.1f;
 	float clipFar = 1e3f;
 
 	struct Ubo;

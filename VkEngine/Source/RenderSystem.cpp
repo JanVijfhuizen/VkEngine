@@ -142,11 +142,7 @@ void RenderSystem::DestroyTexture(const Texture& texture)
 
 DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution)
 {
-	const auto format = _vkRenderer.FindSupportedFormat(
-		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-	);
+	const auto format = _vkRenderer.GetDepthBufferFormat();
 
 	DepthBuffer depthBuffer{};
 	depthBuffer.image = _vkRenderer.CreateImage(resolution, format, VK_IMAGE_TILING_OPTIMAL, 
@@ -157,7 +153,7 @@ DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution)
 
 	auto cmdBuffer = _vkRenderer.CreateCommandBuffer();
 	const auto fence = _vkRenderer.CreateFence();
-
+	
 	_vkRenderer.BeginCommandBufferRecording(cmdBuffer);
 	_vkRenderer.TransitionImageLayout(depthBuffer.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
 
@@ -167,7 +163,7 @@ DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution)
 
 	_vkRenderer.DestroyCommandBuffer(cmdBuffer);
 	_vkRenderer.DestroyFence(fence);
-
+	
 	return depthBuffer;
 }
 
