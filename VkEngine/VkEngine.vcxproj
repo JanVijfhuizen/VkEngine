@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\Light3d.cpp" />
     <ClCompile Include="Source\Camera3d.cpp" />
     <ClCompile Include="Source\Camera2d.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
@@ -200,6 +201,7 @@
     <ClInclude Include="Include\Vertex3d.h" />
     <ClInclude Include="Include\UnlitMaterial3d.h" />
     <ClInclude Include="Include\Transform3d.h" />
+    <ClInclude Include="Include\Light3d.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

@@ -12,6 +12,7 @@
 #include "UnlitMaterial3d.h"
 #include "Transform3d.h"
 #include "Camera3d.h"
+#include "Light3d.h"
 
 int main()
 {
@@ -50,6 +51,10 @@ int main()
 	const auto unlitMaterial3dSystem = new UnlitMaterial3d::System(entityCount);
 	UnlitMaterial3d::System::Instance::Set(unlitMaterial3dSystem);
 	cecsar.AddSet(unlitMaterial3dSystem);
+
+	const auto light3dSystem = new Light3d::System(entityCount);
+	Light3d::System::Instance::Set(light3dSystem);
+	cecsar.AddSet(light3dSystem);
 
 	// Create scene instances.
 	auto texture = renderSystem.CreateTexture("Example.jpg");
@@ -115,13 +120,12 @@ int main()
 	auto& unlitMaterial3d3 = unlitMaterial3dSystem->Insert(cube3Entity.index);
 	unlitMaterial3d3.diffuseTexture = &texture;
 
+	const auto light3dEntity = cecsar.AddEntity();
+	auto& light3dTransform = transform3dSystem->Insert(light3dEntity.index);
+	auto& light3d = light3dSystem->Insert(light3dEntity.index);
+
 	while(true)
 	{
-		bool quit;
-		renderSystem.BeginFrame(&quit);
-		if (quit)
-			break;
-
 		static float f = 0;
 		f += .001f;
 		cam3dTransform.position = { std::sin(f) * 20, -5, std::cos(f) * 20};
@@ -129,6 +133,13 @@ int main()
 		transform3dSystem->Update();
 		camera2dSystem->Update();
 		camera3dSystem->Update();
+
+		light3dSystem->Update();
+
+		bool quit;
+		renderSystem.BeginFrame(&quit);
+		if (quit)
+			break;
 
 		unlitMaterial2dSystem->Update();
 		unlitMaterial3dSystem->Update();
@@ -155,5 +166,8 @@ int main()
 	delete unlitMaterial2dSystem;
 	unlitMaterial3dSystem->Cleanup();
 	delete unlitMaterial3dSystem;
+
+	light3dSystem->Cleanup();
+	delete light3dSystem;
 	return 0;
 }
