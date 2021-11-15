@@ -151,6 +151,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="Source\ShadowCaster.cpp" />
     <ClCompile Include="Source\Light3d.cpp" />
     <ClCompile Include="Source\Camera3d.cpp" />
     <ClCompile Include="Source\Camera2d.cpp" />
@@ -202,6 +203,7 @@
     <ClInclude Include="Include\UnlitMaterial3d.h" />
     <ClInclude Include="Include\Transform3d.h" />
     <ClInclude Include="Include\Light3d.h" />
+    <ClInclude Include="Include\ShadowCaster.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">

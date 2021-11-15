@@ -31,7 +31,8 @@ struct Light3d final
 		VkRenderPass _renderPass;
 		VkShaderModule _vertModule;
 		vi::Pipeline _pipeline;
-		DescriptorPool _descriptorPool;
+		VkCommandBuffer _commandBuffer;
+		VkFence _fence;
 
 		void ConstructInstanceFrame(Frame& frame, Light3d& material, uint32_t denseId) override;
 		void CleanupInstanceFrame(Frame& frame, Light3d& material, uint32_t denseId) override;

@@ -78,7 +78,7 @@ void UnlitMaterial3d::System::Update()
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& cameraSystem = Camera3d::System::Instance::Get();
-	auto& frames = GetSets()[swapChain.GetCurrentImageIndex() + 1];
+	const auto frames = GetSets()[swapChain.GetCurrentImageIndex() + 1].Get<Frame>();
 
 	auto& transforms = Transform3d::System::Instance::Get();
 	const auto bakedTransforms = transforms.GetSets()[0].Get<Transform3d::Baked>();
@@ -102,7 +102,7 @@ void UnlitMaterial3d::System::Update()
 	for (const auto [instance, sparseId] : *this)
 	{
 		const uint32_t denseId = GetDenseId(sparseId);
-		auto& frame = frames.Get<Frame>(denseId);
+		auto& frame = frames[denseId];
 		auto& mesh = meshes[sparseId];
 		auto& bakedTransform = bakedTransforms[transforms.GetDenseId(sparseId)];
 		const auto& diffuseTex = *instance.diffuseTexture;

@@ -13,6 +13,7 @@
 #include "Transform3d.h"
 #include "Camera3d.h"
 #include "Light3d.h"
+#include "ShadowCaster.h"
 
 int main()
 {
@@ -56,8 +57,12 @@ int main()
 	Light3d::System::Instance::Set(light3dSystem);
 	cecsar.AddSet(light3dSystem);
 
+	const auto shadowCasterSystem = new ShadowCaster::System(entityCount);
+	ShadowCaster::System::Instance::Set(shadowCasterSystem);
+	cecsar.AddSet(shadowCasterSystem);
+
 	// Create scene instances.
-	auto texture = renderSystem.CreateTexture("Example.jpg");
+	auto texture = renderSystem.CreateTexture("Test.png");
 
 	// Add quad entity + camera.
 	const auto cam2dEntity = cecsar.AddEntity();
@@ -102,6 +107,7 @@ int main()
 	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
 	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
 	unlitMaterial3d.diffuseTexture = &texture;
+	shadowCasterSystem->Insert(cubeEntity.index);
 
 	const auto cube2Entity = cecsar.AddEntity();
 	auto& cube2Transform = transform3dSystem->Insert(cube2Entity.index);
@@ -110,6 +116,7 @@ int main()
 	cube2Mesh = cubeMesh;
 	auto& unlitMaterial3d2 = unlitMaterial3dSystem->Insert(cube2Entity.index);
 	unlitMaterial3d2.diffuseTexture = &texture;
+	shadowCasterSystem->Insert(cube2Entity.index);
 
 	const auto cube3Entity = cecsar.AddEntity();
 	auto& cube3Transform = transform3dSystem->Insert(cube3Entity.index);
@@ -119,6 +126,7 @@ int main()
 	cube3Mesh = cubeMesh;
 	auto& unlitMaterial3d3 = unlitMaterial3dSystem->Insert(cube3Entity.index);
 	unlitMaterial3d3.diffuseTexture = &texture;
+	shadowCasterSystem->Insert(cube3Entity.index);
 
 	const auto light3dEntity = cecsar.AddEntity();
 	auto& light3dTransform = transform3dSystem->Insert(light3dEntity.index);
@@ -129,6 +137,8 @@ int main()
 		static float f = 0;
 		f += .001f;
 		cam3dTransform.position = { std::sin(f) * 20, -5, std::cos(f) * 20};
+		light3dTransform.position = { std::sin(-f) * 20, -5, std::cos(-f) * 20 };
+		cube3Transform.position.x = { std::sin(f) * 4 };
 
 		transform3dSystem->Update();
 		camera2dSystem->Update();
@@ -169,5 +179,7 @@ int main()
 
 	light3dSystem->Cleanup();
 	delete light3dSystem;
+
+	delete shadowCasterSystem;
 	return 0;
 }
