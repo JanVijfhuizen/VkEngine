@@ -1,23 +1,23 @@
 ﻿#pragma once
-#include "Vertex.h"
-#include "Singleton.h"
+#include "Vertex2d.h"
+#include "Vertex3d.h"
 
 struct Mesh final
 {
     // Defaults to a quad.
-    struct Info final
+    struct Quad final
     {
-        std::vector<Vertex> vertices =
+        std::vector<Vertex2d> vertices =
         {
-            {{-0.5f, -0.5f}, {1.0f, 0.0f}},
-            {{0.5f, -0.5f}, {0.0f, 0.0f}},
-            {{0.5f, 0.5f}, {0.0f, 1.0f}},
-            {{-0.5f, 0.5f}, {1.0f, 1.0f}}
+            {{-1, -1}, {1, 0}},
+            {{1, -1}, {0, 0}},
+            {{1, 1}, {0, 1}},
+            {{-1, 1}, {1, 1}}
         };
 
         std::vector<uint16_t> indices =
         {
-            0, 1, 2, 2, 3, 0
+            2, 1, 0, 0, 3, 2
         };
     };
 
@@ -33,10 +33,7 @@ struct Mesh final
         typedef Singleton<System> Instance;
 
         explicit System(uint32_t size);
+
+        static void Load(const std::string& fileName, std::vector<Vertex3d>& outVertices, std::vector<uint16_t>& outIndices);
     };
 };
-
-inline Mesh::System::System(const uint32_t size) : SparseSet<Mesh>(size)
-{
-
-}

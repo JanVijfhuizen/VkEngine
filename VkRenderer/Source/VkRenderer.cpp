@@ -60,15 +60,15 @@ namespace vi
 
 	VkRenderPass VkRenderer::CreateRenderPass(const RenderPassInfo& info) const
 	{
-		const uint32_t attachmentsCount = info.attachments.size();
-		const auto& format = info.format;
+		const uint32_t colorAttachmentsCount = info.colorAttachments.size();
+		const auto& format = info.colorFormat;
 
 		std::vector<VkAttachmentDescription> descriptions{};
-		descriptions.resize(info.attachments.size());
+		descriptions.resize(info.colorAttachments.size());
 
-		for (uint32_t i = 0; i < attachmentsCount; ++i)
+		for (uint32_t i = 0; i < colorAttachmentsCount; ++i)
 		{
-			auto& descriptionInfo = info.attachments[i];
+			auto& descriptionInfo = info.colorAttachments[i];
 			auto& description = descriptions[i];
 
 			description.format = format;
@@ -82,18 +82,32 @@ namespace vi
 		}
 		
 		std::vector<VkAttachmentReference> colorAttachmentRefs{};
-		colorAttachmentRefs.resize(attachmentsCount);
+		colorAttachmentRefs.resize(colorAttachmentsCount);
 
-		for (uint32_t i = 0; i < attachmentsCount; ++i)
+		for (uint32_t i = 0; i < colorAttachmentsCount; ++i)
 		{
 			auto& attachmentRef = colorAttachmentRefs[i];
 			attachmentRef.attachment = i;
-			attachmentRef.layout = info.attachments[i].layout;
+			attachmentRef.layout = info.colorAttachments[i].layout;
 		}
+
+		VkAttachmentDescription depthAttachment{};
+		depthAttachment.format = GetDepthBufferFormat();
+		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+		depthAttachment.storeOp = info.depthStoreOp;
+		depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+		depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+		depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+		VkAttachmentReference depthAttachmentRef{};
+		depthAttachmentRef.attachment = colorAttachmentsCount;
+		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass{};
 		subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
-		subpass.colorAttachmentCount = attachmentsCount;
+		subpass.colorAttachmentCount = colorAttachmentsCount;
 		subpass.pColorAttachments = colorAttachmentRefs.data();
 
 		VkSubpassDependency dependency{};
@@ -103,10 +117,20 @@ namespace vi
 		dependency.srcAccessMask = 0;
 		dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
 		dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+
+		if (info.useDepthAttachment)
+		{
+			subpass.pDepthStencilAttachment = &depthAttachmentRef;
+			descriptions.push_back(depthAttachment);
+
+			dependency.srcStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			dependency.dstStageMask |= VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
+			dependency.dstAccessMask |= VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+		}
 		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = attachmentsCount;
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(descriptions.size());
 		renderPassInfo.pAttachments = descriptions.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
@@ -336,6 +360,14 @@ namespace vi
 			pushConstantRanges.push_back(pushConstantRange);
 		}
 
+		VkPipelineDepthStencilStateCreateInfo depthStencil{};
+		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencil.depthTestEnable = VK_TRUE;
+		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.stencilTestEnable = VK_FALSE;
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = info.setLayouts.size();
@@ -356,8 +388,7 @@ namespace vi
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
-		// Todo add depth stencil.
-		pipelineInfo.pDepthStencilState = nullptr;
+		pipelineInfo.pDepthStencilState = info.depthBufferEnabled ? &depthStencil : nullptr;
 		pipelineInfo.pColorBlendState = &colorBlending;
 		pipelineInfo.pDynamicState = nullptr;
 		pipelineInfo.layout = pipelineLayout;
@@ -403,7 +434,7 @@ namespace vi
 		vkFreeCommandBuffers(_device, _commandPool, 1, &commandBuffer);
 	}
 
-	VkImage VkRenderer::CreateImage(const glm::ivec2 resolution, 
+	VkImage VkRenderer::CreateImage(const glm::ivec2 resolution, const VkFormat format,
 		const VkImageTiling tiling, const VkImageUsageFlags usage) const
 	{
 		VkImageCreateInfo imageInfo{};
@@ -414,7 +445,7 @@ namespace vi
 		imageInfo.extent.depth = 1;
 		imageInfo.mipLevels = 1;
 		imageInfo.arrayLayers = 1;
-		imageInfo.format = VK_FORMAT_R8G8B8A8_SRGB;
+		imageInfo.format = format;
 		imageInfo.tiling = tiling;
 		imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
 		imageInfo.usage = usage;
@@ -432,7 +463,8 @@ namespace vi
 		vkDestroyImage(_device, image, nullptr);
 	}
 
-	VkImageView VkRenderer::CreateImageView(const VkImage image, const VkFormat format) const
+	VkImageView VkRenderer::CreateImageView(const VkImage image, const VkFormat format,
+		const VkImageAspectFlags aspectFlags) const
 	{
 		VkImageViewCreateInfo createInfo{};
 		createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
@@ -446,7 +478,7 @@ namespace vi
 		createInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
 		createInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
 
-		createInfo.subresourceRange.aspectMask = VK_IMAGE_ASPECT_COLOR_BIT;
+		createInfo.subresourceRange.aspectMask = aspectFlags;
 		createInfo.subresourceRange.baseMipLevel = 0;
 		createInfo.subresourceRange.levelCount = 1;
 		createInfo.subresourceRange.baseArrayLayer = 0;
@@ -497,13 +529,14 @@ namespace vi
 		vkDestroySampler(_device, sampler, nullptr);
 	}
 
-	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass, const VkExtent2D extent) const
+	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView* imageViews, const uint32_t imageViewCount, 
+		const VkRenderPass renderPass, const VkExtent2D extent) const
 	{
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &imageView;
+		framebufferInfo.attachmentCount = imageViewCount;
+		framebufferInfo.pAttachments = imageViews;
 		framebufferInfo.width = extent.width;
 		framebufferInfo.height = extent.height;
 		framebufferInfo.layers = 1;
@@ -550,6 +583,20 @@ namespace vi
 	void VkRenderer::DestroyFence(const VkFence fence) const
 	{
 		vkDestroyFence(_device, fence, nullptr);
+	}
+
+	VkBuffer VkRenderer::CreateBuffer(const VkDeviceSize size, const VkBufferUsageFlags flags) const
+	{
+		VkBufferCreateInfo bufferInfo{};
+		bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+		bufferInfo.size = size;
+		bufferInfo.usage = flags;
+		bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+		VkBuffer vertexBuffer;
+		const auto result = vkCreateBuffer(_device, &bufferInfo, nullptr, &vertexBuffer);
+		assert(!result);
+		return vertexBuffer;
 	}
 
 	void VkRenderer::DestroyBuffer(const VkBuffer buffer) const
@@ -658,6 +705,15 @@ namespace vi
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
 
+		if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+		{
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			const auto format = GetDepthBufferFormat();
+			if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
+				barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+
 		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 		{
 			barrier.srcAccessMask = 0;
@@ -673,6 +729,14 @@ namespace vi
 
 			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		}
 		else
 			throw std::exception("Layout transition not supported!");
@@ -705,7 +769,8 @@ namespace vi
 	}
 
 	void VkRenderer::BeginRenderPass(const VkFramebuffer frameBuffer, 
-		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent) const
+		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent, 
+		VkClearValue* clearColors, const uint32_t clearColorsCount) const
 	{
 		const VkExtent2D extentVk
 		{
@@ -720,9 +785,8 @@ namespace vi
 		renderPassInfo.renderArea.offset = {offset.x, offset.y};
 		renderPassInfo.renderArea.extent = extentVk;
 
-		VkClearValue clearColor = { {{0, 0, 0, 1}} };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		renderPassInfo.clearValueCount = clearColorsCount;
+		renderPassInfo.pClearValues = clearColors;
 
 		vkCmdBeginRenderPass(_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
@@ -802,5 +866,30 @@ namespace vi
 	{
 		const auto result = vkDeviceWaitIdle(_device);
 		assert(!result);
+	}
+
+	VkFormat VkRenderer::FindSupportedFormat(const std::vector<VkFormat>& candidates, 
+		const VkImageTiling tiling, const VkFormatFeatureFlags features) const
+	{
+		for (VkFormat format : candidates)
+		{
+			VkFormatProperties props;
+			vkGetPhysicalDeviceFormatProperties(_physicalDevice, format, &props);
+
+			if (tiling == VK_IMAGE_TILING_LINEAR && (props.linearTilingFeatures & features) == features)
+				return format;
+			if (tiling == VK_IMAGE_TILING_OPTIMAL && (props.optimalTilingFeatures & features) == features)
+				return format;
+		}
+
+		throw std::exception("Format not available!");
+	}
+
+	VkFormat VkRenderer::GetDepthBufferFormat() const
+	{
+		return FindSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
 	}
 }

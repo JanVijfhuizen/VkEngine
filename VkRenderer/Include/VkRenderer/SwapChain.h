@@ -19,8 +19,19 @@ namespace vi
 
 		struct Image final
 		{
+			union
+			{
+				struct
+				{
+					VkImageView imageView;
+					VkImageView depthImageView;
+				};
+				VkImageView imageViews[2];
+			};
+
 			VkImage image;
-			VkImageView imageView;
+			VkImage depthImage;
+			VkDeviceMemory depthImageMemory;
 
 			VkFramebuffer frameBuffer;
 			VkCommandBuffer commandBuffer;

@@ -4,6 +4,7 @@
 #include "VkRenderer/VkRenderer.h"
 #include "VkRenderer/RenderPassInfo.h"
 #include "TextureLoader.h"
+#include "DepthBuffer.h"
 
 RenderSystem::RenderSystem()
 {
@@ -20,8 +21,9 @@ RenderSystem::RenderSystem()
 
 	vi::RenderPassInfo renderPassInfo{};
 	const vi::RenderPassInfo::Attachment renderPassAttachment{};
-	renderPassInfo.attachments.push_back(renderPassAttachment);
-	renderPassInfo.format = _swapChain.GetFormat();
+	renderPassInfo.colorAttachments.push_back(renderPassAttachment);
+	renderPassInfo.colorFormat = _swapChain.GetFormat();
+	renderPassInfo.useDepthAttachment = true;
 	_renderPass = _vkRenderer.CreateRenderPass(renderPassInfo);
 
 	_swapChain.SetRenderPass(_renderPass);
@@ -45,7 +47,12 @@ void RenderSystem::BeginFrame(bool* quit)
 
 	const auto extent = _swapChain.GetExtent();
 	_vkRenderer.BeginCommandBufferRecording(_image.commandBuffer);
-	_vkRenderer.BeginRenderPass(_image.frameBuffer, _swapChain.GetRenderPass(), {}, { extent.width, extent.height });
+
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 0, 0, 0, 1 };
+	clearColors[1].depthStencil = { 1, 0 };
+
+	_vkRenderer.BeginRenderPass(_image.frameBuffer, _swapChain.GetRenderPass(), {}, { extent.width, extent.height }, clearColors, 2);
 }
 
 void RenderSystem::EndFrame()
@@ -58,60 +65,6 @@ void RenderSystem::EndFrame()
 	{
 		// Recreate assets.
 	}
-}
-
-Mesh RenderSystem::CreateMesh(const Mesh::Info& info)
-{
-	auto cpyCommandBuffer = _vkRenderer.CreateCommandBuffer();
-	const auto cpyFence = _vkRenderer.CreateFence();
-
-	// Send vertex data.
-	const auto vertStagingBuffer = _vkRenderer.CreateBuffer<Vertex>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	const auto vertStagingMem = _vkRenderer.AllocateMemory(vertStagingBuffer,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	_vkRenderer.BindMemory(vertStagingBuffer, vertStagingMem);
-	_vkRenderer.MapMemory(vertStagingMem, info.vertices.data(), 0, info.vertices.size());
-
-	const auto vertBuffer = _vkRenderer.CreateBuffer<Vertex>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT);
-	const auto vertMem = _vkRenderer.AllocateMemory(vertBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	_vkRenderer.BindMemory(vertBuffer, vertMem);
-
-	// Send indices data.
-	const auto indStagingBuffer = _vkRenderer.CreateBuffer<uint16_t>(info.indices.size(), VK_BUFFER_USAGE_TRANSFER_SRC_BIT);
-	const auto indStagingMem = _vkRenderer.AllocateMemory(indStagingBuffer,
-		VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	_vkRenderer.BindMemory(indStagingBuffer, indStagingMem);
-	_vkRenderer.MapMemory(indStagingMem, info.indices.data(), 0, info.indices.size());
-
-	const auto indBuffer = _vkRenderer.CreateBuffer<Vertex>(info.vertices.size(), VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_INDEX_BUFFER_BIT);
-	const auto indMem = _vkRenderer.AllocateMemory(indBuffer, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
-	_vkRenderer.BindMemory(indBuffer, indMem);
-
-	_vkRenderer.BeginCommandBufferRecording(cpyCommandBuffer);
-	_vkRenderer.CopyBuffer(vertStagingBuffer, vertBuffer, info.vertices.size() * sizeof(Vertex));
-	_vkRenderer.CopyBuffer(indStagingBuffer, indBuffer, info.indices.size() * sizeof(int16_t));
-	_vkRenderer.EndCommandBufferRecording();
-
-	_vkRenderer.Submit(&cpyCommandBuffer, 1, VK_NULL_HANDLE, VK_NULL_HANDLE, cpyFence);
-	_vkRenderer.WaitForFence(cpyFence);
-
-	_vkRenderer.DestroyBuffer(vertStagingBuffer);
-	_vkRenderer.FreeMemory(vertStagingMem);
-
-	_vkRenderer.DestroyBuffer(indStagingBuffer);
-	_vkRenderer.FreeMemory(indStagingMem);
-
-	_vkRenderer.DestroyFence(cpyFence);
-	_vkRenderer.DestroyCommandBuffer(cpyCommandBuffer);
-
-	Mesh mesh{};
-	mesh.vertexBuffer = vertBuffer;
-	mesh.vertexMemory = vertMem;
-	mesh.indexBuffer = indBuffer;
-	mesh.indexMemory = indMem;
-	mesh.indCount = info.indices.size();
-
-	return mesh;
 }
 
 void RenderSystem::UseMesh(const Mesh& mesh) const
@@ -185,6 +138,40 @@ void RenderSystem::DestroyTexture(const Texture& texture)
 	_vkRenderer.DestroyImageView(texture.imageView);
 	_vkRenderer.DestroyImage(texture.image);
 	_vkRenderer.FreeMemory(texture.imageMemory);
+}
+
+DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution)
+{
+	const auto format = _vkRenderer.GetDepthBufferFormat();
+
+	DepthBuffer depthBuffer{};
+	depthBuffer.image = _vkRenderer.CreateImage(resolution, format, VK_IMAGE_TILING_OPTIMAL, 
+		VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT);
+	depthBuffer.imageMemory = _vkRenderer.AllocateMemory(depthBuffer.image, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT);
+	_vkRenderer.BindMemory(depthBuffer.image, depthBuffer.imageMemory);
+	depthBuffer.imageView = _vkRenderer.CreateImageView(depthBuffer.image, format, VK_IMAGE_ASPECT_DEPTH_BIT);
+
+	auto cmdBuffer = _vkRenderer.CreateCommandBuffer();
+	const auto fence = _vkRenderer.CreateFence();
+	
+	_vkRenderer.BeginCommandBufferRecording(cmdBuffer);
+	_vkRenderer.TransitionImageLayout(depthBuffer.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+	_vkRenderer.EndCommandBufferRecording();
+	_vkRenderer.Submit(&cmdBuffer, 1, nullptr, nullptr, fence);
+	_vkRenderer.WaitForFence(fence);
+
+	_vkRenderer.DestroyCommandBuffer(cmdBuffer);
+	_vkRenderer.DestroyFence(fence);
+	
+	return depthBuffer;
+}
+
+void RenderSystem::DestroyDepthBuffer(DepthBuffer& depthBuffer) const
+{
+	_vkRenderer.DestroyImageView(depthBuffer.imageView);
+	_vkRenderer.DestroyImage(depthBuffer.image);
+	_vkRenderer.FreeMemory(depthBuffer.imageMemory);
 }
 
 vi::WindowSystemGLFW& RenderSystem::GetWindowSystem() const

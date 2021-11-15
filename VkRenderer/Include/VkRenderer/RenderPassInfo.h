@@ -17,7 +17,10 @@ namespace vi
 			VkImageLayout layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 		};
 
-		VkFormat format;
-		std::vector<Attachment> attachments{};
+		VkFormat colorFormat;
+		std::vector<Attachment> colorAttachments{};
+
+		bool useDepthAttachment = false;
+		VkAttachmentStoreOp depthStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
 	};
 }

@@ -151,9 +151,11 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="Source\Camera.cpp" />
+    <ClCompile Include="Source\Camera3d.cpp" />
+    <ClCompile Include="Source\Camera2d.cpp" />
     <ClCompile Include="Source\Cecsar.cpp" />
     <ClCompile Include="Source\DescriptorPool.cpp" />
+    <ClCompile Include="Source\Mesh.cpp" />
     <ClCompile Include="Source\RenderSystem.cpp" />
     <ClCompile Include="Source\FileReader.cpp" />
     <ClCompile Include="Source\pch.cpp">
@@ -162,14 +164,20 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">Create</PrecompiledHeader>
       <PrecompiledHeaderFile Condition="'$(Configuration)|$(Platform)'=='Release|x64'">pch.h</PrecompiledHeaderFile>
     </ClCompile>
-    <ClCompile Include="Source\Transform.cpp" />
+    <ClCompile Include="Source\Transform2d.cpp" />
     <ClCompile Include="Source\VkEngine.cpp" />
-    <ClCompile Include="Source\Vertex.cpp" />
+    <ClCompile Include="Source\Vertex2d.cpp" />
     <ClCompile Include="Source\TextureLoader.cpp" />
     <ClCompile Include="Source\UnlitMaterial2d.cpp" />
+    <ClCompile Include="Source\Vertex3d.cpp" />
+    <ClCompile Include="Source\UnlitMaterial3d.cpp" />
+    <ClCompile Include="Source\Transform3d.cpp" />
   </ItemGroup>
   <ItemGroup>
+    <ClInclude Include="Include\Camera3d.h" />
     <ClInclude Include="Include\Camera.h" />
+    <ClInclude Include="Include\Camera2d.h" />
+    <ClInclude Include="Include\DepthBuffer.h" />
     <ClInclude Include="Include\DescriptorPool.h" />
     <ClInclude Include="Include\FileReader.h" />
     <ClInclude Include="Include\Cecsar.h" />
@@ -181,22 +189,22 @@
     <ClInclude Include="Include\Set.h" />
     <ClInclude Include="Include\SparseSet.h" />
     <ClInclude Include="Include\pch.h" />
-    <ClInclude Include="Include\Transform.h" />
-    <ClInclude Include="Include\Vertex.h" />
+    <ClInclude Include="Include\tiny_obj_loader.h" />
+    <ClInclude Include="Include\Transform2d.h" />
+    <ClInclude Include="Include\Vertex2d.h" />
     <ClInclude Include="Include\TextureLoader.h" />
     <ClInclude Include="Include\RenderSystem.h" />
     <ClInclude Include="Include\SoASet.h" />
     <ClInclude Include="Include\ShaderSet.h" />
     <ClInclude Include="Include\UnlitMaterial2d.h" />
+    <ClInclude Include="Include\Vertex3d.h" />
+    <ClInclude Include="Include\UnlitMaterial3d.h" />
+    <ClInclude Include="Include\Transform3d.h" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="..\VkRenderer\VkRenderer.vcxproj">
       <Project>{19ef4ac1-ea8d-47d5-9a59-f9c52514f0ea}</Project>
     </ProjectReference>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\shader3d.frag" />
-    <None Include="Shaders\shader3d.vert" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

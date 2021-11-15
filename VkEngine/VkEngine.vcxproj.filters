@@ -24,7 +24,7 @@
     <ClCompile Include="Source\FileReader.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Vertex.cpp">
+    <ClCompile Include="Source\Vertex2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\TextureLoader.cpp">
@@ -39,13 +39,28 @@
     <ClCompile Include="Source\UnlitMaterial2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Camera.cpp">
+    <ClCompile Include="Source\Camera2d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
     <ClCompile Include="Source\DescriptorPool.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="Source\Transform.cpp">
+    <ClCompile Include="Source\Transform2d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Vertex3d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Mesh.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\UnlitMaterial3d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Transform3d.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Source\Camera3d.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -68,7 +83,7 @@
     <ClInclude Include="Include\FileReader.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Vertex.h">
+    <ClInclude Include="Include\Vertex2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Mesh.h">
@@ -95,10 +110,10 @@
     <ClInclude Include="Include\UnlitMaterial2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Transform.h">
+    <ClInclude Include="Include\Transform2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Include\Camera.h">
+    <ClInclude Include="Include\Camera2d.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="Include\Pool.h">
@@ -107,9 +122,26 @@
     <ClInclude Include="Include\DescriptorPool.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Shaders\shader3d.frag" />
-    <None Include="Shaders\shader3d.vert" />
+    <ClInclude Include="Include\Vertex3d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\tiny_obj_loader.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\UnlitMaterial3d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Camera.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Transform3d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\Camera3d.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Include\DepthBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
 </Project>

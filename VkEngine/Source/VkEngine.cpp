@@ -2,13 +2,16 @@
 #include "Cecsar.h"
 #include "VkRenderer/WindowSystemGLFW.h"
 #include "VkRenderer/VkRenderer.h"
-#include "Vertex.h"
+#include "Vertex2d.h"
 #include "Mesh.h"
 #include "RenderSystem.h"
 #include "Singleton.h"
-#include "Transform.h"
-#include "Camera.h"
+#include "Transform2d.h"
+#include "Camera2d.h"
 #include "UnlitMaterial2d.h"
+#include "UnlitMaterial3d.h"
+#include "Transform3d.h"
+#include "Camera3d.h"
 
 int main()
 {
@@ -20,39 +23,97 @@ int main()
 
 	auto& renderer = renderSystem.GetVkRenderer();
 
-	const auto transformSystem = new Transform::System(entityCount);
-	Transform::System::Instance::Set(transformSystem);
-	cecsar.AddSet(transformSystem);
+	const auto transform2dSystem = new Transform2d::System(entityCount);
+	Transform2d::System::Instance::Set(transform2dSystem);
+	cecsar.AddSet(transform2dSystem);
+
+	const auto transform3dSystem = new Transform3d::System(entityCount);
+	Transform3d::System::Instance::Set(transform3dSystem);
+	cecsar.AddSet(transform3dSystem);
 	
 	const auto meshSystem = new Mesh::System(entityCount);
 	Mesh::System::Instance::Set(meshSystem);
 	cecsar.AddSet(meshSystem);
 
-	const auto cameraSystem = new Camera::System(entityCount);
-	Camera::System::Instance::Set(cameraSystem);
-	cecsar.AddSet(cameraSystem);
+	const auto camera2dSystem = new Camera2d::System(entityCount);
+	Camera2d::System::Instance::Set(camera2dSystem);
+	cecsar.AddSet(camera2dSystem);
 
-	const auto unlitMaterialSystem = new UnlitMaterial2d::System(entityCount);
-	UnlitMaterial2d::System::Instance::Set(unlitMaterialSystem);
-	cecsar.AddSet(unlitMaterialSystem);
+	const auto camera3dSystem = new Camera3d::System(entityCount);
+	Camera3d::System::Instance::Set(camera3dSystem);
+	cecsar.AddSet(camera3dSystem);
+
+	const auto unlitMaterial2dSystem = new UnlitMaterial2d::System(entityCount);
+	UnlitMaterial2d::System::Instance::Set(unlitMaterial2dSystem);
+	cecsar.AddSet(unlitMaterial2dSystem);
+
+	const auto unlitMaterial3dSystem = new UnlitMaterial3d::System(entityCount);
+	UnlitMaterial3d::System::Instance::Set(unlitMaterial3dSystem);
+	cecsar.AddSet(unlitMaterial3dSystem);
 
 	// Create scene instances.
-	const auto camEntity = cecsar.AddEntity();
-	cameraSystem->Insert(camEntity.id);
-	transformSystem->Insert(camEntity.id);
-
 	auto texture = renderSystem.CreateTexture("Example.jpg");
 
-	Mesh::Info meshInfo{};
-	for (auto& vertex : meshInfo.vertices)
-		vertex.pos /= 2;
+	// Add quad entity + camera.
+	const auto cam2dEntity = cecsar.AddEntity();
+	camera2dSystem->Insert(cam2dEntity.index);
+	transform2dSystem->Insert(cam2dEntity.index);
+
+	Mesh::Quad quadInfo{};
+	for (auto& vertex : quadInfo.vertices)
+		vertex.position /= 2;
 
 	const auto quadEntity = cecsar.AddEntity();
-	transformSystem->Insert(quadEntity.id);
-	auto& mesh = meshSystem->Insert(quadEntity.id);
-	mesh = renderSystem.CreateMesh(meshInfo);
-	auto& unlitMaterial = unlitMaterialSystem->Insert(quadEntity.id);
-	unlitMaterial.diffuseTexture = &texture;
+	auto& quadTransform = transform2dSystem->Insert(quadEntity.index);
+	quadTransform.position = { 1, 1 };
+	auto& quadMesh = meshSystem->Insert(quadEntity.index);
+	quadMesh = renderSystem.CreateMesh(quadInfo.vertices, quadInfo.indices);
+	auto& unlitMaterial2d = unlitMaterial2dSystem->Insert(quadEntity.index);
+	unlitMaterial2d.diffuseTexture = &texture;
+
+	const auto quad2Entity = cecsar.AddEntity();
+	auto& quad2Transform = transform2dSystem->Insert(quad2Entity.index);
+	quad2Transform.position = { -1, -1 };
+	auto& quad2Mesh = meshSystem->Insert(quad2Entity.index);
+	quad2Mesh = quadMesh;
+
+	auto& unlitMaterial2d2 = unlitMaterial2dSystem->Insert(quad2Entity.index);
+	unlitMaterial2d2.diffuseTexture = &texture;
+
+	// Add cube entity.
+	const auto cam3dEntity = cecsar.AddEntity();
+	camera3dSystem->Insert(cam3dEntity.index);
+	auto& cam3dTransform = transform3dSystem->Insert(cam3dEntity.index);
+
+	std::vector<Vertex3d> cubeVerts{};
+	std::vector<uint16_t> cubeInds{};
+	Mesh::System::Load("Cube.obj", cubeVerts, cubeInds);
+
+	const auto cubeEntity = cecsar.AddEntity();
+	auto& cubeTransform = transform3dSystem->Insert(cubeEntity.index);
+	cubeTransform.position = { 0, 5, 0 };
+	cubeTransform.scale = glm::vec3{ 10, 1, 10 };
+	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
+	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
+	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
+	unlitMaterial3d.diffuseTexture = &texture;
+
+	const auto cube2Entity = cecsar.AddEntity();
+	auto& cube2Transform = transform3dSystem->Insert(cube2Entity.index);
+	cube2Transform.position = { 1, .5f, -1 };
+	auto& cube2Mesh = meshSystem->Insert(cube2Entity.index);
+	cube2Mesh = cubeMesh;
+	auto& unlitMaterial3d2 = unlitMaterial3dSystem->Insert(cube2Entity.index);
+	unlitMaterial3d2.diffuseTexture = &texture;
+
+	const auto cube3Entity = cecsar.AddEntity();
+	auto& cube3Transform = transform3dSystem->Insert(cube3Entity.index);
+	cube3Transform.position = { 0, 0, 0 };
+	cube3Transform.rotation = { 45, 38, 12 };
+	auto& cube3Mesh = meshSystem->Insert(cube3Entity.index);
+	cube3Mesh = cubeMesh;
+	auto& unlitMaterial3d3 = unlitMaterial3dSystem->Insert(cube3Entity.index);
+	unlitMaterial3d3.diffuseTexture = &texture;
 
 	while(true)
 	{
@@ -61,22 +122,38 @@ int main()
 		if (quit)
 			break;
 
-		cameraSystem->Update();
-		unlitMaterialSystem->Update();
+		static float f = 0;
+		f += .001f;
+		cam3dTransform.position = { std::sin(f) * 20, -5, std::cos(f) * 20};
+
+		transform3dSystem->Update();
+		camera2dSystem->Update();
+		camera3dSystem->Update();
+
+		unlitMaterial2dSystem->Update();
+		unlitMaterial3dSystem->Update();
 
 		renderSystem.EndFrame();
 	}
 
 	renderer.DeviceWaitIdle();
 
-	renderSystem.DestroyMesh(mesh);
+	renderSystem.DestroyMesh(quadMesh);
+	renderSystem.DestroyMesh(cubeMesh);
 	renderSystem.DestroyTexture(texture);
 
-	cameraSystem->Cleanup();
-	delete transformSystem;
-	delete cameraSystem;
+	camera2dSystem->Cleanup();
+	delete camera2dSystem;
+	camera3dSystem->Cleanup();
+	delete camera3dSystem;
+
+	delete transform2dSystem;
+	delete transform3dSystem;
 	delete meshSystem;
-	unlitMaterialSystem->Cleanup();
-	delete unlitMaterialSystem;
+	
+	unlitMaterial2dSystem->Cleanup();
+	delete unlitMaterial2dSystem;
+	unlitMaterial3dSystem->Cleanup();
+	delete unlitMaterial3dSystem;
 	return 0;
 }

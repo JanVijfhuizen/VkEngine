@@ -59,17 +59,18 @@ namespace vi
 		[[nodiscard]] VkCommandBuffer CreateCommandBuffer() const;
 		void DestroyCommandBuffer(VkCommandBuffer commandBuffer) const;
 
-		[[nodiscard]] VkImage CreateImage(glm::ivec2 resolution, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL, 
+		[[nodiscard]] VkImage CreateImage(glm::ivec2 resolution, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, VkImageTiling tiling = VK_IMAGE_TILING_OPTIMAL,
 			VkImageUsageFlags usage = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT) const;
 		void DestroyImage(VkImage image) const;
 
-		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB) const;
+		[[nodiscard]] VkImageView CreateImageView(VkImage image, VkFormat format = VK_FORMAT_R8G8B8A8_SRGB, 
+			VkImageAspectFlags aspectFlags = VK_IMAGE_ASPECT_COLOR_BIT) const;
 		void DestroyImageView(VkImageView imageView) const;
 
 		[[nodiscard]] VkSampler CreateSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR) const;
 		void DestroySampler(VkSampler sampler) const;
 
-		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass, VkExtent2D extent) const;
+		[[nodiscard]] VkFramebuffer CreateFrameBuffer(const VkImageView* imageViews, uint32_t imageViewCount, VkRenderPass renderPass, VkExtent2D extent) const;
 		void DestroyFrameBuffer(VkFramebuffer frameBuffer) const;
 
 		[[nodiscard]] VkSemaphore CreateSemaphore() const;
@@ -79,6 +80,7 @@ namespace vi
 		void WaitForFence(VkFence fence) const;
 		void DestroyFence(VkFence fence) const;
 
+		[[nodiscard]] VkBuffer CreateBuffer(VkDeviceSize size, VkBufferUsageFlags flags) const;
 		template <typename T>
 		[[nodiscard]] VkBuffer CreateBuffer(uint32_t count, VkBufferUsageFlags flags) const;
 		void DestroyBuffer(VkBuffer buffer) const;
@@ -102,7 +104,8 @@ namespace vi
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording() const;
 
-		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent) const;
+		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent, 
+			VkClearValue* clearColors, uint32_t clearColorsCount) const;
 		void EndRenderPass() const;
 
 		void BindPipeline(Pipeline pipeline);
@@ -121,6 +124,11 @@ namespace vi
 		[[nodiscard]] uint32_t FindMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties) const;
 
 		void DeviceWaitIdle() const;
+
+		[[nodiscard]] VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
+			VkImageTiling tiling, VkFormatFeatureFlags features) const;
+
+		[[nodiscard]] VkFormat GetDepthBufferFormat() const;
 
 	private:
 		std::unique_ptr<Settings> _settings{};

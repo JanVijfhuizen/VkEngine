@@ -64,7 +64,6 @@ namespace ce
 		[[nodiscard]] constexpr Iterator end();
 
 	private:
-		char* _data = nullptr;
 		T* _values;
 		uint32_t* _dense;
 		int32_t* _sparse;
@@ -111,14 +110,9 @@ namespace ce
 	template <typename T>
 	SparseSet<T>::SparseSet(const uint32_t size) : _size(size)
 	{
-		const size_t valSize = sizeof(T) * size;
-		const size_t iSize = sizeof(uint32_t) * size;
-		const size_t memSize = valSize + iSize * 2;
-
-		_data = reinterpret_cast<char*>(malloc(memSize));
-		_values = reinterpret_cast<T*>(_data);
-		_dense = reinterpret_cast<uint32_t*>(_data + valSize);
-		_sparse = reinterpret_cast<int32_t*>(_data + iSize * 2);
+		_values = new T[size];
+		_dense = new uint32_t[size];
+		_sparse = new int32_t[size];
 
 		for (uint32_t i = 0; i < size; ++i)
 			_sparse[i] = -1;
@@ -127,7 +121,9 @@ namespace ce
 	template <typename T>
 	SparseSet<T>::~SparseSet()
 	{
-		free(_data);
+		delete[] _values;
+		delete[] _dense;
+		delete[] _sparse;
 	}
 
 	template <typename T>
