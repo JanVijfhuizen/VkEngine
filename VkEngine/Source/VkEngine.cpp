@@ -91,8 +91,8 @@ int main()
 
 	const auto cubeEntity = cecsar.AddEntity();
 	auto& cubeTransform = transform3dSystem->Insert(cubeEntity.index);
-	cubeTransform.position = { 0, 0, 0 };
-	cubeTransform.scale = glm::vec3{ .05f };
+	cubeTransform.position = { 0, 5, 0 };
+	cubeTransform.scale = glm::vec3{ 10, 1, 10 };
 	auto& cubeMesh = meshSystem->Insert(cubeEntity.index);
 	cubeMesh = renderSystem.CreateMesh<Vertex3d, uint16_t>(cubeVerts, cubeInds);
 	auto& unlitMaterial3d = unlitMaterial3dSystem->Insert(cubeEntity.index);
