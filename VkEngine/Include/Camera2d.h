@@ -1,8 +1,10 @@
 #pragma once
 #include "Camera.h"
 
-struct alignas(4) Camera2d final
+struct Camera2d final
 {
+	float depth = 1;
+
 	struct Ubo;
 
 	class System final : public CameraSystem<Camera2d, Ubo>

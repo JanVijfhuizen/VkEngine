@@ -23,6 +23,7 @@ RenderSystem::RenderSystem()
 	const vi::RenderPassInfo::Attachment renderPassAttachment{};
 	renderPassInfo.colorAttachments.push_back(renderPassAttachment);
 	renderPassInfo.colorFormat = _swapChain.GetFormat();
+	renderPassInfo.useDepthAttachment = true;
 	_renderPass = _vkRenderer.CreateRenderPass(renderPassInfo);
 
 	_swapChain.SetRenderPass(_renderPass);
@@ -46,7 +47,12 @@ void RenderSystem::BeginFrame(bool* quit)
 
 	const auto extent = _swapChain.GetExtent();
 	_vkRenderer.BeginCommandBufferRecording(_image.commandBuffer);
-	_vkRenderer.BeginRenderPass(_image.frameBuffer, _swapChain.GetRenderPass(), {}, { extent.width, extent.height });
+
+	VkClearValue clearColors[2];
+	clearColors[0].color = { 0, 0, 0, 1 };
+	clearColors[1].depthStencil = { 1, 0 };
+
+	_vkRenderer.BeginRenderPass(_image.frameBuffer, _swapChain.GetRenderPass(), {}, { extent.width, extent.height }, clearColors, 2);
 }
 
 void RenderSystem::EndFrame()
@@ -134,13 +140,9 @@ void RenderSystem::DestroyTexture(const Texture& texture)
 	_vkRenderer.FreeMemory(texture.imageMemory);
 }
 
-DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution) const
+DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution)
 {
-	const auto format = _vkRenderer.FindSupportedFormat(
-		{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-		VK_IMAGE_TILING_OPTIMAL,
-		VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-	);
+	const auto format = _vkRenderer.GetDepthBufferFormat();
 
 	DepthBuffer depthBuffer{};
 	depthBuffer.image = _vkRenderer.CreateImage(resolution, format, VK_IMAGE_TILING_OPTIMAL, 
@@ -149,6 +151,19 @@ DepthBuffer RenderSystem::CreateDepthBuffer(const glm::ivec2 resolution) const
 	_vkRenderer.BindMemory(depthBuffer.image, depthBuffer.imageMemory);
 	depthBuffer.imageView = _vkRenderer.CreateImageView(depthBuffer.image, format, VK_IMAGE_ASPECT_DEPTH_BIT);
 
+	auto cmdBuffer = _vkRenderer.CreateCommandBuffer();
+	const auto fence = _vkRenderer.CreateFence();
+	
+	_vkRenderer.BeginCommandBufferRecording(cmdBuffer);
+	_vkRenderer.TransitionImageLayout(depthBuffer.image, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+
+	_vkRenderer.EndCommandBufferRecording();
+	_vkRenderer.Submit(&cmdBuffer, 1, nullptr, nullptr, fence);
+	_vkRenderer.WaitForFence(fence);
+
+	_vkRenderer.DestroyCommandBuffer(cmdBuffer);
+	_vkRenderer.DestroyFence(fence);
+	
 	return depthBuffer;
 }
 

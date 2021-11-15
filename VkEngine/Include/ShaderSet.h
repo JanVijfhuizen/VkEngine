@@ -62,7 +62,6 @@ Material& ShaderSet<Material, Frame>::Insert(const uint32_t sparseId)
 {
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& swapChain = renderSystem.GetSwapChain();
-
 	auto& material = ce::SoASet<Material>::Insert(sparseId);
 	auto& deleteQueue = ce::SoASet<Material>::GetSets()[0];
 	const uint32_t denseId = ce::SoASet<Material>::GetDenseId(sparseId);

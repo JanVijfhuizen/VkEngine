@@ -70,7 +70,7 @@ namespace vi
 		[[nodiscard]] VkSampler CreateSampler(VkFilter magFilter = VK_FILTER_LINEAR, VkFilter minFilter = VK_FILTER_LINEAR) const;
 		void DestroySampler(VkSampler sampler) const;
 
-		[[nodiscard]] VkFramebuffer CreateFrameBuffer(VkImageView imageView, VkRenderPass renderPass, VkExtent2D extent) const;
+		[[nodiscard]] VkFramebuffer CreateFrameBuffer(const VkImageView* imageViews, uint32_t imageViewCount, VkRenderPass renderPass, VkExtent2D extent) const;
 		void DestroyFrameBuffer(VkFramebuffer frameBuffer) const;
 
 		[[nodiscard]] VkSemaphore CreateSemaphore() const;
@@ -104,7 +104,8 @@ namespace vi
 		void BeginCommandBufferRecording(VkCommandBuffer commandBuffer);
 		void EndCommandBufferRecording() const;
 
-		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent) const;
+		void BeginRenderPass(VkFramebuffer frameBuffer, VkRenderPass renderPass, glm::ivec2 offset, glm::ivec2 extent, 
+			VkClearValue* clearColors, uint32_t clearColorsCount) const;
 		void EndRenderPass() const;
 
 		void BindPipeline(Pipeline pipeline);
@@ -126,6 +127,8 @@ namespace vi
 
 		[[nodiscard]] VkFormat FindSupportedFormat(const std::vector<VkFormat>& candidates,
 			VkImageTiling tiling, VkFormatFeatureFlags features) const;
+
+		[[nodiscard]] VkFormat GetDepthBufferFormat() const;
 
 	private:
 		std::unique_ptr<Settings> _settings{};

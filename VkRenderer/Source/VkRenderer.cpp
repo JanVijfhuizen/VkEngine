@@ -91,14 +91,8 @@ namespace vi
 			attachmentRef.layout = info.colorAttachments[i].layout;
 		}
 
-		const auto depthFormat = FindSupportedFormat(
-			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
-			VK_IMAGE_TILING_OPTIMAL,
-			VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
-		);
-
 		VkAttachmentDescription depthAttachment{};
-		depthAttachment.format = depthFormat;
+		depthAttachment.format = GetDepthBufferFormat();
 		depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
 		depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
 		depthAttachment.storeOp = info.depthStoreOp;
@@ -108,7 +102,7 @@ namespace vi
 		depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkAttachmentReference depthAttachmentRef{};
-		depthAttachmentRef.attachment = 1;
+		depthAttachmentRef.attachment = colorAttachmentsCount;
 		depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
 
 		VkSubpassDescription subpass{};
@@ -136,7 +130,7 @@ namespace vi
 		
 		VkRenderPassCreateInfo renderPassInfo{};
 		renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-		renderPassInfo.attachmentCount = descriptions.size();
+		renderPassInfo.attachmentCount = static_cast<uint32_t>(descriptions.size());
 		renderPassInfo.pAttachments = descriptions.data();
 		renderPassInfo.subpassCount = 1;
 		renderPassInfo.pSubpasses = &subpass;
@@ -366,6 +360,14 @@ namespace vi
 			pushConstantRanges.push_back(pushConstantRange);
 		}
 
+		VkPipelineDepthStencilStateCreateInfo depthStencil{};
+		depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+		depthStencil.depthTestEnable = VK_TRUE;
+		depthStencil.depthWriteEnable = VK_TRUE;
+		depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+		depthStencil.depthBoundsTestEnable = VK_FALSE;
+		depthStencil.stencilTestEnable = VK_FALSE;
+
 		VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
 		pipelineLayoutInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 		pipelineLayoutInfo.setLayoutCount = info.setLayouts.size();
@@ -386,8 +388,7 @@ namespace vi
 		pipelineInfo.pViewportState = &viewportState;
 		pipelineInfo.pRasterizationState = &rasterizer;
 		pipelineInfo.pMultisampleState = &multisampling;
-		// Todo add depth stencil.
-		pipelineInfo.pDepthStencilState = nullptr;
+		pipelineInfo.pDepthStencilState = info.depthBufferEnabled ? &depthStencil : nullptr;
 		pipelineInfo.pColorBlendState = &colorBlending;
 		pipelineInfo.pDynamicState = nullptr;
 		pipelineInfo.layout = pipelineLayout;
@@ -528,13 +529,14 @@ namespace vi
 		vkDestroySampler(_device, sampler, nullptr);
 	}
 
-	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView imageView, const VkRenderPass renderPass, const VkExtent2D extent) const
+	VkFramebuffer VkRenderer::CreateFrameBuffer(const VkImageView* imageViews, const uint32_t imageViewCount, 
+		const VkRenderPass renderPass, const VkExtent2D extent) const
 	{
 		VkFramebufferCreateInfo framebufferInfo{};
 		framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
 		framebufferInfo.renderPass = renderPass;
-		framebufferInfo.attachmentCount = 1;
-		framebufferInfo.pAttachments = &imageView;
+		framebufferInfo.attachmentCount = imageViewCount;
+		framebufferInfo.pAttachments = imageViews;
 		framebufferInfo.width = extent.width;
 		framebufferInfo.height = extent.height;
 		framebufferInfo.layers = 1;
@@ -703,6 +705,15 @@ namespace vi
 		VkPipelineStageFlags srcStage;
 		VkPipelineStageFlags dstStage;
 
+		if (newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL) 
+		{
+			barrier.subresourceRange.aspectMask = VK_IMAGE_ASPECT_DEPTH_BIT;
+
+			const auto format = GetDepthBufferFormat();
+			if (format == VK_FORMAT_D32_SFLOAT_S8_UINT || format == VK_FORMAT_D24_UNORM_S8_UINT)
+				barrier.subresourceRange.aspectMask |= VK_IMAGE_ASPECT_STENCIL_BIT;
+		}
+
 		if (oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL)
 		{
 			barrier.srcAccessMask = 0;
@@ -718,6 +729,14 @@ namespace vi
 
 			srcStage = VK_PIPELINE_STAGE_TRANSFER_BIT;
 			dstStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT;
+		}
+		else if(oldLayout == VK_IMAGE_LAYOUT_UNDEFINED && newLayout == VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL)
+		{
+			barrier.srcAccessMask = 0;
+			barrier.dstAccessMask = VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_READ_BIT | VK_ACCESS_DEPTH_STENCIL_ATTACHMENT_WRITE_BIT;
+
+			srcStage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+			dstStage = VK_PIPELINE_STAGE_EARLY_FRAGMENT_TESTS_BIT;
 		}
 		else
 			throw std::exception("Layout transition not supported!");
@@ -750,7 +769,8 @@ namespace vi
 	}
 
 	void VkRenderer::BeginRenderPass(const VkFramebuffer frameBuffer, 
-		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent) const
+		const VkRenderPass renderPass, const glm::ivec2 offset, const glm::ivec2 extent, 
+		VkClearValue* clearColors, const uint32_t clearColorsCount) const
 	{
 		const VkExtent2D extentVk
 		{
@@ -765,9 +785,8 @@ namespace vi
 		renderPassInfo.renderArea.offset = {offset.x, offset.y};
 		renderPassInfo.renderArea.extent = extentVk;
 
-		VkClearValue clearColor = { {{0, 0, 0, 1}} };
-		renderPassInfo.clearValueCount = 1;
-		renderPassInfo.pClearValues = &clearColor;
+		renderPassInfo.clearValueCount = clearColorsCount;
+		renderPassInfo.pClearValues = clearColors;
 
 		vkCmdBeginRenderPass(_currentCommandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
 	}
@@ -852,7 +871,7 @@ namespace vi
 	VkFormat VkRenderer::FindSupportedFormat(const std::vector<VkFormat>& candidates, 
 		const VkImageTiling tiling, const VkFormatFeatureFlags features) const
 	{
-		for (VkFormat format : candidates) 
+		for (VkFormat format : candidates)
 		{
 			VkFormatProperties props;
 			vkGetPhysicalDeviceFormatProperties(_physicalDevice, format, &props);
@@ -864,5 +883,13 @@ namespace vi
 		}
 
 		throw std::exception("Format not available!");
+	}
+
+	VkFormat VkRenderer::GetDepthBufferFormat() const
+	{
+		return FindSupportedFormat(
+			{ VK_FORMAT_D32_SFLOAT, VK_FORMAT_D32_SFLOAT_S8_UINT, VK_FORMAT_D24_UNORM_S8_UINT },
+			VK_IMAGE_TILING_OPTIMAL, VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT
+		);
 	}
 }
