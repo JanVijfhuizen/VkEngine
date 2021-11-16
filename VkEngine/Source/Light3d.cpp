@@ -23,11 +23,11 @@ Light3d::System::System(const uint32_t size, const Info& info) : ShaderSet<Light
 
 	_vertModule = renderer.CreateShaderModule(vertCode);
 
-	vi::DescriptorLayoutInfo lightLayoutInfo{};
-	_bindingInfo.size = sizeof Ubo;
-	_bindingInfo.flag = VK_SHADER_STAGE_VERTEX_BIT;
-	lightLayoutInfo.bindings.push_back(_bindingInfo);
-	auto layout = renderer.CreateLayout(lightLayoutInfo);
+	vi::DescriptorLayoutInfo lsmLayoutInfo{};
+	_lsmBindingInfo.size = sizeof Ubo;
+	_lsmBindingInfo.flag = VK_SHADER_STAGE_VERTEX_BIT;
+	lsmLayoutInfo.bindings.push_back(_lsmBindingInfo);
+	auto layout = renderer.CreateLayout(lsmLayoutInfo);
 
 	vi::PipelineLayoutInfo pipelineInfo{};
 	pipelineInfo.attributeDescriptions = Vertex3d::GetAttributeDescriptions();
@@ -55,8 +55,19 @@ Light3d::System::System(const uint32_t size, const Info& info) : ShaderSet<Light
 	_fence = renderer.CreateFence();
 
 	const uint32_t imageCount = swapChain.GetImageCount();
+
 	VkDescriptorType uboType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-	_descriptorPool.Construct(imageCount * GetSize(), layout, &uboType, 1);
+	_lsmDescriptorPool.Construct(imageCount * GetSize(), layout, &uboType, 1);
+
+	vi::DescriptorLayoutInfo depthLayoutInfo{};
+	depthLayoutInfo.bindings.push_back(_lsmBindingInfo);
+	_depthBindingInfo.flag = VK_SHADER_STAGE_FRAGMENT_BIT;
+	_depthBindingInfo.type = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	depthLayoutInfo.bindings.push_back(_depthBindingInfo);
+	_depthLayout = renderer.CreateLayout(depthLayoutInfo);
+
+	VkDescriptorType uboTypes[] = { VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER };
+	_depthDescriptorPool.Construct(imageCount * GetSize(), _depthLayout, uboTypes, 2);
 }
 
 void Light3d::System::Cleanup()
@@ -71,7 +82,9 @@ void Light3d::System::Cleanup()
 	renderer.DestroyRenderPass(_renderPass);
 	renderer.DestroyCommandBuffer(_commandBuffer);
 	renderer.DestroyFence(_fence);
-	_descriptorPool.Cleanup();
+
+	_lsmDescriptorPool.Cleanup();
+	_depthDescriptorPool.Cleanup();
 }
 
 void Light3d::System::Update()
@@ -107,7 +120,7 @@ void Light3d::System::Update()
 
 		Ubo ubo{};
 		ubo.lightSpaceMatrix = projection * view;
-		renderer.MapMemory(frame.lightMemory, &ubo, 0, 1);
+		renderer.MapMemory(frame.lsmMemory, &ubo, 0, 1);
 
 		for (const auto [shadowCaster, shadowCasterSparseId] : shadowCasters)
 		{
@@ -115,7 +128,7 @@ void Light3d::System::Update()
 			auto& bakedTransform = bakedTransforms[transforms.GetDenseId(shadowCasterSparseId)];
 
 			renderSystem.UseMesh(mesh);
-			renderer.BindDescriptorSets(&frame.descriptorSet, 1);
+			renderer.BindDescriptorSets(&frame.lsmDescriptorSet, 1);
 			renderer.UpdatePushConstant(_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, bakedTransform);
 			renderer.Draw(mesh.indCount);
 		}
@@ -126,6 +139,11 @@ void Light3d::System::Update()
 	renderer.EndCommandBufferRecording();
 	renderer.Submit(&_commandBuffer, 1, nullptr, nullptr, _fence);
 	renderer.WaitForFence(_fence);
+}
+
+VkDescriptorSetLayout Light3d::System::GetLayout() const
+{
+	return _depthLayout;
 }
 
 void Light3d::System::ConstructInstanceFrame(Frame& frame, Light3d&, const uint32_t)
@@ -140,11 +158,17 @@ void Light3d::System::ConstructInstanceFrame(Frame& frame, Light3d&, const uint3
 			static_cast<uint32_t>(_info.shadowResolution.y)
 		});
 
-	frame.descriptorSet = _descriptorPool.Get();
-	frame.lightBuffer = renderer.CreateBuffer<Ubo>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
-	frame.lightMemory = renderer.AllocateMemory(frame.lightBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-	renderer.BindMemory(frame.lightBuffer, frame.lightMemory);
-	renderer.BindBuffer(frame.descriptorSet, frame.lightBuffer, _bindingInfo, 0, 0);
+	frame.lsmBuffer = renderer.CreateBuffer<Ubo>(1, VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT);
+	frame.lsmMemory = renderer.AllocateMemory(frame.lsmBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
+	renderer.BindMemory(frame.lsmBuffer, frame.lsmMemory);
+
+	frame.lsmDescriptorSet = _lsmDescriptorPool.Get();
+	renderer.BindBuffer(frame.lsmDescriptorSet, frame.lsmBuffer, _lsmBindingInfo, 0, 0);
+
+	frame.depthDescriptorSet = _depthDescriptorPool.Get();
+	frame.depthSampler = renderer.CreateSampler();
+	renderer.BindBuffer(frame.depthDescriptorSet, frame.lsmBuffer, _depthBindingInfo, 0, 0);
+	renderer.BindSampler(frame.depthDescriptorSet, frame.depthBuffer.imageView, frame.depthSampler, 1, 0);
 }
 
 void Light3d::System::CleanupInstanceFrame(Frame& frame, Light3d&, const uint32_t)
@@ -152,9 +176,12 @@ void Light3d::System::CleanupInstanceFrame(Frame& frame, Light3d&, const uint32_
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
-	_descriptorPool.Add(frame.descriptorSet);
+	_lsmDescriptorPool.Add(frame.lsmDescriptorSet);
+	_depthDescriptorPool.Add(frame.depthDescriptorSet);
+
+	renderer.DestroySampler(frame.depthSampler);
 	renderSystem.DestroyDepthBuffer(frame.depthBuffer);
 	renderer.DestroyFrameBuffer(frame.frameBuffer);
-	renderer.DestroyBuffer(frame.lightBuffer);
-	renderer.FreeMemory(frame.lightMemory);
+	renderer.DestroyBuffer(frame.lsmBuffer);
+	renderer.FreeMemory(frame.lsmMemory);
 }

@@ -11,9 +11,13 @@ struct alignas(4) Light3d final
 		DepthBuffer depthBuffer;
 		VkFramebuffer frameBuffer;
 
-		VkDescriptorSet descriptorSet;
-		VkBuffer lightBuffer;
-		VkDeviceMemory lightMemory;
+		VkDescriptorSet lsmDescriptorSet;
+		VkDescriptorSet depthDescriptorSet;
+
+		VkBuffer lsmBuffer;
+		VkDeviceMemory lsmMemory;
+
+		VkSampler depthSampler;
 	};
 
 	class System final : public ShaderSet<Light3d, Frame>
@@ -43,8 +47,11 @@ struct alignas(4) Light3d final
 		vi::Pipeline _pipeline;
 		VkCommandBuffer _commandBuffer;
 		VkFence _fence;
-		DescriptorPool _descriptorPool;
-		vi::BindingInfo _bindingInfo;
+		vi::BindingInfo _lsmBindingInfo;
+		vi::BindingInfo _depthBindingInfo;
+		DescriptorPool _lsmDescriptorPool;
+		DescriptorPool _depthDescriptorPool;
+		VkDescriptorSetLayout _depthLayout;
 
 		void ConstructInstanceFrame(Frame& frame, Light3d& material, uint32_t denseId) override;
 		void CleanupInstanceFrame(Frame& frame, Light3d& material, uint32_t denseId) override;

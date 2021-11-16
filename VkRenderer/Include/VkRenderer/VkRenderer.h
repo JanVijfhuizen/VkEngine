@@ -46,7 +46,7 @@ namespace vi
 		[[nodiscard]] VkDescriptorSetLayout CreateLayout(const struct DescriptorLayoutInfo& info) const;
 		void DestroyLayout(VkDescriptorSetLayout layout) const;
 
-		[[nodiscard]] VkDescriptorPool CreateDescriptorPool(VkDescriptorType* types, uint32_t typeCount, uint32_t maxSets) const;
+		[[nodiscard]] VkDescriptorPool CreateDescriptorPool(const VkDescriptorType* types, uint32_t typeCount, uint32_t maxSets) const;
 		void CreateDescriptorSets(VkDescriptorPool pool, VkDescriptorSetLayout layout, VkDescriptorSet* outSets, uint32_t setCount) const;
 		void BindBuffer(VkDescriptorSet set, VkBuffer buffer, const struct BindingInfo& info, uint32_t bindingIndex, uint32_t arrayIndex) const;
 		void BindSampler(VkDescriptorSet set, VkImageView imageView, VkSampler sampler, 

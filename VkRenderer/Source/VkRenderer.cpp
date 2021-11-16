@@ -183,7 +183,7 @@ namespace vi
 		vkDestroyDescriptorSetLayout(_device, layout, nullptr);
 	}
 
-	VkDescriptorPool VkRenderer::CreateDescriptorPool(VkDescriptorType* types, const uint32_t typeCount, const uint32_t maxSets) const
+	VkDescriptorPool VkRenderer::CreateDescriptorPool(const VkDescriptorType* types, const uint32_t typeCount, const uint32_t maxSets) const
 	{
 		std::vector<VkDescriptorPoolSize> sizes{};
 		sizes.resize(typeCount);
