@@ -117,7 +117,14 @@ void Light3d::System::Update()
 		renderer.BeginRenderPass(frame.frameBuffer, _renderPass, {}, _info.shadowResolution, &clearValue, 1);
 
 		glm::mat4 view = glm::lookAt(transform.position, camera.lookat, glm::vec3(0, 1, 0));
-		glm::mat4 projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, camera.clipNear, camera.clipFar);
+		/*
+		const float oX = _info.shadowResolution.x;
+		const float oY = _info.shadowResolution.y;
+		glm::mat4 projection = glm::ortho(0.f, oX, 0.f, oY, camera.clipNear, camera.clipFar);
+		*/
+
+		//glm::mat4 projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, camera.clipNear, camera.clipFar); // TODO somehow produces corrupt values.
+		glm::mat4 projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, .1f, 1000.f);
 
 		Ubo ubo{};
 		ubo.lightSpaceMatrix = projection * view;
