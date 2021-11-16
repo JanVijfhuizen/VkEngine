@@ -132,12 +132,14 @@ int main()
 	auto& light3dTransform = transform3dSystem->Insert(light3dEntity.index);
 	auto& light3d = light3dSystem->Insert(light3dEntity.index);
 
+	light3dTransform.position = { 20, -5, 28 };
+
 	while(true)
 	{
 		static float f = 0;
 		f += .001f;
-		cam3dTransform.position = { std::sin(f) * 20, -5, std::cos(f) * 20};
-		light3dTransform.position = { std::sin(-f) * 20, -5, std::cos(-f) * 20 };
+		cam3dTransform.position = { std::sin(f) * 40, -20, std::cos(f) * 40};
+		//light3dTransform.position = { std::sin(-f) * 20, -5, std::cos(-f) * 20 };
 		cube3Transform.position.x = { std::sin(f) * 4 };
 
 		transform3dSystem->Update();
@@ -151,7 +153,7 @@ int main()
 		if (quit)
 			break;
 
-		unlitMaterial2dSystem->Update();
+		//unlitMaterial2dSystem->Update();
 		unlitMaterial3dSystem->Update();
 
 		renderSystem.EndFrame();

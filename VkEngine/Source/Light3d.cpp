@@ -17,6 +17,7 @@ Light3d::System::System(const uint32_t size, const Info& info) : ShaderSet<Light
 
 	vi::RenderPassInfo renderPassInfo{};
 	renderPassInfo.useDepthAttachment = true;
+	renderPassInfo.depthStoreOp = VK_ATTACHMENT_STORE_OP_STORE;
 	_renderPass = renderer.CreateRenderPass(renderPassInfo);
 
 	const auto vertCode = FileReader::Read("Shaders/vert3dShadow.spv");
@@ -116,7 +117,7 @@ void Light3d::System::Update()
 		renderer.BeginRenderPass(frame.frameBuffer, _renderPass, {}, _info.shadowResolution, &clearValue, 1);
 
 		glm::mat4 view = glm::lookAt(transform.position, camera.lookat, glm::vec3(0, 1, 0));
-		glm::mat4 projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, .1f, 1000.f);
+		glm::mat4 projection = glm::ortho(-10.f, 10.f, -10.f, 10.f, camera.clipNear, camera.clipFar);
 
 		Ubo ubo{};
 		ubo.lightSpaceMatrix = projection * view;
