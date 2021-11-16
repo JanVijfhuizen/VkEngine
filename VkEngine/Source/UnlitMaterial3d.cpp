@@ -4,6 +4,7 @@
 #include "Camera3d.h"
 #include "VkRenderer/PipelineInfo.h"
 #include "Transform3d.h"
+#include "Light3d.h"
 
 UnlitMaterial3d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial3d, Frame>(size)
 {
@@ -12,6 +13,7 @@ UnlitMaterial3d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial3d
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& cameraSystem = Camera3d::System::Instance::Get();
+	auto& light3dSystem = Light3d::System::Instance::Get();
 
 	const auto vertCode = FileReader::Read("Shaders/vert3d.spv");
 	const auto fragCode = FileReader::Read("Shaders/frag3d.spv");
@@ -30,6 +32,7 @@ UnlitMaterial3d::System::System(const uint32_t size) : ShaderSet<UnlitMaterial3d
 	pipelineInfo.attributeDescriptions = Vertex3d::GetAttributeDescriptions();
 	pipelineInfo.bindingDescription = Vertex3d::GetBindingDescription();
 	pipelineInfo.setLayouts.push_back(cameraSystem.GetLayout());
+	pipelineInfo.setLayouts.push_back(light3dSystem.GetLayout());
 	pipelineInfo.setLayouts.push_back(layout);
 	pipelineInfo.modules.push_back(
 		{
@@ -78,6 +81,7 @@ void UnlitMaterial3d::System::Update()
 	auto& swapChain = renderSystem.GetSwapChain();
 
 	auto& cameraSystem = Camera3d::System::Instance::Get();
+	auto& light3dSystem = Light3d::System::Instance::Get();
 	const auto frames = GetSets()[swapChain.GetCurrentImageIndex() + 1].Get<Frame>();
 
 	auto& transforms = Transform3d::System::Instance::Get();
@@ -91,11 +95,13 @@ void UnlitMaterial3d::System::Update()
 		struct
 		{
 			VkDescriptorSet cameraSet;
+			VkDescriptorSet lightSet;
 			VkDescriptorSet materialSet;
 		};
-		VkDescriptorSet sets[2];
+		VkDescriptorSet sets[3];
 	};
 	cameraSet = cameraSystem.GetCurrentFrameSet().Get<CameraFrame>(0).descriptor;
+	lightSet = light3dSystem.GetCurrentFrameSet().Get<Light3d::Frame>(0).depthDescriptor;
 
 	renderer.BindPipeline(_pipeline);
 
@@ -110,7 +116,7 @@ void UnlitMaterial3d::System::Update()
 		materialSet = frame.descriptorSet;
 
 		renderSystem.UseMesh(mesh);
-		renderer.BindDescriptorSets(sets, 2);
+		renderer.BindDescriptorSets(sets, 3);
 		renderer.BindSampler(frame.descriptorSet, diffuseTex.imageView, frame.matDiffuseSampler, 0, 0);
 		renderer.UpdatePushConstant(_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, bakedTransform);
 		renderer.Draw(mesh.indCount);

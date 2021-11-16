@@ -11,8 +11,8 @@ struct alignas(4) Light3d final
 		DepthBuffer depthBuffer;
 		VkFramebuffer frameBuffer;
 
-		VkDescriptorSet lsmDescriptorSet;
-		VkDescriptorSet depthDescriptorSet;
+		VkDescriptorSet lsmDescriptor;
+		VkDescriptorSet depthDescriptor;
 
 		VkBuffer lsmBuffer;
 		VkDeviceMemory lsmMemory;
@@ -34,6 +34,8 @@ struct alignas(4) Light3d final
 		void Cleanup() override;
 
 		void Update() override;
+
+		[[nodiscard]] VkDescriptorSetLayout GetLayout() const;
 
 	private:
 		struct Ubo final

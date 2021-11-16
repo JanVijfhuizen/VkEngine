@@ -45,6 +45,10 @@ int main()
 	Camera3d::System::Instance::Set(camera3dSystem);
 	cecsar.AddSet(camera3dSystem);
 
+	const auto light3dSystem = new Light3d::System(entityCount);
+	Light3d::System::Instance::Set(light3dSystem);
+	cecsar.AddSet(light3dSystem);
+
 	const auto unlitMaterial2dSystem = new UnlitMaterial2d::System(entityCount);
 	UnlitMaterial2d::System::Instance::Set(unlitMaterial2dSystem);
 	cecsar.AddSet(unlitMaterial2dSystem);
@@ -52,10 +56,6 @@ int main()
 	const auto unlitMaterial3dSystem = new UnlitMaterial3d::System(entityCount);
 	UnlitMaterial3d::System::Instance::Set(unlitMaterial3dSystem);
 	cecsar.AddSet(unlitMaterial3dSystem);
-
-	const auto light3dSystem = new Light3d::System(entityCount);
-	Light3d::System::Instance::Set(light3dSystem);
-	cecsar.AddSet(light3dSystem);
 
 	const auto shadowCasterSystem = new ShadowCaster::System(entityCount);
 	ShadowCaster::System::Instance::Set(shadowCasterSystem);

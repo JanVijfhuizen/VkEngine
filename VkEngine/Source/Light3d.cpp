@@ -128,7 +128,7 @@ void Light3d::System::Update()
 			auto& bakedTransform = bakedTransforms[transforms.GetDenseId(shadowCasterSparseId)];
 
 			renderSystem.UseMesh(mesh);
-			renderer.BindDescriptorSets(&frame.lsmDescriptorSet, 1);
+			renderer.BindDescriptorSets(&frame.lsmDescriptor, 1);
 			renderer.UpdatePushConstant(_pipeline.layout, VK_SHADER_STAGE_VERTEX_BIT, bakedTransform);
 			renderer.Draw(mesh.indCount);
 		}
@@ -162,13 +162,13 @@ void Light3d::System::ConstructInstanceFrame(Frame& frame, Light3d&, const uint3
 	frame.lsmMemory = renderer.AllocateMemory(frame.lsmBuffer, VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
 	renderer.BindMemory(frame.lsmBuffer, frame.lsmMemory);
 
-	frame.lsmDescriptorSet = _lsmDescriptorPool.Get();
-	renderer.BindBuffer(frame.lsmDescriptorSet, frame.lsmBuffer, _lsmBindingInfo, 0, 0);
+	frame.lsmDescriptor = _lsmDescriptorPool.Get();
+	renderer.BindBuffer(frame.lsmDescriptor, frame.lsmBuffer, _lsmBindingInfo, 0, 0);
 
-	frame.depthDescriptorSet = _depthDescriptorPool.Get();
+	frame.depthDescriptor = _depthDescriptorPool.Get();
 	frame.depthSampler = renderer.CreateSampler();
-	renderer.BindBuffer(frame.depthDescriptorSet, frame.lsmBuffer, _depthBindingInfo, 0, 0);
-	renderer.BindSampler(frame.depthDescriptorSet, frame.depthBuffer.imageView, frame.depthSampler, 1, 0);
+	renderer.BindBuffer(frame.depthDescriptor, frame.lsmBuffer, _depthBindingInfo, 0, 0);
+	renderer.BindSampler(frame.depthDescriptor, frame.depthBuffer.imageView, frame.depthSampler, 1, 0);
 }
 
 void Light3d::System::CleanupInstanceFrame(Frame& frame, Light3d&, const uint32_t)
@@ -176,8 +176,8 @@ void Light3d::System::CleanupInstanceFrame(Frame& frame, Light3d&, const uint32_
 	auto& renderSystem = RenderSystem::Instance::Get();
 	auto& renderer = renderSystem.GetVkRenderer();
 
-	_lsmDescriptorPool.Add(frame.lsmDescriptorSet);
-	_depthDescriptorPool.Add(frame.depthDescriptorSet);
+	_lsmDescriptorPool.Add(frame.lsmDescriptor);
+	_depthDescriptorPool.Add(frame.depthDescriptor);
 
 	renderer.DestroySampler(frame.depthSampler);
 	renderSystem.DestroyDepthBuffer(frame.depthBuffer);
